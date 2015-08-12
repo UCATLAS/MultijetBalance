@@ -1,0 +1,4 @@
+# https://twiki.cern.ch/twiki/bin/view/Atlas/SpecialRunsIn2015
+# Period A4
+data15_13TeV.00267638.physics_Main.merge.DAOD_EXOT2.r6818_p2358_p2361
+data15_13TeV.00267639.physics_Main.merge.DAOD_EXOT2.r6818_p2358_p2361
