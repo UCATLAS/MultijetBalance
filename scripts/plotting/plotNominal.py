@@ -97,7 +97,8 @@ def plotNominal(file, f_plotSys, f_addGagik):
     nomHist.SetMaximum(1.5*nomHist.GetMaximum())
     nomHist.SetMinimum(0.0001)
     if( "MJB" in histName) :
-      nomHist.GetXaxis().SetRangeUser( 300, 2000 )
+      #nomHist.GetXaxis().SetRangeUser( 300, 2000 )
+      nomHist.GetXaxis().SetRangeUser( 500, 2000 )
       nomHist.SetMaximum(1.1)
       nomHist.SetMinimum(0.9)
       nomHist.GetXaxis().SetMoreLogLabels(True)

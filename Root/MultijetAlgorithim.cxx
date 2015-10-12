@@ -59,6 +59,8 @@ MultijetAlgorithim :: MultijetAlgorithim (std::string name, std::string configNa
   // called on both the submission and the worker node.  Most of your
   // initialization code will go into histInitialize() and
   // initialize().
+
+//  !!
 }
 
 MultijetAlgorithim ::~MultijetAlgorithim(){
@@ -76,7 +78,6 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_debug             = config->GetValue("Debug" ,           false );
   m_isAFII            = config->GetValue("IsAFII"  ,         false );
   m_isDAOD            = config->GetValue("IsDAOD"  ,         true );
-  m_is8TeV            = config->GetValue("Is8TeV"  ,         false );
   m_maxEvent          = config->GetValue("MaxEvent"  ,       1e8 );
   m_useCutFlow        = config->GetValue("UseCutFlow",       true);
   m_writeTree         = config->GetValue("WriteTree",        false);
@@ -92,31 +93,27 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_leadJetMJBCorrection  = config->GetValue("LeadJetMJBCorrection",   "false");
   m_varString         = config->GetValue("Variations",       "Nominal");
   m_MCPileupCheckContainer = config->GetValue("MCPileupCheckContainer", "AntiKt4TruthJets");
-  m_triggerThreshold  = config->GetValue("TriggerThreshold", 0);
-  m_triggerThreshold *= GeV;
+  m_triggerConfig     = config->GetValue("Triggers", "");
   m_closureTest       = config->GetValue("ClosureTest" ,    false);
 
   if( m_writeNominalTree )
     m_writeTree = true;
 
-
-  // Check simulation flavour for calibration config
-  //const std::string stringMeta = wk()->metaData()->getStrining MC as FullSim by default!" );
-  //m_isFullSim = true;
-  //TString fileName = TString(wk()->inputFile()->GetName());
-  //if( fileName.Contains("13TeV") )
-  //  m_comEnergy = "13TeV";
-  //else if( fileName.Contains("8TeV") )
-  //  m_comEnergy = "8TeV";
-  //else
-  //  std::cout << "No COM Energy could be found from the string name" << std::endl;
-  //std::cout << "Setting m_comEnergy to "<< m_comEnergy << std::endl;
-  if(m_is8TeV)
-    m_comEnergy = "8TeV";
-  else
-    m_comEnergy = "13TeV";
+  m_comEnergy = "13TeV";
   if( m_MCPileupCheckContainer.compare("None") == 0 ) //If they're identical
     m_useMCPileupCheck = false;
+
+
+  // Save triggers to use
+  std::stringstream ss(m_triggerConfig);
+  std::string thisTriggerStr;
+  std::string::size_type sz;
+  while (std::getline(ss, thisTriggerStr, ',')) {
+    m_triggers.push_back( thisTriggerStr.substr(0, thisTriggerStr.find_first_of(':')) );
+    m_triggerThresholds.push_back( std::stof(thisTriggerStr.substr(thisTriggerStr.find_first_of(':')+1, thisTriggerStr.size()) , &sz) *GeV );
+    cout << m_triggers.at(m_triggers.size()-1) << " " << m_triggerThresholds.at(m_triggers.size()-1) << endl;
+  }
+
 
   ///// Tool Config parameters /////
 
@@ -133,26 +130,14 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
 
 
   // JetCalibrationTool //
-  if( m_is8TeV){
-    m_jetCalibSequence          = config->GetValue("CalibSequence", "JetArea_Residual_Origin_EtaJES_GSC");
-    if(m_isMC && m_isAFII)
-      m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_Full2012dataset_AFII_January2014.config");
-    else if(m_isMC && !m_isAFII)
-      m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_Full2012dataset_May2014.config");
-    else if(!m_isMC){
-      //m_jetCalibConfig          = config->GetValue("JetCalibConfig",  "JES_Full2012dataset_InsituDerivation.config");
-      m_jetCalibConfig          = config->GetValue("JetCalibConfig",  "JES_Full2012dataset_May2014.config");
-    }
-  }else{ //is 13 TeV
-    m_jetCalibSequence          = config->GetValue("CalibSequence", "JetArea_Residual_Origin_EtaJES_GSC");
-    if(m_isMC && m_isAFII)
-      m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_Prerecommendation2015_AFII_Apr2015.config");
-    else if(m_isMC && !m_isAFII)
-      m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_MC15Prerecommendation_April2015.config");
-      //m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_Prerecommendation2015_Feb2015.config");
-    else if(!m_isMC){
-      m_jetCalibConfig          = config->GetValue("JetCalibConfig",  "JES_Full2012dataset_May2014.config");
-    }
+  m_jetCalibSequence          = config->GetValue("CalibSequence", "JetArea_Residual_Origin_EtaJES_GSC");
+  if(m_isMC && m_isAFII)
+    m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_Prerecommendation2015_AFII_Apr2015.config");
+  else if(m_isMC && !m_isAFII)
+    m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_MC15Prerecommendation_April2015.config");
+    //m_jetCalibConfig          = config->GetValue("JetCalibConfig", "JES_Prerecommendation2015_Feb2015.config");
+  else if(!m_isMC){
+    m_jetCalibConfig          = config->GetValue("JetCalibConfig",  "JES_Full2012dataset_May2014.config");
   }
 
   if ( !m_isMC && m_jetCalibSequence.find("Insitu") == std::string::npos) m_jetCalibSequence += "_Insitu";
@@ -274,8 +259,8 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
 
     m_cutflowFirst = origCutflowHist->GetXaxis()->FindBin("njets");
     origCutflowHistW->GetXaxis()->FindBin("njets");
-    origCutflowHist->GetXaxis()->FindBin("trigEff");
-    origCutflowHistW->GetXaxis()->FindBin("trigEff");
+    origCutflowHist->GetXaxis()->FindBin("trigger2");
+    origCutflowHistW->GetXaxis()->FindBin("trigger2");
     origCutflowHist->GetXaxis()->FindBin( "centralLead");
     origCutflowHistW->GetXaxis()->FindBin("centralLead");
     origCutflowHist->GetXaxis()->FindBin( "detEta");
@@ -298,13 +283,13 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
     origCutflowHistW->GetXaxis()->FindBin("beta");
 
     //Add a cutflow for each variation
-    for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
+    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
       m_cutflowHist.push_back( (TH1D*) origCutflowHist->Clone() );
       m_cutflowHistW.push_back( (TH1D*) origCutflowHistW->Clone() );
-      m_cutflowHist.at(iVar)->SetName( ("cutflow_"+m_algVar.at(iVar)).c_str() );
-      m_cutflowHistW.at(iVar)->SetName( ("cutflow_weighted_"+m_algVar.at(iVar)).c_str() );
-      m_cutflowHist.at(iVar)->SetTitle( ("cutflow_"+m_algVar.at(iVar)).c_str() );
-      m_cutflowHistW.at(iVar)->SetTitle( ("cutflow_weighted_"+m_algVar.at(iVar)).c_str() );
+      m_cutflowHist.at(iVar)->SetName( ("cutflow_"+m_sysVar.at(iVar)).c_str() );
+      m_cutflowHistW.at(iVar)->SetName( ("cutflow_weighted_"+m_sysVar.at(iVar)).c_str() );
+      m_cutflowHist.at(iVar)->SetTitle( ("cutflow_"+m_sysVar.at(iVar)).c_str() );
+      m_cutflowHistW.at(iVar)->SetTitle( ("cutflow_weighted_"+m_sysVar.at(iVar)).c_str() );
       m_cutflowHist.at(iVar)->SetDirectory( file );
       m_cutflowHistW.at(iVar)->SetDirectory( file );
 
@@ -313,14 +298,14 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
         m_cutflowHist.at(iVar)->SetBinContent(iBin, origCutflowHist->GetBinContent(iBin) );
         m_cutflowHistW.at(iVar)->SetBinContent(iBin, origCutflowHistW->GetBinContent(iBin) );
       }//for iBin
-    }//for each m_algVar
+    }//for each m_sysVar
   } //m_useCutflow
 
 
   //Add output hists for each variation
   m_ss << m_MJBIteration;
-  for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
-    MultijetHists* thisJetHists = new MultijetHists( ( "Iteration"+m_ss.str()+"_"+m_algVar.at(iVar) ), (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
+  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+    MultijetHists* thisJetHists = new MultijetHists( ( "Iteration"+m_ss.str()+"_"+m_sysVar.at(iVar) ), (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
     m_jetHists.push_back(thisJetHists);
     m_jetHists.at(iVar)->initialize(m_MJBCorrectionBinning);
     m_jetHists.at(iVar)->record( wk() );
@@ -352,11 +337,11 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
       Error("initialize()","Failed to get file for output tree!");
       return EL::StatusCode::FAILURE;
     }
-    for(int unsigned iVar=0; iVar < m_algVar.size(); ++iVar){
+    for(int unsigned iVar=0; iVar < m_sysVar.size(); ++iVar){
       if (m_writeNominalTree && (int) iVar != m_NominalIndex)
         continue;
 
-      TTree * outTree = new TTree( ("outTree_"+m_algVar.at(iVar)).c_str(), ("outTree_"+m_algVar.at(iVar) ).c_str());
+      TTree * outTree = new TTree( ("outTree_"+m_sysVar.at(iVar)).c_str(), ("outTree_"+m_sysVar.at(iVar) ).c_str());
       if( !outTree ) {
         Error("initialize()","Failed to get output tree!");
         return EL::StatusCode::FAILURE;
@@ -391,36 +376,36 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   ++m_eventCounter;
 
   if(m_eventCounter >  m_maxEvent){
-    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
-  }
+      wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+    }
 
-  if(m_eventCounter %1000 == 0)
-    std::cout << "Event # " << m_eventCounter << std::endl;
+    if(m_eventCounter %100000 == 0)
+      Info("execute()", "Event # %i", m_eventCounter);
 
-  m_iCutflow = m_cutflowFirst; //for cutflow histogram automatic filling
+    m_iCutflow = m_cutflowFirst; //for cutflow histogram automatic filling
 
-  //----------------------------
-  // Event information
-  //---------------------------
-  ///////////////////////////// Retrieve Containers /////////////////////////////////////////
-  if(m_debug) Info("execute()", "Retrieve Containers ");
+    //----------------------------
+    // Event information
+    //---------------------------
+    ///////////////////////////// Retrieve Containers /////////////////////////////////////////
+    if(m_debug) Info("execute()", "Retrieve Containers ");
 
-  //const xAOD::EventInfo* eventInfo = HelperFunctions::getContainer<xAOD::EventInfo>("EventInfo", m_event, m_store);
-  const xAOD::EventInfo* eventInfo = 0;
-  HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store);
-  m_mcEventWeight = (m_isMC ? eventInfo->mcEventWeight() : 1.) ;
+    //const xAOD::EventInfo* eventInfo = HelperFunctions::getContainer<xAOD::EventInfo>("EventInfo", m_event, m_store);
+    const xAOD::EventInfo* eventInfo = 0;
+    HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store);
+    m_mcEventWeight = (m_isMC ? eventInfo->mcEventWeight() : 1.) ;
 
-  //const xAOD::VertexContainer* vertices = HelperFunctions::getContainer<xAOD::VertexContainer>("PrimaryVertices", m_event, m_store);;
-  const xAOD::VertexContainer* vertices = 0;
-  HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store);
-  m_pvLocation = HelperFunctions::getPrimaryVertexLocation( vertices );  //Get primary vertex for JVF cut
+    //const xAOD::VertexContainer* vertices = HelperFunctions::getContainer<xAOD::VertexContainer>("PrimaryVertices", m_event, m_store);;
+    const xAOD::VertexContainer* vertices = 0;
+    HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store);
+    m_pvLocation = HelperFunctions::getPrimaryVertexLocation( vertices );  //Get primary vertex for JVF cut
 
-  //const xAOD::JetContainer* inJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_inContainerName, m_event, m_store);
-  const xAOD::JetContainer* inJets = 0;
-  HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store);
+    //const xAOD::JetContainer* inJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_inContainerName, m_event, m_store);
+    const xAOD::JetContainer* inJets = 0;
+    HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store);
 
-  if(inJets->size() <3){
-    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+    if(inJets->size() <3){
+      wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
   passCutAll(); //njets
 
@@ -431,7 +416,6 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   for( auto thisJet : *(originalSignalJetsSC.first) ) {
      originalSignalJets->push_back( thisJet );
    }
-
 
   const xAOD::JetContainer* truthJets = 0;
   if(m_useMCPileupCheck && m_isMC){
@@ -450,8 +434,6 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   //at least 2 tracks with vertex - Done in baseEventSelection
   //!!data quality to remove fake jets from noise bursts in caloriters, non-collision background, and from cosmic rays
 
-  //Save original pt of all jets
-  //!! to pointer?
   if(m_debug) Info("execute()", "Get Raw Kinematics ");
   vector<TLorentzVector> rawJetKinematics;
   for (unsigned int iJet = 0; iJet < originalSignalJets->size(); ++iJet){
@@ -460,30 +442,56 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     rawJetKinematics.push_back(thisJet);
   }
 
-  ////Save each calibration step
-  //std::vector< std::vector<TLorentzVector> > calibStageJetKinematics;
-  //for( int iCalibStage = 0; iCalibStage < m_JCSIndex.size(); ++ iCalibStage){
-  //  std::vector<TLorentzVector> thisCalibStage;
-  //  calibStageJetKinematics.push_back( thisCalibStage );
-  //}
-
-
   if(m_debug) Info("execute()", "Apply Jet Calibration Tool ");
   for(unsigned int iJet=0; iJet < originalSignalJets->size(); ++iJet){
     applyJetCalibrationTool( originalSignalJets->at(iJet) );
     originalSignalJets->at(iJet)->auxdecor< float >( "jetCorr") = originalSignalJets->at(iJet)->pt() / rawJetKinematics.at(iJet).Pt() ;
   }
   reorderJets( originalSignalJets );
+//start
 
 
-  if(m_debug) Info("execute()", "Trigger Efficiency ");
-  ////  trigger efficiency ////
-  if( originalSignalJets->at(0)->pt() < m_triggerThreshold){
+  ////  trigger ////
+  if(m_debug) Info("execute()", "Trigger ");
+  float prescale = 1.;
+  bool passedTriggers = false;
+  float prescaleCut = 0.;
+  for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
+
+    auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
+    if( triggerChainGroup->isPassed() && originalSignalJets->at(0)->pt() > m_triggerThresholds.at(iT)){
+
+//      std::string l1string = "";
+//      if (m_triggers.at(iT).find("HLT_j360") != std::string::npos){
+//        l1string = "L1_J100";
+//      }else if(m_triggers.at(iT).find("HLT_j260") != std::string::npos){
+//        l1string = "L1_J75";
+//      }else if(m_triggers.at(iT).find("HLT_j150") != std::string::npos){
+//        l1string = "L1_J40";
+//      }
+//
+//      prescaleCut = triggerChainGroup->getPrescale();
+//cout << m_triggers.at(iT) << " : " << l1string << endl;
+//cout << prescaleCut << endl;
+//cout << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT),TrigDefs::requireDecision) << " : " << m_trigDecTools.at(iT)->getPrescale(l1string.c_str()) << endl;
+//
+//
+      //Check that it's also below another trigger region ??
+      passedTriggers = true;
+//      cout << "fixed " << TrigConf::PrescaleSet::getPrescaleFromCut(prescale) << endl;
+
+//      HLT_j360 (unp) = L1_J100 (unp)
+//      HLT_j260 (p) = L1_J75 (unp)
+//      HLT_j150 (p) = L1_J40 (p)
+      break;
+    }
+  }
+
+  if( !passedTriggers ){
+    delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
-  passCutAll(); //trigger threshold
-
-
+  passCutAll(); //trigger2
 
   //Assign detEta for jets .  Will this be changed by calibrations?
   if(m_debug) Info("execute()", "DetEta ");
@@ -494,7 +502,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   }
 
   if( fabs(originalSignalJets->at(0)->auxdecor< float >("detEta")) > 1.2 ) {
-  //if( originalSignalJets->at(0)->Rapidity() > 1.2 ) {
+    delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
   passCutAll(); //centralLead
@@ -506,6 +514,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     }
   }
   if (originalSignalJets->size() < 3){
+    delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
   passCutAll(); //detEta
@@ -516,6 +525,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   if(m_useMCPileupCheck && m_isMC){
     float pTAvg = ( originalSignalJets->at(0)->pt() + originalSignalJets->at(1)->pt() ) /2.0;
     if( truthJets->size() == 0 || (pTAvg / truthJets->at(0)->pt() > 1.4) ){
+      delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
       wk()->skipEvent();  return EL::StatusCode::SUCCESS;
     }
   }
@@ -534,8 +544,9 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   int m_cutflowFirst_SystLoop = m_iCutflow; //Get cutflow position for systematic looping
   vector< xAOD::Jet*>* signalJets = new std::vector< xAOD::Jet* >();
 
-  for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
+  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
 
+    if(m_debug) Info("execute()", "Starting variation %i %s", iVar, m_sysVar.at(iVar).c_str());
     //Reset standard values
     *signalJets = *originalSignalJets;
     m_iCutflow = m_cutflowFirst_SystLoop;
@@ -545,46 +556,67 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     ptThresholdCut = 25.*GeV;
 
     //Set relevant variations for this iVar
-    if( m_algVar.at(iVar).find("MJB_a") != std::string::npos ){
-      std::string thisVarStr = m_algVar.at(iVar).substr( m_algVar.at(iVar).find("MJB_a")+5, 2 );
-      alphaCut = std::stod(thisVarStr) / 100;
-    }else if( m_algVar.at(iVar).find("MJB_b") != std::string::npos ){
-      std::string thisVarStr = m_algVar.at(iVar).substr( m_algVar.at(iVar).find("MJB_b")+5, 2 );
-      betaCut = std::stod(thisVarStr) / 10.;
-    }else if( m_algVar.at(iVar).find("MJB_pta") != std::string::npos ){
-      std::string thisVarStr = m_algVar.at(iVar).substr( m_algVar.at(iVar).find("MJB_pta")+7, 2 );
-      ptAsymCut = std::stod(thisVarStr) / 100.;
-    }else if( m_algVar.at(iVar).find("MJB_ptt") != std::string::npos ){
-      std::string thisVarStr = m_algVar.at(iVar).substr( m_algVar.at(iVar).find("MJB_ptt")+7, 2 );
-      ptThresholdCut = std::stod(thisVarStr) * GeV;
+    if( m_sysTool.at(iVar) == 2 ){ //alpha
+//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_a")+5, 2 );
+//      alphaCut = std::stod(thisVarStr)  / 100;
+      alphaCut = (double) m_sysToolIndex.at(iVar)  / 100.;
+    }else if( m_sysTool.at(iVar) == 3 ){ //beta
+//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_b")+5, 2 );
+//      betaCut = std::stod(thisVarStr) / 10.;
+      betaCut = (double) m_sysToolIndex.at(iVar)  / 10.;
+    }else if( m_sysTool.at(iVar) == 4 ){ //pta
+//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_pta")+7, 2 );
+//      ptAsymCut = std::stod(thisVarStr) / 100.;
+      ptAsymCut = (double) m_sysToolIndex.at(iVar)  / 100.;
+    }else if( m_sysTool.at(iVar) == 5 ){ //ptt
+//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_ptt")+7, 2 );
+//      ptThresholdCut = std::stod(thisVarStr) * GeV;
+      ptThresholdCut = (double) m_sysToolIndex.at(iVar) * GeV;
     }
 
     //?? eta uncertainties should be applied before V+jet nominal?? This makes more sense to me, but is not what Gagik did. Ask Bogdan!
     if(m_debug) Info("execute()", "Apply other calibrations ");
     for (unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
 
-      if( std::find(m_JCSIndex.begin(), m_JCSIndex.end(), iVar) != m_JCSIndex.end()){
-        int iCalibStage = std::find(m_JCSIndex.begin(), m_JCSIndex.end(), iVar) - m_JCSIndex.begin();
-        // need vector<string> jetCalibStageString
+      if(m_sysTool.at(iVar) == 1){
+        int iCalibStage = m_sysToolIndex.at(iVar);
         xAOD::JetFourMom_t jetCalibStageCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>( m_JCSStrings.at(iCalibStage).c_str() );
         signalJets->at(iJet)->auxdata< float >("pt") = jetCalibStageCopy.Pt();
         signalJets->at(iJet)->auxdata< float >("eta") = jetCalibStageCopy.Eta();
         signalJets->at(iJet)->auxdata< float >("phi") = jetCalibStageCopy.Phi();
         signalJets->at(iJet)->auxdata< float >("e") = jetCalibStageCopy.E();
       } else {
-        signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
-        signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
-        signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
-        signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
+
+        if(iJet !=0 ){ //Use Insitu Correction
+          signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
+          signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
+          signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
+          signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
+        } else { //Use GSC Correction for lead jet
+          xAOD::JetFourMom_t jetCalibGSCCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetGSCScaleMomentum");
+          signalJets->at(iJet)->auxdata< float >("pt") = jetCalibGSCCopy.Pt();
+          signalJets->at(iJet)->auxdata< float >("eta") = jetCalibGSCCopy.Eta();
+          signalJets->at(iJet)->auxdata< float >("phi") = jetCalibGSCCopy.Phi();
+          signalJets->at(iJet)->auxdata< float >("e") = jetCalibGSCCopy.E();
+        }
       }
 
       if(iJet > 0){  //Don't apply systematic corrections to lead jet
         applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
-        applyVjetCalibration( signalJets->at(iJet) , iVar );
+        // Vjet currently removed!! What's the best way to apply these uncertainties?!
         applyMJBCalibration( signalJets->at(iJet) , iVar );
       } else if( m_closureTest){ //Apply MJB to lead jet
+        //apply previous correction for closure test??
         applyMJBCalibration( signalJets->at(iJet), iVar, true );
       }
+
+//prev      if(iJet > 0){  //Don't apply systematic corrections to lead jet
+//prev        applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
+//prev        applyVjetCalibration( signalJets->at(iJet) , iVar );
+//prev        applyMJBCalibration( signalJets->at(iJet) , iVar );
+//prev      } else if( m_closureTest){ //Apply MJB to lead jet
+//prev        applyMJBCalibration( signalJets->at(iJet), iVar, true );
+//prev      }
 
     }
     reorderJets( signalJets );
@@ -729,16 +761,16 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 
 
     eventInfo->auxdecor< float >("weight_mcEventWeight") = m_mcEventWeight;
-//    double weight_corr =  m_mcEventWeight; //* eventInfo->auxdecor< float >("weight_prescale");
+    eventInfo->auxdecor< float >("weight_prescale") = prescale;
     eventInfo->auxdecor< float >("weight_xs") = m_xs * m_acceptance;
     if(m_isMC)
       eventInfo->auxdecor< float >("weight") = m_mcEventWeight*m_xs*m_acceptance;
     else
-      eventInfo->auxdecor< float >("weight") = m_mcEventWeight;
+      eventInfo->auxdecor< float >("weight") = m_mcEventWeight*prescale;
 
 
     /////////////// Output Plots ////////////////////////////////
-    if(m_debug) Info("execute()", "Begin output for %s", m_algVar.at(iVar).c_str() );
+    if(m_debug) Info("execute()", "Begin output for %s", m_sysVar.at(iVar).c_str() );
     m_jetHists.at(iVar)->execute( signalJets, eventInfo, m_pvLocation );
 
 
@@ -769,6 +801,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
         //m_nominalTree->Fill();
         //m_nominalTree->ClearUser();
         delete plottingJets;
+        delete plottingJetsAux;
       }//If it's not m_writeNominalTree or else we're on the nominal sample
     }//if m_writeTree
 
@@ -804,9 +837,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 
 
   delete signalJets;
-  delete originalSignalJets;
-  delete originalSignalJetsSC.first;
-  delete originalSignalJetsSC.second;
+  delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
 
   return EL::StatusCode::SUCCESS;
 }
@@ -833,7 +864,7 @@ EL::StatusCode MultijetAlgorithim :: finalize ()
   // submission node after all your histogram outputs have been
   // merged.  This is different from histFinalize() in that it only
   // gets called on worker nodes that processed input events.
-  for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
+  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
     m_jetHists.at(iVar)->finalize();
   }
 
@@ -857,12 +888,12 @@ EL::StatusCode MultijetAlgorithim :: finalize ()
     TH1D* origCutflowHist = (TH1D*)file->Get("cutflow");
     TH1D* origCutflowHistW = (TH1D*)file->Get("cutflow_weighted");
 
-    for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
+    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
       for(unsigned int iBin=1; iBin < m_cutflowFirst; ++iBin){
         m_cutflowHist.at(iVar)->SetBinContent(iBin, origCutflowHist->GetBinContent(iBin) );
         m_cutflowHistW.at(iVar)->SetBinContent(iBin, origCutflowHistW->GetBinContent(iBin) );
       }//for iBin
-    }//for each m_algVar
+    }//for each m_sysVar
   } //m_useCutflow
 
 
@@ -937,6 +968,7 @@ EL::StatusCode MultijetAlgorithim :: histFinalize ()
 
 
 EL::StatusCode MultijetAlgorithim::passCut(int iVar){
+  if(m_debug) Info("passCut()", "Passing Cut %i", iVar);
   m_cutflowHist.at(iVar)->Fill(m_iCutflow, 1);
   m_cutflowHistW.at(iVar)->Fill(m_iCutflow, m_mcEventWeight);
   m_iCutflow++;
@@ -946,7 +978,7 @@ return EL::StatusCode::SUCCESS;
 
 
 EL::StatusCode MultijetAlgorithim::passCutAll(){
-  for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
+  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
     m_cutflowHist.at(iVar)->Fill(m_iCutflow, 1);
     m_cutflowHistW.at(iVar)->Fill(m_iCutflow, m_mcEventWeight);
   }
@@ -965,7 +997,7 @@ EL::StatusCode MultijetAlgorithim::getLumiWeights(const xAOD::EventInfo* eventIn
     m_acceptance = 1;
   }else{
     m_mcChannelNumber = eventInfo->mcChannelNumber();
-cout << m_mcChannelNumber << endl;
+//cout << m_mcChannelNumber << endl;
     ifstream fileIn(  gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalanceAlgo/XsAcc_"+m_comEnergy+".txt").c_str() ) );
     std::string runNumStr = std::to_string( m_mcChannelNumber );
 
@@ -981,7 +1013,7 @@ cout << m_mcChannelNumber << endl;
         sscanf(subStr.c_str(), "%e", &m_acceptance);
         iss >> subStr;
         sscanf(subStr.c_str(), "%i", &m_numAMIEvents);
-        cout << "Setting xs / acceptance / numAMIEvents to " << m_xs << ":" << m_acceptance << ":" << m_numAMIEvents << endl;
+        Info("getLumiWeights", "Setting xs=%f , acceptance=%f , and numAMIEvents=%i ", m_xs, m_acceptance, m_numAMIEvents);
         continue;
       }
     }
@@ -1013,18 +1045,14 @@ double MultijetAlgorithim::DeltaR(double eta1, double phi1,double eta2, double p
 
 EL::StatusCode MultijetAlgorithim :: loadVariations (){
 
-  std::cout << "Variation String is " << m_varString << " has been split into: ";
-
   // Add the configuration if AllSystematics is used //
   if( m_varString.find("AllSystematics") != std::string::npos){
-//!!    m_varString = "NoCorr-Nominal-AllEtaIntercalibration-AllFlavor-AllGJPos-AllGJNeg-AllZJPos-AllZJNeg-AllMJBPos-AllMJBNeg";
-    m_varString = "Nominal-JetCalibSequence-AllEtaIntercalibration-AllFlavor-AllGJPos-AllGJNeg-AllZJPos-AllZJNeg-AllMJBPos-AllMJBNeg";
+    m_varString = "Nominal-JetCalibSequence-Special-MJB-AllZjet-AllGjet-AllLAr";
   }
 
   m_NominalIndex = -1; //The index of the nominal
-//  m_NoCorrIndex = -1; //The index of the no correction
 
-  // A vector of all systematics names //
+  // Turn into a vector of all systematics names
   std::vector< std::string> varVector;
   size_t pos = 0;
   while ((pos = m_varString.find("-")) != std::string::npos){
@@ -1033,233 +1061,146 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
   }
   varVector.push_back( m_varString ); //append final one
 
-//// These are for applying falvor response to one jet at a time, for first 3 jets. Not used now?
-////??  m_algVar.push_back("EIC_flvcomp2_pos");  m_algVarPos.push_back(1);
-////??  m_algVar.push_back("EIC_flvresp2_pos");  m_algVarPos.push_back(1);
-////??  m_algVar.push_back("EIC_flvcomp3_pos");  m_algVarPos.push_back(1);
-////??  m_algVar.push_back("EIC_flvresp3_pos");  m_algVarPos.push_back(1);
-////??  m_algVar.push_back("EIC_flvcomp4_pos");  m_algVarPos.push_back(1);
-////??  m_algVar.push_back("EIC_flvresp4_pos");  m_algVarPos.push_back(1);
-////??  m_algVar.push_back("EIC_flvcomp2_neg");  m_algVarPos.push_back(0);
-////??  m_algVar.push_back("EIC_flvresp2_neg");  m_algVarPos.push_back(0);
-////??  m_algVar.push_back("EIC_flvcomp3_neg");  m_algVarPos.push_back(0);
-////??  m_algVar.push_back("EIC_flvresp3_neg");  m_algVarPos.push_back(0);
-////??  m_algVar.push_back("EIC_flvcomp4_neg");  m_algVarPos.push_back(0);
-////??  m_algVar.push_back("EIC_flvresp4_neg");  m_algVarPos.push_back(0);
-
-
   for( unsigned int iVar = 0; iVar < varVector.size(); ++iVar ){
 
-    /////////////// Every Jet Calibration Stage ////////////////
-    if( varVector.at(iVar).compare("JetCalibSequence") == 0 ){
+    /////////////////////////////// Nominal ///////////////////////////////
+    if( varVector.at(iVar).compare("Nominal") == 0 ){
+      m_sysVar.push_back( "Nominal" ); m_sysTool.push_back( -1 ); m_sysToolIndex.push_back( -1 ); m_sysSign.push_back(0);
+      m_NominalIndex = m_sysVar.size()-1;
+
+    /////////////////// Every Jet Calibration Stage ////////////////
+    }else if( varVector.at(iVar).compare("JetCalibSequence") == 0 ){
       if( m_JCSTokens.size() <= 0){
         Error( "loadVariations()", "JetCalibSequence is empty.  This will not be added to the systematics");
       }
       Info( "loadVariations()", "Adding JetCalibSequence");
       for( unsigned int iJCS = 0; iJCS < m_JCSTokens.size(); ++iJCS){
-        m_algVar.push_back("JCS_"+m_JCSTokens.at(iJCS) ); m_algVarPos.push_back(0);
-        m_JCSIndex.push_back(m_algVar.size()-1);
+        //Name - JetCalibTool - Variation Number - sign
+        m_sysVar.push_back("JCS_"+m_JCSTokens.at(iJCS) ); m_sysTool.push_back( 1 ); m_sysToolIndex.push_back( iJCS ); m_sysSign.push_back(0);
       }
-    /////////////////////////////// Eta-intercalibration ///////////////////////////////
-    }else if( varVector.at(iVar).compare("AllEtaIntercalibration") == 0 ){
-      std::cout << "Adding AllEtaIntercalibration" << std::endl;
-      m_algVar.push_back("EtaIntercalibration_Modelling_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("EtaIntercalibration_TotalStat_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("EtaIntercalibration_Modelling_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("EtaIntercalibration_TotalStat_neg");  m_algVarPos.push_back(0);
-    } else if( varVector.at(iVar).compare("AllFlavor") == 0 ){
-      std::cout << "Adding AllFlavor" << std::endl;
-      m_algVar.push_back("Flavor_Composition_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("Flavor_Response_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("Flavor_Composition_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("Flavor_Response_neg");  m_algVarPos.push_back(0);
+
+    /////////////////////////////// Special ///////////////////////////////
+    }else if( varVector.at(iVar).compare("Special") == 0 ){
+
+      ifstream fileIn( gSystem->ExpandPathName( m_jetUncertaintyConfig.c_str() ) );
+      std::string line;
+      std::string subStr;
+      while (getline(fileIn, line)){
+        if (line.find(".Name:") != std::string::npos){
+          //get JES number
+          istringstream iss(line);
+          iss >> subStr;
+          std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
+          int thisJESNumber = atoi( thisJESNumberStr.c_str() );
+          if( thisJESNumber >= 57 && thisJESNumber <= 68){
+            //next get JES name
+            iss >> subStr;
+
+            //Name - JES Tool - JES Number - sign
+            m_sysVar.push_back( subStr ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 1 );
+            m_sysVar.push_back( subStr ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 0 );
+
+          } //if a Special JES
+        }//if the relevant Name line
+      }//for each line in JES config
 
 
-    ////////////////////////////////// Gamma+jets /////////////////////////////////////////
-    } else if( varVector.at(iVar).compare("AllGJPos") == 0 ){
-      std::cout << "Adding AllGJPos" << std::endl;
-      m_algVar.push_back("GJ_dphi_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_generator_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_outofcone_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_phesmaterial_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_phespresampler_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_phesz_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_purity_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_subleadingjet_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat1_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat2_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat3_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat4_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat5_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat6_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat7_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat8_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("GJ_stat9_pos");  m_algVarPos.push_back(1);
-    } else if( varVector.at(iVar).compare("AllGJNeg") == 0 ){
-      std::cout << "Adding AllGJNeg" << std::endl;
-      m_algVar.push_back("GJ_dphi_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_generator_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_outofcone_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_phesmaterial_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_phespresampler_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_phesz_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_purity_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_subleadingjet_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat1_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat2_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat3_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat4_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat5_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat6_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat7_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat8_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("GJ_stat9_neg");  m_algVarPos.push_back(0);
+    ////////////////////////////////// GJ, ZJ, or LAr /////////////////////////////////////////
+    } else if( varVector.at(iVar).find("All") != std::string::npos ){
 
+      //Get JES systematic type from name
+      std::string sysType = varVector.at(iVar).substr(3, varVector.at(iVar).size() );
 
-    ////////////////////////////////////// Z+jets /////////////////////////////////////////
-    } else if( varVector.at(iVar).compare("AllZJPos") == 0 ){
-      std::cout << "Adding AllZJPos" << std::endl;
-      m_algVar.push_back("ZJ_elecenergyzeeall_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_elecenmat_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_elecenpreshower_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_fitmethod_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_generator_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_jvfcut_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_outofcone_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_subleadingjet_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat1_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat2_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat3_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat4_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat5_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat6_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat7_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat8_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat9_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("ZJ_stat10_pos");  m_algVarPos.push_back(1);
-    } else if( varVector.at(iVar).compare("AllZJNeg") == 0 ){
-      std::cout << "Adding AllZJNeg" << std::endl;
-      m_algVar.push_back("ZJ_elecenergyzeeall_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_elecenmat_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_elecenpreshower_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_fitmethod_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_generator_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_jvfcut_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_outofcone_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_subleadingjet_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat1_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat2_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat3_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat4_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat5_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat6_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat7_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat8_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat9_neg");  m_algVarPos.push_back(0);
-      m_algVar.push_back("ZJ_stat10_neg");  m_algVarPos.push_back(0);
+      ifstream fileIn( gSystem->ExpandPathName( m_jetUncertaintyConfig.c_str() ) );
+      std::string line;
+      std::string subStr;
+      while (getline(fileIn, line)){
+        if (line.find(".Name:") != std::string::npos){
+
+          //get JES number
+          istringstream iss(line);
+          iss >> subStr;
+          std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
+          int thisJESNumber = atoi( thisJESNumberStr.c_str() );
+
+          //next get JES Name
+          iss >> subStr;
+          std::string thisJESName = subStr;
+          if( thisJESName.find( sysType ) != std::string::npos ){
+
+            //Name - JES Tool - JES Number - sign
+            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 1 );
+            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 0 );
+
+          } //if the current JES type
+        }//if the relevant Name line
+      }//for each line in JES config
 
     //////////////////////////////////////// MJB  /////////////////////////////////////////
-    } else if( varVector.at(iVar).compare("AllMJBPos") == 0 ){
-      std::cout << "Adding AllMJBPos" << std::endl;
-      m_algVar.push_back("MJB_a40_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("MJB_b15_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("MJB_pta90_pos");  m_algVarPos.push_back(1);
-      m_algVar.push_back("MJB_ptt30_pos");  m_algVarPos.push_back(1);
-
-      //////// These are not implemented ///////
-     // m_algVar.push_back("MJB_stat7_pos"); m_algVarPos.push_back(1);  // [800-900]
-     // m_algVar.push_back("MJB_stat8_pos");  m_algVarPos.push_back(1); // [900-1100]
-     // m_algVar.push_back("MJB_stat9_pos");   m_algVarPos.push_back(1);// [1100-1300]
-     // m_algVar.push_back("MJB_stat10_pos");  m_algVarPos.push_back(1);// [1300-1600]
-     // m_algVar.push_back("MJB_stat11_pos");  m_algVarPos.push_back(1);// [1600-1900]
-     // m_algVar.push_back("MJB_sherpa");  m_algVarPos.push_back(1);
-     // m_algVar.push_back("MJB_powheg");  m_algVarPos.push_back(1);
-     // m_algVar.push_back("MJB_pythia");  m_algVarPos.push_back(1);
-     // m_algVar.push_back("MJB_herwig");  m_algVarPos.push_back(1);
-
-      ////// These are extras that might need to be run ///////
-      //  m_algVar.push_back("MJB_a32_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_a34_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_a36_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_a38_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b11_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b12_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b13_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b14_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta82_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta84_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta86_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta88_pos");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_ptt27_pos");  m_algVarPos.push_back(1);
-
-    } else if( varVector.at(iVar).compare("AllMJBNeg") == 0 ){
-      std::cout << "Adding AllMJBNeg" << std::endl;
-      m_algVar.push_back("MJB_a20_neg");  m_algVarPos.push_back(1);
-      m_algVar.push_back("MJB_b05_neg");  m_algVarPos.push_back(1);
-      m_algVar.push_back("MJB_pta70_neg");  m_algVarPos.push_back(1);
-      m_algVar.push_back("MJB_ptt20_neg");  m_algVarPos.push_back(1);
-
-      //////// These are not implemented ///////
-     // m_algVar.push_back("MJB_stat7_neg");  m_algVarPos.push_back(0);
-     // m_algVar.push_back("MJB_stat8_neg");  m_algVarPos.push_back(0);
-     // m_algVar.push_back("MJB_stat9_neg");  m_algVarPos.push_back(0);
-     // m_algVar.push_back("MJB_stat10_neg");  m_algVarPos.push_back(0);
-     // m_algVar.push_back("MJB_stat11_neg");  m_algVarPos.push_back(0);
-
-      ////// These are extras that might need to be run ///////
-      //  m_algVar.push_back("MJB_a22_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_a24_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_a26_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_a28_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b06_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b07_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b08_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_b09_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta72_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta74_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta76_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_pta78_neg");  m_algVarPos.push_back(1);
-      //  m_algVar.push_back("MJB_ptt22_neg");  m_algVarPos.push_back(1);
-
-
-    }else{
-
-      if (varVector.at(iVar).size() > 1){
-        m_algVar.push_back( varVector.at(iVar) );
-        std::cout << "Adding " << varVector.at(iVar) << std::endl;
-//!!        if( varVector.at(iVar).find("NoCorr") != std::string::npos ){
-//!!          m_algVarPos.push_back(0);
-//!!          m_NoCorrIndex = m_algVar.size()-1;
-//!!        }else if( varVector.at(iVar).find("Nominal") != std::string::npos ){
-        if( varVector.at(iVar).find("Nominal") != std::string::npos ){
-          m_algVarPos.push_back(0);
-          m_NominalIndex = m_algVar.size()-1;
-        }else if( varVector.at(iVar).find("_pos") != std::string::npos ){
-          m_algVarPos.push_back(1);
-        }else{
-          m_algVarPos.push_back(0);
-        }
+    } else if( varVector.at(iVar).compare("MJB") == 0 ){
+      //Name - MJB Variation - MJB Value - sign
+      m_sysVar.push_back("MJB_a40_pos");   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( 40 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_a20_neg");   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( 20 ); m_sysSign.push_back(0);
+      m_sysVar.push_back("MJB_b15_pos");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 15 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_b05_neg");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 5  ); m_sysSign.push_back(0);
+      m_sysVar.push_back("MJB_pta90_pos"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 90 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_pta70_neg"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 70 ); m_sysSign.push_back(0);
+      m_sysVar.push_back("MJB_ptt30_pos"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 30 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_ptt20_neg"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 20 ); m_sysSign.push_back(0);
+      if (m_MJBIteration > 0){
+        m_sysVar.push_back("MJB_stat0_pos"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 0  ); m_sysSign.push_back(1);
+        m_sysVar.push_back("MJB_stat0_neg"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 0  ); m_sysSign.push_back(0);
+        m_sysVar.push_back("MJB_stat1_pos"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 1  ); m_sysSign.push_back(1);
+        m_sysVar.push_back("MJB_stat1_neg"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 1  ); m_sysSign.push_back(0);
       }
+
+      //////// These are not implemented ///////
+     // m_sysVar.push_back("MJB_sherpa");  m_sysSign.push_back(1);
+     // m_sysVar.push_back("MJB_powheg");  m_sysSign.push_back(1);
+     // m_sysVar.push_back("MJB_pythia");  m_sysSign.push_back(1);
+     // m_sysVar.push_back("MJB_herwig");  m_sysSign.push_back(1);
+
     }
 
+//!!//// These are for applying falvor response to one jet at a time, for first 3 jets. Not used now?
+//!!////??  m_sysVar.push_back("EIC_flvcomp2_pos");  m_sysSign.push_back(1);
+//!!////??  m_sysVar.push_back("EIC_flvresp2_pos");  m_sysSign.push_back(1);
+//!!////??  m_sysVar.push_back("EIC_flvcomp3_pos");  m_sysSign.push_back(1);
+//!!////??  m_sysVar.push_back("EIC_flvresp3_pos");  m_sysSign.push_back(1);
+//!!////??  m_sysVar.push_back("EIC_flvcomp4_pos");  m_sysSign.push_back(1);
+//!!////??  m_sysVar.push_back("EIC_flvresp4_pos");  m_sysSign.push_back(1);
+//!!////??  m_sysVar.push_back("EIC_flvcomp2_neg");  m_sysSign.push_back(0);
+//!!////??  m_sysVar.push_back("EIC_flvresp2_neg");  m_sysSign.push_back(0);
+//!!////??  m_sysVar.push_back("EIC_flvcomp3_neg");  m_sysSign.push_back(0);
+//!!////??  m_sysVar.push_back("EIC_flvresp3_neg");  m_sysSign.push_back(0);
+//!!////??  m_sysVar.push_back("EIC_flvcomp4_neg");  m_sysSign.push_back(0);
+//!!////??  m_sysVar.push_back("EIC_flvresp4_neg");  m_sysSign.push_back(0);
+//!!
   }//for varVector
+  return EL::StatusCode::SUCCESS;
+}
 
-
-
+EL::StatusCode MultijetAlgorithim :: loadVariationsOld (){
   return EL::StatusCode::SUCCESS;
 }
 
 EL::StatusCode MultijetAlgorithim :: loadTriggerTool(){
 
-  m_trigConfTool = new TrigConf::xAODConfigTool( "xAODConfigTool" );
-  m_trigConfTool->initialize();
-  ToolHandle< TrigConf::ITrigConfigTool > configHandle( m_trigConfTool );
+  for(unsigned int iT=0; iT < m_triggers.size(); ++iT){
+    TrigConf::xAODConfigTool* tmpTrigConfTool = new TrigConf::xAODConfigTool( ("xAODConfigTool_"+m_triggers.at(iT)).c_str() );
+    tmpTrigConfTool->initialize();
+    ToolHandle< TrigConf::ITrigConfigTool > configHandle( tmpTrigConfTool );
 
-  m_trigDecTool = new Trig::TrigDecisionTool( "TrigDecisionTool" );
-  m_trigDecTool->setProperty( "ConfigTool", configHandle );
-  m_trigDecTool->setProperty( "TrigDecisionKey", "xTrigDecision" );
-  m_trigDecTool->setProperty( "OutputLevel", MSG::ERROR);
-  m_trigDecTool->initialize();
+    Trig::TrigDecisionTool* tmpTrigDecTool = new Trig::TrigDecisionTool( ("TrigDecisionTool_"+m_triggers.at(iT)).c_str() );
+    tmpTrigDecTool->setProperty( "ConfigTool", configHandle );
+    tmpTrigDecTool->setProperty( "TrigDecisionKey", "xTrigDecision" );
+    tmpTrigDecTool->setProperty( "OutputLevel", MSG::INFO);
+    tmpTrigDecTool->initialize();
+
+    m_trigConfTools.push_back( tmpTrigConfTool );
+    m_trigDecTools.push_back( tmpTrigDecTool );
+
+  }
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1270,6 +1211,8 @@ EL::StatusCode MultijetAlgorithim :: loadJVTTool(){
   m_JVTToolHandle = ToolHandle<IJetUpdateJvt>("jvtag");
   RETURN_CHECK("loadJVTTool", m_JVTTool->setProperty("JVTFileName","JetMomentTools/JVTlikelihood_20140805.root"), "");
   RETURN_CHECK("loadJVTTool", m_JVTTool->initialize(), "");
+
+  return EL::StatusCode::SUCCESS;
 }
 
 EL::StatusCode MultijetAlgorithim :: loadJetCalibrationTool(){
@@ -1360,26 +1303,26 @@ EL::StatusCode MultijetAlgorithim :: loadJetUncertaintyTool(){
   if(m_isAFII)
     RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("MCType", "AFII"), "" );
   else
-    RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("MCType", "MC12"), "" );
+    RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("MCType", "MC15"), "" );
   RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("ConfigFile",m_jetUncertaintyConfig), "" );
   RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->initialize(), "" );
 
   m_JetUncertaintiesTool->msg().setLevel( MSG::ERROR ); // VERBOSE, INFO, DEBUG
 
 
-  //Setup integer mapping of JetUncertaintiesTool systematics to use
-  std::string jetSystNames[4] = {"EtaIntercalibration_Modelling", "EtaIntercalibration_TotalStat", "Flavor_Composition", "Flavor_Response"};
-   int jetSystNums[4] = {56, 57, 64, 65}; // for JES_2012/Final/InsituJES2012_AllNuisanceParameters.config
-  //int jetSystNums[4] = {3, 4, 11, 12}; // for JES_2012/Final/InsituJES2012_3NP_Scenario1.config
-
-  for(unsigned int iJESVar=0; iJESVar < 4; ++iJESVar){
-    std::string thisJetSystName = jetSystNames[iJESVar];
-    int thisJetSystNum = jetSystNums[iJESVar];
-    for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
-      if( m_algVar.at(iVar).find( thisJetSystName ) != std::string::npos )
-        m_JESMap[iVar] = thisJetSystNum;
-    }//iVar
-  }//iJESVar
+//  //Setup integer mapping of JetUncertaintiesTool systematics to use
+//  std::string jetSystNames[4] = {"EtaIntercalibration_Modelling", "EtaIntercalibration_TotalStat", "Flavor_Composition", "Flavor_Response"};
+//   int jetSystNums[4] = {56, 57, 64, 65}; // for JES_2012/Final/InsituJES2012_AllNuisanceParameters.config
+//  //int jetSystNums[4] = {3, 4, 11, 12}; // for JES_2012/Final/InsituJES2012_3NP_Scenario1.config
+//
+//  for(unsigned int iJESVar=0; iJESVar < 4; ++iJESVar){
+//    std::string thisJetSystName = jetSystNames[iJESVar];
+//    int thisJetSystNum = jetSystNums[iJESVar];
+//    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+//      if( m_sysVar.at(iVar).find( thisJetSystName ) != std::string::npos )
+//        m_JESMap[iVar] = thisJetSystNum;
+//    }//iVar
+//  }//iJESVar
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1412,11 +1355,11 @@ EL::StatusCode MultijetAlgorithim :: loadVjetCalibration(){
       h->SetDirectory(0); //Detach histogram from file to memory
       m_VjetHists.push_back(h);
 
-      ///// Integer mapping of systematics file with m_algVar variation
+      ///// Integer mapping of systematics file with m_sysVar variation
       //Map this latest histogram index to it's algorithim index
       thisKeyName = thisKeyName.substr( thisKeyName.find("SystError_")+10 , thisKeyName.size() );
-      for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
-        if( m_algVar.at(iVar).find(thisKeyName) != std::string::npos){
+      for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+        if( m_sysVar.at(iVar).find(thisKeyName) != std::string::npos){
           m_VjetMap[iVar] = m_VjetHists.size()-1;
         }
       }//iVar
@@ -1447,10 +1390,10 @@ EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
     histPrefix += "_leadJet";
 
 
-  for(unsigned int iVar=0; iVar < m_algVar.size(); ++iVar){
-    TH1D *MJBHist = (TH1D*) MJBFile->Get( (mjbIterPrefix+m_algVar.at(iVar)+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
+  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+    TH1D *MJBHist = (TH1D*) MJBFile->Get( (mjbIterPrefix+m_sysVar.at(iVar)+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
     if (! MJBHist){ //if it doesn't exists !!
-      std::cout << "Error, can't find Systematic Variation " << mjbIterPrefix << m_algVar.at(iVar) << ", exiting" << std::endl;
+      Error("loadMJBCalibration()", "Can't find Systematic Variation %s %s. Exiting...", mjbIterPrefix.c_str(), m_sysVar.at(iVar).c_str() );
       return EL::StatusCode::FAILURE;
     }
     MJBHist->SetDirectory(0); //Detach historam from file to memory
@@ -1475,28 +1418,25 @@ EL::StatusCode MultijetAlgorithim :: applyJetCalibrationTool( xAOD::Jet* jet){
 EL::StatusCode MultijetAlgorithim :: applyJetUncertaintyTool( xAOD::Jet* jet , int iVar ){
   if(m_debug) Info("execute()", "applyJetUncertaintyTool ");
 
-  if(m_isMC)
-    return EL::StatusCode::SUCCESS;
-//!!  if( m_NoCorrIndex == (int) iVar  || jet->pt() > m_maxSub.at(0) )  //Default requirements for any correction
-  if( (std::find(m_JCSIndex.begin(), m_JCSIndex.end(), iVar) != m_JCSIndex.end())  || jet->pt() > m_maxSub.at(0) )  //Default requirements for any correction
-    return EL::StatusCode::SUCCESS;
-
-  if( m_JESMap.find(iVar) == m_JESMap.end() )  //If this systematic is for JetUncertaintyTool
+  if( ( m_isMC ) //JetUncertaintyTool doesn't apply to MC
+    || ( jet->pt() > m_maxSub.at(0) )  //Can't be above 800 GeV
+    || ( m_sysTool.at(iVar) != 0 ) ) //If not JetUncertaintyTool
     return EL::StatusCode::SUCCESS;
 
-  if( (m_JESMap[iVar] == 64 || m_JESMap[iVar] == 65) && jet->pt() < 20.*GeV)  //Flavor pt limit
-    return EL::StatusCode::SUCCESS;
-  else if( (m_JESMap[iVar] == 56 || m_JESMap[iVar] == 57) && jet->pt() < 15.*GeV)  //EtaIntercalibration pt limit
-    return EL::StatusCode::SUCCESS;
+  // These should be taken care of by the tool? !!
+//  if( (m_JESMap[iVar] == 64 || m_JESMap[iVar] == 65) && jet->pt() < 20.*GeV)  //Flavor pt limit
+//    return EL::StatusCode::SUCCESS;
+//  else if( (m_JESMap[iVar] == 56 || m_JESMap[iVar] == 57) && jet->pt() < 15.*GeV)  //EtaIntercalibration pt limit
+//    return EL::StatusCode::SUCCESS;
 
   float thisUncertainty = 1.;
-  if( m_algVarPos.at(iVar) == 1)
-    thisUncertainty += m_JetUncertaintiesTool->getUncertainty(m_JESMap[iVar], *jet);
+  if( m_sysSign.at(iVar) == 1)
+    thisUncertainty += m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
   else
-    thisUncertainty -= m_JetUncertaintiesTool->getUncertainty(m_JESMap[iVar], *jet);
+    thisUncertainty -= m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
 
   TLorentzVector thisJet;
-  thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
+  thisJet.SetPtEtaPhiE( jet->pt(), jet->eta(), jet->phi(), jet->e() );
   thisJet *= thisUncertainty;
   jet->auxdata< float >("pt") = thisJet.Pt();
   jet->auxdata< float >("eta") = thisJet.Eta();
@@ -1513,8 +1453,7 @@ EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
-//!!  if( m_NoCorrIndex == (int) iVar || jet->pt() < 17.*GeV || jet->pt() > m_maxSub.at(0) ) //If NoCorr or not in V+jet correction range
-  if( (std::find(m_JCSIndex.begin(), m_JCSIndex.end(), iVar) != m_JCSIndex.end()) || jet->pt() < 17.*GeV || jet->pt() > m_maxSub.at(0) ) //If NoCorr or not in V+jet correction range
+  if( (m_sysTool.at(iVar) == 1) || jet->pt() < 17.*GeV || jet->pt() > m_maxSub.at(0) ) //If NoCorr or not in V+jet correction range
     return EL::StatusCode::SUCCESS;
 
 
@@ -1526,12 +1465,12 @@ EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int 
   if( m_VjetMap.find(iVar) != m_VjetMap.end() ){
     //cout << "Content is " <<  m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) ) << " for bin " << m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) << " for pt " << jet->pt()/GeV << endl;
     //cout << "nominal correction is " << thisCalibration << endl;
-    if( m_algVarPos.at(iVar) == 1){
+    if( m_sysSign.at(iVar) == 1){
       thisCalibration += m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) );
     }else{
       thisCalibration -= m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) );
     }
-    //cout << "final correction for " << m_algVar.at(iVar) << " is " << thisCalibration << endl;
+    //cout << "final correction for " << m_sysVar.at(iVar) << " is " << thisCalibration << endl;
   }
 
   TLorentzVector thisJet;
@@ -1561,12 +1500,26 @@ EL::StatusCode MultijetAlgorithim :: applyMJBCalibration( xAOD::Jet* jet , int i
     return EL::StatusCode::SUCCESS;
 
   // If it's for a subcalibration of JCS, don't apply this calibration
-  if( std::find(m_JCSIndex.begin(), m_JCSIndex.end(), iVar) != m_JCSIndex.end())
+  if(m_sysTool.at(iVar) == 1)
     return EL::StatusCode::SUCCESS;
 
 
 cout << "Applying MJB calibration!!!!" << endl;
   float thisCalibration = 1. / m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) );
+
+  // MJB Statistical Systematic //
+  // Is the error from the first iteration applied for the first iteration? If so, this needs to be done later in the plotting code
+
+  if (m_sysTool.at(iVar) == 6){
+    int reverseIndex = m_sysToolIndex.at(iVar);
+    int numBins = m_MJBHists.at(iVar)->GetNbinsX();
+    int index = numBins - reverseIndex;
+    float errY = m_MJBHists.at(iVar)->GetBinError( index );
+    if( m_sysSign.at(iVar) == 1) // then it's negative
+      errY = -errY;
+    thisCalibration = 1./ (m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) ) * 1+errY);
+
+  }
 
   TLorentzVector thisJet;
   thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
@@ -1577,6 +1530,7 @@ cout << "pt " << jet->pt() << " -> " << thisJet.Pt() << endl;
   jet->auxdata< float >("eta") = thisJet.Eta();
   jet->auxdata< float >("phi") = thisJet.Phi();
   jet->auxdata< float >("e") = thisJet.E();
+
 
   return EL::StatusCode::SUCCESS;
 }

@@ -142,8 +142,8 @@ def combinedPlotNominal(files, normalize, ratio):
       if( "MJB" in histName) :
         nomHist.GetXaxis().SetRangeUser( 200, 2500 )
         #nomHist.GetXaxis().SetRangeUser( 300, 2000 )
-        nomHist.SetMaximum(1.5)
-        nomHist.SetMinimum(0.5)
+        nomHist.SetMaximum(1.2)
+        nomHist.SetMinimum(0.8)
         nomHist.GetXaxis().SetMoreLogLabels(True)
 #      nomHist.SetMarkerSize(.75)
       if not type(nomHist) == TGraphErrors:

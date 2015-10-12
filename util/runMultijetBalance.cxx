@@ -237,6 +237,7 @@ int main( int argc, char* argv[] ) {
       outputName = "user."+userName+".%in:name[1]%.%in:name[2]%.%in:name[3]%"+outputTag;
   }else
     outputName = "%in:name%"+outputTag;
+cout << outputName << endl;
 
   // Set the name of the input TTree. It's always "CollectionTree"
   sh.setMetaString( "nc_tree", "CollectionTree" );
@@ -276,6 +277,9 @@ int main( int argc, char* argv[] ) {
     if (f_production)
       driver.options()->setString(EL::Job::optSubmitFlags, "--official");
     driver.options()->setString("nc_skipScout", "true");
+
+
+    driver.options()->setString("showCmd", "true");
 
     //driver.options()->setString("nc_excludeSite", ???);
     //driver.options()->setDouble(EL::Job::optGridMemory,10240); // 10 GB

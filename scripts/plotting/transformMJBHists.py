@@ -6,7 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="%prog [options]", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-b", dest='batchMode', action='store_true', default=False, help="Batch mode for PyRoot")
-parser.add_argument("--dir", dest='workDir', default='gridOutput/', help="Typically gridOutput")
+parser.add_argument("--dir", dest='workDir', default='gridOutput/E_area', help="Typically gridOutput")
 args = parser.parse_args()
 
 
@@ -35,7 +35,7 @@ f_plotSL = False
 #f_combine = True #Combine MC files
 #f_calculateMJB = True # Calculate new histograms to be added to root file
 f_plotRelevant = True # Most important Plots
-f_plotAll = True # All plots
+#f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 
 doData = True
@@ -111,11 +111,11 @@ if(f_calculateMJB):
 
 ## Needs recoilPt_center
 
-#  ## .(Double)MJB_initial -> .(Double)MJB_final ##
-#  initialFiles = glob.glob(args.workDir+'/*_initial.root')
-#  for file in initialFiles:
-#    print 'python MultijetBalanceAlgo/scripts/plotting/calculateFinalMJBGraphs.py --file '+file+ ' --binnings '+binnings
-#    calculateFinalMJBGraphs.calculateFinalMJBGraphs(file, binnings)
+  ## .(Double)MJB_initial -> .(Double)MJB_final ##
+  initialFiles = glob.glob(args.workDir+'/*_initial.root')
+  for file in initialFiles:
+    print 'python MultijetBalanceAlgo/scripts/plotting/calculateFinalMJBGraphs.py --file '+file+ ' --binnings '+binnings
+    calculateFinalMJBGraphs.calculateFinalMJBGraphs(file, binnings)
 
 
 if(f_plotRelevant):
@@ -158,7 +158,7 @@ if(f_plotRelevant):
   for file in files:
     print 'python MultijetBalanceAlgo/scripts/plotting/plotMJBvEta.py -b --file '+file+' --binnings '+binnings
     os.system('python MultijetBalanceAlgo/scripts/plotting/plotMJBvEta.py -b --file '+file+' --binnings '+binnings)
-    #plotMJBvEta.plotMJBvEta(file, binnings)
+    plotMJBvEta.plotMJBvEta(file, binnings)
 
   if(doSys):
     ## plotSysRatios.py ##
@@ -166,7 +166,7 @@ if(f_plotRelevant):
     for file in files:
       print 'python MultijetBalanceAlgo/scripts/plotting/plotSysRatios.py -b --file '+file
       os.system('python MultijetBalanceAlgo/scripts/plotting/plotSysRatios.py -b --file '+file)
-      #plotSysRatios.plotSysRatios(file)
+      plotSysRatios.plotSysRatios(file)
 
 
 if(f_plotAll):
@@ -175,7 +175,7 @@ if(f_plotAll):
   for file in files:
     print 'python MultijetBalanceAlgo/scripts/plotting/plotAll.py -b --file '+file
     os.system('python MultijetBalanceAlgo/scripts/plotting/plotAll.py -b --file '+file)
-    #plotAll.plotAll(file)
+    plotAll.plotAll(file)
 
 #if(f_plotSL):
 #  ## plotSL.py ##

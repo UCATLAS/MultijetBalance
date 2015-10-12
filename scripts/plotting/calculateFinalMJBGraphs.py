@@ -95,8 +95,9 @@ def calculateFinalMJBGraphs(file, binnings):
         yValues = []
         yErrors = []
         for iBin in range(1, thisHist.GetNbinsX()+1):
-          yValues.append( thisHist.GetBinContent(iBin) )
-          yErrors.append( thisHist.GetBinError(iBin) )
+          if thisHist.GetXaxis().GetBinLowEdge(iBin) > 499:
+            yValues.append( thisHist.GetBinContent(iBin) )
+            yErrors.append( thisHist.GetBinError(iBin) )
         yValues = array('d', yValues)
         yErrors = array('d', yErrors)
         thisGraph = TGraphErrors(thisHist.GetNbinsX(), xValues, yValues, xErrors, yErrors)

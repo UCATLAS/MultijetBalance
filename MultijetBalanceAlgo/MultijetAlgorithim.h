@@ -21,6 +21,12 @@
 
 #include "JetMomentTools/JetVertexTaggerTool.h"
 
+// For bootstrap
+//#include "MultijetBalanceAlgo/BootstrapGenerator.h"
+//#include "MultijetBalanceAlgo/TH1DBootstrap.h"
+//#include "MultijetBalanceAlgo/TH2DBootstrap.h"
+//#include "MultijetBalanceAlgo/SystContainer.h"
+
 
 static float GeV = 1000.;
 
@@ -76,8 +82,11 @@ class MultijetAlgorithim : public EL::Algorithm
     bool m_useMCPileupCheck;
     bool m_leadJetMJBCorrection;
     bool m_closureTest;
-    float m_triggerThreshold;
+    std::string m_triggerConfig;
     float m_JVTCut;
+
+    std::vector<std::string> m_triggers; //!
+    std::vector<float> m_triggerThresholds; //!
 
     //config for Jet Tools
     std::string m_jetDef;
@@ -97,8 +106,8 @@ class MultijetAlgorithim : public EL::Algorithm
     JetUncertaintiesTool * m_JetUncertaintiesTool;  //!
     #endif // not __CINT__
 
-    TrigConf::xAODConfigTool       * m_trigConfTool;          //!
-    Trig::TrigDecisionTool     * m_trigDecTool;           //!
+    std::vector< TrigConf::xAODConfigTool* > m_trigConfTools; //!
+    std::vector< Trig::TrigDecisionTool* > m_trigDecTools;    //!
 
     //JVTTool
     JetVertexTaggerTool      * m_JVTTool;        //!
@@ -114,15 +123,17 @@ class MultijetAlgorithim : public EL::Algorithm
     std::stringstream m_ss; //!
 
     std::vector<int> m_maxSub; //!
-    std::vector<std::string> m_algVar; //!
+
+    std::vector<std::string> m_sysVar; //!
+    std::vector<int> m_sysTool; //!
+    std::vector<int> m_sysToolIndex; //!
+    std::vector<int> m_sysSign; //!
     int m_NominalIndex; //!
-    int m_NoCorrIndex; //!
-    std::vector<int> m_algVarPos; //!
+
     std::vector< TH1F* > m_VjetHists; //!
     std::vector< TH1D* > m_MJBHists; //!
     std::map<int, int> m_VjetMap; //!
     std::map<int, int> m_JESMap; //!
-    std::vector<int> m_JCSIndex; //!
     std::vector<std::string> m_JCSTokens; //!
     std::vector<std::string> m_JCSStrings; //!
 
@@ -144,6 +155,7 @@ class MultijetAlgorithim : public EL::Algorithm
     #endif
 
   EL::StatusCode loadVariations();
+  EL::StatusCode loadVariationsOld();
   EL::StatusCode loadTriggerTool();
   EL::StatusCode loadJVTTool();
   EL::StatusCode loadJetCalibrationTool();

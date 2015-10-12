@@ -15,7 +15,7 @@ def getRecoilPtTree(pathToTrees, treeName):
 
   for file in files:
 
-    print "Reweighting file ", file
+    print "Creating pT Tree file ", file
 
     inFile = TFile.Open(file, "UPDATE")
     tree = inFile.Get( treeName )
