@@ -142,10 +142,10 @@ StatusCode MultijetHists::initialize(std::string binning) {
   m_subOverRecoilPt = book( m_name, "subOverRecoilPt", "Subleading Jet p_{T} / Recoil System p_{T}", 100, 0., 1.);
   m_recoilPt_center = book(m_name, "recoilPt_center", "Recoil System p_{T}", 3000, 0, 3000.);
 
-  Double_t ptBalBins[41];
-  int numPtBalBins = 40;
+  Double_t ptBalBins[501];
+  int numPtBalBins = 500;
   for(int i=0; i < numPtBalBins+1; ++i){
-    ptBalBins[i] = i/10.;
+    ptBalBins[i] = i/100.;
   }
 
   for(int iB = 0; iB < m_numPtBinnings; ++iB){
