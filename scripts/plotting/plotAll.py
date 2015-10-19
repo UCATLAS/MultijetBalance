@@ -49,9 +49,13 @@ def plotAll(file):
 
   print "Plotting All Histograms for "
   for dir in dirList:
+    if not "Nominal" in dir:
+      continue
     print "           ", dir
     if not os.path.exists(outDir+dir):
       os.mkdir( outDir+dir )
+    if not os.path.exists(outDir+dir+'/eps'):
+      os.mkdir( outDir+dir+'/eps' )
 
     thisDir = inFile.Get( dir )
     histList = [key.GetName() for key in thisDir.GetListOfKeys()]
@@ -71,6 +75,7 @@ def plotAll(file):
       else:
         thisHist.Draw()
       c1.SaveAs( outDir+dir+"/"+thisHist.GetName()+".png" )
+      c1.SaveAs( outDir+dir+"/eps/"+thisHist.GetName()+".eps" )
       c1.Clear()
   inFile.Close()
 

@@ -39,6 +39,8 @@ def combinedPlotNominal(files, normalize, ratio):
     outDir += "combinedPlotNominal/"
   if not os.path.exists(outDir):
     os.mkdir(outDir)
+  if not os.path.exists(outDir+'/eps'):
+    os.mkdir(outDir+'/eps')
   AtlasStyle.SetAtlasStyle()
 
   gROOT.ProcessLine("gErrorIgnoreLevel = 2000") #Ignore TCanvas::Print info
@@ -140,7 +142,7 @@ def combinedPlotNominal(files, normalize, ratio):
       if( "Pt" in histName) :
         nomHist.GetXaxis().SetRangeUser( 200, 1500 )
       if( "MJB" in histName) :
-        nomHist.GetXaxis().SetRangeUser( 200, 2500 )
+        nomHist.GetXaxis().SetRangeUser( 400, 2500 )
         #nomHist.GetXaxis().SetRangeUser( 300, 2000 )
         nomHist.SetMaximum(1.2)
         nomHist.SetMinimum(0.8)
@@ -213,8 +215,10 @@ def combinedPlotNominal(files, normalize, ratio):
     #if "Pt" in histName or "alpha" in histName:
     pad1.SetLogy()
     c1.SaveAs(outDir+nomHist.GetName()+"_logy.png" )
+    c1.SaveAs(outDir+"/eps/"+nomHist.GetName()+"_logy.eps" )
     pad1.SetLogy(0)
     c1.SaveAs((outDir+nomHist.GetName()+".png") )
+    c1.SaveAs((outDir+"/eps/"+nomHist.GetName()+".eps") )
     c1.Clear()
 
 

@@ -80,7 +80,8 @@ def calculateMJBHists(file, binnings, f_extraPlots):
       for iSample in range(0, numSamplingLayers):
         sampHist2D = oldDir.Get( ("recoilPt_SamplingLayerPercent"+str(iSample)) )
         sampHist2D.SetDirectory(0)
-        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName())
+        sampHist2D.Sumw2()
+        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName(), 1, -1, "")
         prof_sampHist.SetDirectory(0)
         sampHist = prof_sampHist.ProjectionX("prof_"+sampHist2D.GetName())
         sampHist.SetTitle( "Profile "+sampHist2D.GetTitle() )
@@ -90,7 +91,8 @@ def calculateMJBHists(file, binnings, f_extraPlots):
       for iSample in range(0, numSamplingLayers):
         sampHist2D = oldDir.Get( ("recoilPt_SamplingLayerPercent"+str(iSample)+binning) )
         sampHist2D.SetDirectory(0)
-        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName())
+        sampHist2D.Sumw2()
+        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName(), 1, -1, "")
         prof_sampHist.SetDirectory(0)
         sampHist = prof_sampHist.ProjectionX("prof_"+sampHist2D.GetName())
         sampHist.SetTitle( "Profile "+sampHist2D.GetTitle() )
@@ -107,8 +109,9 @@ def calculateMJBHists(file, binnings, f_extraPlots):
       for thisTag in MJBcorrectionTags:  ## for each eta range ##
         ### Get actual MJB correction using ProfileX ###
         recoilPt_PtBal = oldDir.Get( "recoilPt_PtBal"+thisTag+binning )
-        recoilPt_PtBal.Rebin2D(2,1)
-        prof_MJBcorrection = recoilPt_PtBal.ProfileX("prof_MJB"+thisTag+binning)
+#        recoilPt_PtBal.Rebin2D(2,1)
+        recoilPt_PtBal.Sumw2()
+        prof_MJBcorrection = recoilPt_PtBal.ProfileX("prof_MJB"+thisTag+binning, 1, -1, "")
         MJBcorrection = prof_MJBcorrection.ProjectionX("MJB"+thisTag+binning)
         MJBcorrection.SetTitle("MJBcorrection"+thisTag)
         MJBcorrection.GetYaxis().SetTitle( "p_{T}^{Jet 1}/p_{T}^{Recoil}" )
@@ -125,7 +128,8 @@ def calculateMJBHists(file, binnings, f_extraPlots):
 
       ### Get extra MJB correction based on leadpT ###
       leadJetPt_PtBal = oldDir.Get( "leadJetPt_PtBal"+binning )
-      prof_MJBcorrection = leadJetPt_PtBal.ProfileX("prof_MJB_leadJet"+binning)
+      leadJetPt_PtBal.Sumw2()
+      prof_MJBcorrection = leadJetPt_PtBal.ProfileX("prof_MJB_leadJet"+binning, 1, -1, "")
       MJBcorrection = prof_MJBcorrection.ProjectionX("MJB_leadJet"+binning)
       MJBcorrection.SetTitle("MJBcorrection_leadJet")
       MJBcorrection.GetYaxis().SetTitle( "p_{T}^{Jet 1}/p_{T}^{Recoil}" )

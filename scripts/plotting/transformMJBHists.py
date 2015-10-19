@@ -6,7 +6,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="%prog [options]", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-b", dest='batchMode', action='store_true', default=False, help="Batch mode for PyRoot")
-parser.add_argument("--dir", dest='workDir', default='gridOutput/E_area', help="Typically gridOutput")
+parser.add_argument("--dir", dest='workDir', default='gridOutput/combinedArea', help="Typically gridOutput")
 args = parser.parse_args()
 
 
@@ -33,9 +33,9 @@ f_plotSL = False
 #f_getPtHist = True
 #f_scale = True #Scale MC files
 #f_combine = True #Combine MC files
-#f_calculateMJB = True # Calculate new histograms to be added to root file
+f_calculateMJB = True # Calculate new histograms to be added to root file
 f_plotRelevant = True # Most important Plots
-#f_plotAll = True # All plots
+f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 
 doData = True
@@ -68,11 +68,11 @@ if(f_getPtHist):
 
 if(f_scale and doMC):
   ## input -> scaled ##
-  files = glob.glob(args.workDir+'/../hist-output/*mc15*_hist-output.root')
+  files = glob.glob(args.workDir+'/../hist/*mc15*_hist.root')
   for file in files:
     print 'python MultijetBalanceAlgo/scripts/plotting/scaleHist.py --file '+file
     scaleHist.scaleHist(file)
-  files = glob.glob(args.workDir+'/../hist-output/*scaled.root')
+  files = glob.glob(args.workDir+'/../hist/*scaled.root')
   for file in files:
     os.system('mv '+file+' '+args.workDir+'/initialFiles/')
 
@@ -80,14 +80,14 @@ if(f_scale and doMC):
 if(f_combine):
   if( doMC ):
     ## scaled -> all*scaled ##
-    print 'hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc15*_hist-output.scaled.root'
-    os.system('hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc*_hist-output.scaled.root')
+    print 'hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc15*_hist.scaled.root'
+    os.system('hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc*_hist.scaled.root')
   if( doData ):
-    print 'hadd '+args.workDir+'/hist.data.all.scaled.root '+args.workDir+'/../hist-output/*.data*_hist-output.root'
-    os.system('hadd '+args.workDir+'/hist.data.all.scaled.root '+args.workDir+'/../hist-output/*.data*_hist-output.root')
+    print 'hadd '+args.workDir+'/hist.data.all.scaled.root '+args.workDir+'/../hist/*.data*_hist.root'
+    os.system('hadd '+args.workDir+'/hist.data.all.scaled.root '+args.workDir+'/../hist/*.data*_hist.root')
 
   if(doJZSlices):
-    files = glob.glob(args.workDir+'/initialFiles/*.mc15*_hist-output.scaled.root')
+    files = glob.glob(args.workDir+'/initialFiles/*.mc15*_hist.scaled.root')
     for file in files:
       JZString = os.path.basename(file).split('.')[4].split('_')[-1]
       os.system('cp '+file+' '+args.workDir+'/hist.mc.'+JZString+'.scaled.root')
@@ -175,7 +175,7 @@ if(f_plotAll):
   for file in files:
     print 'python MultijetBalanceAlgo/scripts/plotting/plotAll.py -b --file '+file
     os.system('python MultijetBalanceAlgo/scripts/plotting/plotAll.py -b --file '+file)
-    plotAll.plotAll(file)
+#    plotAll.plotAll(file)
 
 #if(f_plotSL):
 #  ## plotSL.py ##

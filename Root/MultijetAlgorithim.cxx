@@ -95,6 +95,10 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_MCPileupCheckContainer = config->GetValue("MCPileupCheckContainer", "AntiKt4TruthJets");
   m_triggerConfig     = config->GetValue("Triggers", "");
   m_closureTest       = config->GetValue("ClosureTest" ,    false);
+  m_noLimitJESPt = config->GetValue("NoLimitJESPt" ,    false);
+  m_reverseSubleading = config->GetValue("ReverseSubleading" ,    false);
+
+  m_leadingInsitu = config->GetValue("LeadingInsitu", false);
 
   if( m_writeNominalTree )
     m_writeTree = true;
@@ -587,7 +591,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
         signalJets->at(iJet)->auxdata< float >("e") = jetCalibStageCopy.E();
       } else {
 
-        if(iJet !=0 ){ //Use Insitu Correction
+        if( iJet !=0 || m_leadingInsitu ){ //Use Insitu Correction
           signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
           signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
           signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
@@ -605,7 +609,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
         applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
         // Vjet currently removed!! What's the best way to apply these uncertainties?!
         applyMJBCalibration( signalJets->at(iJet) , iVar );
-      } else if( m_closureTest){ //Apply MJB to lead jet
+      } else if( m_closureTest || m_leadingInsitu ){ //Apply MJB to lead jet
         //apply previous correction for closure test??
         applyMJBCalibration( signalJets->at(iJet), iVar, true );
       }
@@ -622,9 +626,10 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     reorderJets( signalJets );
 
     //Z/y - jet balance is only valid up to 800 GeV
-    //if( signalJets->at(1)->pt() < 0.){ //default 800.
     if(m_debug) Info("execute()", "Subleading pt selection ");
-    if( signalJets->at(1)->pt() > m_maxSub.at(m_MJBIteration)){ //default 800.
+    if( !m_reverseSubleading && (signalJets->at(1)->pt() > m_maxSub.at(m_MJBIteration)) ){
+        continue;
+    }else if( m_reverseSubleading && (signalJets->at(1)->pt() <= m_maxSub.at(m_MJBIteration)) ){
         continue;
     }
     passCut(iVar); //ptSub
@@ -699,7 +704,6 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     passCut(iVar); //alpha
 
     //Beta is phi angle between leading jet and each other passing jet
-    //std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << signalJets->at(0)->pt() << std::endl;
     if(m_debug) Info("execute()", "Beta Selection ");
     double smallestBeta=10., avgBeta = 0., thisBeta=0.;
     for(unsigned int iJet=1; iJet < signalJets->size(); ++iJet){
@@ -1419,9 +1423,12 @@ EL::StatusCode MultijetAlgorithim :: applyJetUncertaintyTool( xAOD::Jet* jet , i
   if(m_debug) Info("execute()", "applyJetUncertaintyTool ");
 
   if( ( m_isMC ) //JetUncertaintyTool doesn't apply to MC
-    || ( jet->pt() > m_maxSub.at(0) )  //Can't be above 800 GeV
     || ( m_sysTool.at(iVar) != 0 ) ) //If not JetUncertaintyTool
     return EL::StatusCode::SUCCESS;
+
+  if( !m_noLimitJESPt && (jet->pt() > m_maxSub.at(0)) ){  //Can't be above 800 GeV
+    return EL::StatusCode::SUCCESS;
+  }
 
   // These should be taken care of by the tool? !!
 //  if( (m_JESMap[iVar] == 64 || m_JESMap[iVar] == 65) && jet->pt() < 20.*GeV)  //Flavor pt limit
@@ -1453,7 +1460,9 @@ EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
-  if( (m_sysTool.at(iVar) == 1) || jet->pt() < 17.*GeV || jet->pt() > m_maxSub.at(0) ) //If NoCorr or not in V+jet correction range
+  if( (m_sysTool.at(iVar) == 1) || jet->pt() < 17.*GeV ) //If NoCorr or not in V+jet correction range
+    return EL::StatusCode::SUCCESS;
+  if( !m_noLimitJESPt && jet->pt() > m_maxSub.at(0) )
     return EL::StatusCode::SUCCESS;
 
 

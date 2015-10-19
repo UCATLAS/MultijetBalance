@@ -82,6 +82,9 @@ class MultijetAlgorithim : public EL::Algorithm
     bool m_useMCPileupCheck;
     bool m_leadJetMJBCorrection;
     bool m_closureTest;
+    bool m_leadingInsitu;
+    bool m_noLimitJESPt;
+    bool m_reverseSubleading;
     std::string m_triggerConfig;
     float m_JVTCut;
 

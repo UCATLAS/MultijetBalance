@@ -37,6 +37,8 @@ def plotNominal(file, f_plotSys, f_addGagik):
   outDir += "plotNominal/"
   if not os.path.exists(outDir):
     os.mkdir(outDir)
+  if not os.path.exists(outDir+'/eps'):
+    os.mkdir(outDir+'/eps')
   AtlasStyle.SetAtlasStyle()
 
   gROOT.ProcessLine("gErrorIgnoreLevel = 2000") #Ignore TCanvas::Print info
@@ -97,8 +99,7 @@ def plotNominal(file, f_plotSys, f_addGagik):
     nomHist.SetMaximum(1.5*nomHist.GetMaximum())
     nomHist.SetMinimum(0.0001)
     if( "MJB" in histName) :
-      #nomHist.GetXaxis().SetRangeUser( 300, 2000 )
-      nomHist.GetXaxis().SetRangeUser( 500, 2000 )
+      nomHist.GetXaxis().SetRangeUser( 300, 2500 )
       nomHist.SetMaximum(1.1)
       nomHist.SetMinimum(0.9)
       nomHist.GetXaxis().SetMoreLogLabels(True)
@@ -212,10 +213,12 @@ def plotNominal(file, f_plotSys, f_addGagik):
     if "Pt" in histName or "alpha" in histName:
       pad1.SetLogy()
       c1.SaveAs(outDir+nomHist.GetName()+"_logy.png" )
+      c1.SaveAs(outDir+'/eps/'+nomHist.GetName()+"_logy.eps" )
       pad1.SetLogy(0)
     if "MJB" in histName:
       pad1.SetLogx()
     c1.SaveAs((outDir+nomHist.GetName()+".png") )
+    c1.SaveAs((outDir+'/eps/'+nomHist.GetName()+".eps") )
     c1.Clear()
 
 
