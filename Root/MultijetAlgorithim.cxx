@@ -460,6 +460,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   float prescale = 1.;
   bool passedTriggers = false;
   float prescaleCut = 0.;
+//cout << "LB is " << eventInfo->lumiBlock() << endl;
   for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
 
     auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
@@ -476,10 +477,11 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 //
 //      prescaleCut = triggerChainGroup->getPrescale();
 //cout << m_triggers.at(iT) << " : " << l1string << endl;
-//cout << prescaleCut << endl;
-//cout << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT),TrigDefs::requireDecision) << " : " << m_trigDecTools.at(iT)->getPrescale(l1string.c_str()) << endl;
-//
-//
+//cout << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << ":" << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT),TrigDefs::requireDecision) << " : " << m_trigDecTools.at(iT)->getPrescale(l1string.c_str()) << endl;
+//cout << "Final? " << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << std::endl;
+//cout << "Prescale cut " << prescaleCut << endl;
+
+
       //Check that it's also below another trigger region ??
       passedTriggers = true;
 //      cout << "fixed " << TrigConf::PrescaleSet::getPrescaleFromCut(prescale) << endl;

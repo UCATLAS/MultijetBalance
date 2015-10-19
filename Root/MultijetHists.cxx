@@ -62,7 +62,7 @@ StatusCode MultijetHists::initialize(std::string binning) {
 
   // Inclusive Fine
   if( binning.size() == 0 || binning.find("Fine") != std::string::npos){
-    Double_t ptBins_Fine[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500.};
+    Double_t ptBins_Fine[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
     binningNames.push_back("_Fine");
     int thisBinning = binningNames.size()-1;
     binningSizes.push_back( sizeof(ptBins_Fine)/sizeof(ptBins_Fine[0])-1 );
