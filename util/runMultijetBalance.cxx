@@ -269,10 +269,10 @@ cout << outputName << endl;
   if(f_grid){
     EL::PrunDriver driver;
     driver.options()->setString("nc_outputSampleName", outputName);
-    if( samplePath.find("Data") == std::string::npos){
-      std::cout << "Setting code to 1 file per job " << std::endl;
-      driver.options()->setDouble(EL::Job::optGridNFilesPerJob, 1);
-    }
+//    if( samplePath.find("Data") == std::string::npos){
+    std::cout << "Setting code to 1 file per job " << std::endl;
+    driver.options()->setDouble(EL::Job::optGridNFilesPerJob, 1);
+//    }
     //driver.options()->setString("nc_grid_filter", "*.AOD.*");
     if (f_production)
       driver.options()->setString(EL::Job::optSubmitFlags, "--official");

@@ -50,8 +50,8 @@ def plotSysRatios(file):
     sysDirList.append( inFile.Get(sysDirName) )
 
   ## Combine systematics in types ##
-#  sysTypes = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "MJB", "All"]
-  sysTypes = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "All"]
+  sysTypes = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "MJB", "All"]
+#  sysTypes = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "All"]
 # SingleParticle, RelativeNonClosure, Pileup, BJES, PunchThrough
   if "All" in sysTypes:
     colorOffset = 240./(len(sysTypes)-1)
@@ -96,7 +96,7 @@ def plotSysRatios(file):
     if("MJB" in histName):
       settingsHist.GetXaxis().SetRangeUser( 400, 3000 )
       settingsHist.GetXaxis().SetMoreLogLabels(True)
-      settingsHist.GetYaxis().SetRangeUser(-0.04, 0.04)
+      settingsHist.GetYaxis().SetRangeUser(-0.02, 0.02)
 
     settingsHist.Draw()
 

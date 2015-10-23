@@ -38,6 +38,8 @@
 #include <xAODAnaHelpers/tools/ReturnCheck.h>
 #include <xAODAnaHelpers/tools/ReturnCheckConfig.h>
 
+#include "SystTool/SystContainer.h"
+
 
 using namespace std;
 
@@ -95,10 +97,14 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_MCPileupCheckContainer = config->GetValue("MCPileupCheckContainer", "AntiKt4TruthJets");
   m_triggerConfig     = config->GetValue("Triggers", "");
   m_closureTest       = config->GetValue("ClosureTest" ,    false);
-  m_noLimitJESPt = config->GetValue("NoLimitJESPt" ,    false);
-  m_reverseSubleading = config->GetValue("ReverseSubleading" ,    false);
 
-  m_leadingInsitu = config->GetValue("LeadingInsitu", false);
+  m_PtAsym            = config->GetValue("PtAsym", 0.8);
+  m_SubLeadingPt      = config->GetValue("SubLeadingPt", 800.);
+  m_noLimitJESPt      = config->GetValue("NoLimitJESPt" ,    false);
+  m_reverseSubleading = config->GetValue("ReverseSubleading" ,    false);
+  m_leadingInsitu     = config->GetValue("LeadingInsitu", false);
+
+  m_bootstrap = config->GetValue("BootStrap", false);
 
   if( m_writeNominalTree )
     m_writeTree = true;
@@ -181,6 +187,9 @@ EL::StatusCode MultijetAlgorithim :: setupJob (EL::Job& job)
 
   EL::OutputStream outForTree("tree");
   job.outputAdd (outForTree);
+
+  job.outputAdd(EL::OutputStream("SystToolOutput"));
+
   return EL::StatusCode::SUCCESS;
 }
 
@@ -246,13 +255,28 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   getLumiWeights(eventInfo);
 
   //maximum subleading pt for each iteration
-  m_maxSub.push_back(800.*GeV);  //iteration 0
+  m_maxSub.push_back(m_SubLeadingPt*GeV);  //iteration 0
+  //m_maxSub.push_back(800.*GeV);  //iteration 0
   m_maxSub.push_back( 1400.*GeV);  //iteration 1
+
 
 
   // load all variations
   setupJetCalibrationStages();
   loadVariations();
+
+  //Crap for Syst Tool
+  // Fix this to be elegent and take any binning
+  if( m_bootstrap ){
+    systTool_nToys = 100;
+    double theseBins[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
+    int binSize = sizeof(theseBins)/sizeof(theseBins[0]);
+    for( int iBin=0; iBin < binSize; ++iBin){
+      systTool_ptBins.push_back(theseBins[iBin]);
+    }
+    // we have m_sysVar, systTool_ptBins, systTool_nToys
+    systTool = new SystContainer(m_sysVar, systTool_ptBins, systTool_nToys);
+  }
 
   if(m_useCutFlow) {
 
@@ -558,7 +582,8 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     m_iCutflow = m_cutflowFirst_SystLoop;
     alphaCut = 0.3; //0.3
     betaCut = 1.0; //1
-    ptAsymCut = 0.8; //0.8
+//    ptAsymCut = 0.8; //0.8
+    ptAsymCut = m_PtAsym;
     ptThresholdCut = 25.*GeV;
 
     //Set relevant variations for this iVar
@@ -811,6 +836,12 @@ EL::StatusCode MultijetAlgorithim :: execute ()
       }//If it's not m_writeNominalTree or else we're on the nominal sample
     }//if m_writeTree
 
+
+    /////////////////////////////////////// SystTool ////////////////////////////////////////
+    if( m_bootstrap ){
+      systTool->fillSyst(m_sysVar.at(iVar), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt(), (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
+    }
+
   }//For each iVar
 
 //!! Other ideas
@@ -883,6 +914,13 @@ EL::StatusCode MultijetAlgorithim :: finalize ()
 //      }
 //    }
 //  }//if m_writeTree
+
+
+  if( m_bootstrap ){
+    //systTool->writeToFile("SystToolOutput.root");
+    systTool->writeToFile(wk()->getOutputFile("SystToolOutput"));
+    delete systTool;
+  }
 
   delete m_JetCalibrationTool;
   delete m_JetCleaningTool;
@@ -1150,7 +1188,9 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
       m_sysVar.push_back("MJB_b15_pos");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 15 ); m_sysSign.push_back(1);
       m_sysVar.push_back("MJB_b05_neg");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 5  ); m_sysSign.push_back(0);
       m_sysVar.push_back("MJB_pta90_pos"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 90 ); m_sysSign.push_back(1);
-      m_sysVar.push_back("MJB_pta70_neg"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 70 ); m_sysSign.push_back(0);
+      if(m_PtAsym == 0.8){ // don't do it for 1.0 ...
+        m_sysVar.push_back("MJB_pta70_neg"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 70 ); m_sysSign.push_back(0);
+      }
       m_sysVar.push_back("MJB_ptt30_pos"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 30 ); m_sysSign.push_back(1);
       m_sysVar.push_back("MJB_ptt20_neg"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 20 ); m_sysSign.push_back(0);
       if (m_MJBIteration > 0){
@@ -1183,6 +1223,7 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
 //!!////??  m_sysVar.push_back("EIC_flvresp4_neg");  m_sysSign.push_back(0);
 //!!
   }//for varVector
+  cout << "Done loading systematics " << endl;
   return EL::StatusCode::SUCCESS;
 }
 
@@ -1391,18 +1432,21 @@ EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
     m_ss << (m_MJBIteration-1);
 
   std::string mjbIterPrefix = "Iteration"+m_ss.str()+"_";
-  std::string histPrefix = "MJB";
+  std::string histPrefix = "DoubleMJB";
   if (m_leadJetMJBCorrection)
     histPrefix += "_leadJet";
 
 
   for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-    TH1D *MJBHist = (TH1D*) MJBFile->Get( (mjbIterPrefix+m_sysVar.at(iVar)+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
-    if (! MJBHist){ //if it doesn't exists !!
-      Error("loadMJBCalibration()", "Can't find Systematic Variation %s %s. Exiting...", mjbIterPrefix.c_str(), m_sysVar.at(iVar).c_str() );
-      return EL::StatusCode::FAILURE;
+    TH1D *MJBHist;
+    if( m_sysVar.at(iVar).find("JCS") == std::string::npos && m_sysVar.at(iVar).find("MJB_stat") == std::string::npos ){
+      MJBHist = (TH1D*) MJBFile->Get( (mjbIterPrefix+m_sysVar.at(iVar)+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
+      if (! MJBHist){ //if it doesn't exists !!
+        Error("loadMJBCalibration()", "Can't find Systematic Variation %s%s. Exiting...", mjbIterPrefix.c_str(), m_sysVar.at(iVar).c_str() );
+        return EL::StatusCode::FAILURE;
+      }
+      MJBHist->SetDirectory(0); //Detach historam from file to memory
     }
-    MJBHist->SetDirectory(0); //Detach historam from file to memory
     m_MJBHists.push_back(MJBHist);
   }
 
@@ -1515,7 +1559,7 @@ EL::StatusCode MultijetAlgorithim :: applyMJBCalibration( xAOD::Jet* jet , int i
     return EL::StatusCode::SUCCESS;
 
 
-cout << "Applying MJB calibration!!!!" << endl;
+//cout << "Applying MJB calibration!!!!" << endl;
   float thisCalibration = 1. / m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) );
 
   // MJB Statistical Systematic //
@@ -1536,7 +1580,7 @@ cout << "Applying MJB calibration!!!!" << endl;
   thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
   thisJet *= thisCalibration; //modify TLV
   //(**jet) *= (thisCalibration); //following Gagik...
-cout << "pt " << jet->pt() << " -> " << thisJet.Pt() << endl;
+//cout << "pt " << jet->pt() << " -> " << thisJet.Pt() << endl;
   jet->auxdata< float >("pt") = thisJet.Pt();
   jet->auxdata< float >("eta") = thisJet.Eta();
   jet->auxdata< float >("phi") = thisJet.Phi();

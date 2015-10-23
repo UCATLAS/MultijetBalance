@@ -28,7 +28,7 @@ PACKAGE_BINFLAGS =
 PACKAGE_LIBFLAGS =
 
 # the list of packages we depend on:
-PACKAGE_DEP = EventLoop xAODRootAccess xAODAnaHelpers EventLoopGrid JetUncertainties JetCalibTools JetSelectorTools JetResolution TrigConfxAOD TrigDecisionTool JetMomentTools
+PACKAGE_DEP = EventLoop xAODRootAccess xAODAnaHelpers EventLoopGrid JetUncertainties JetCalibTools JetSelectorTools JetResolution TrigConfxAOD TrigDecisionTool JetMomentTools SystTool BootstrapGenerator
 #xAODTrigMissingET TrigConfL1Data TrigSteeringEvent TrigDecisionInterface TrigConfHLTData TrigNavStructure TrigConfInterfaces TrigConfxAOD TrigDecisionTool
 
 

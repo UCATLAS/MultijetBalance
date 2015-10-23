@@ -41,6 +41,8 @@ namespace Trig {
 class TrigDecisionTool;
 }
 
+class SystContainer;
+
 class MultijetAlgorithim : public EL::Algorithm
 {
   // put your configuration variables here as public variables.
@@ -82,9 +84,14 @@ class MultijetAlgorithim : public EL::Algorithm
     bool m_useMCPileupCheck;
     bool m_leadJetMJBCorrection;
     bool m_closureTest;
+
     bool m_leadingInsitu;
     bool m_noLimitJESPt;
     bool m_reverseSubleading;
+    float m_PtAsym;
+    float m_SubLeadingPt;
+
+    bool m_bootstrap;
     std::string m_triggerConfig;
     float m_JVTCut;
 
@@ -99,6 +106,10 @@ class MultijetAlgorithim : public EL::Algorithm
     bool m_jetCleanUgly;
     std::string m_jetUncertaintyConfig;
 
+    // for SystTool
+    SystContainer  * systTool; //!
+    int systTool_nToys; //!
+    std::vector<double> systTool_ptBins; //!
   private:
 
 

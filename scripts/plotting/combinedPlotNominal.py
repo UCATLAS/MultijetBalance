@@ -138,14 +138,16 @@ def combinedPlotNominal(files, normalize, ratio):
 #        nomHist.SetMinimum(0.000101)
 #      else:
       nomHist.SetMaximum(1.5*nomHist.GetMaximum())
-      nomHist.SetMinimum(0.000101)
+      nomHist.SetMinimum(0.0000101)
+      nomHist.GetYaxis().SetTitle("AU")
+      #nomHist.SetMinimum(0.000101)
       if( "Pt" in histName) :
-        nomHist.GetXaxis().SetRangeUser( 200, 1500 )
+        nomHist.GetXaxis().SetRangeUser( 200, 2500 )
       if( "MJB" in histName) :
         nomHist.GetXaxis().SetRangeUser( 400, 2500 )
         #nomHist.GetXaxis().SetRangeUser( 300, 2000 )
-        nomHist.SetMaximum(1.2)
-        nomHist.SetMinimum(0.8)
+        nomHist.SetMaximum(1.05)
+        nomHist.SetMinimum(0.90)
         nomHist.GetXaxis().SetMoreLogLabels(True)
 #      nomHist.SetMarkerSize(.75)
       if not type(nomHist) == TGraphErrors:
