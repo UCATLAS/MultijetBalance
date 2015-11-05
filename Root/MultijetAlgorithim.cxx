@@ -472,6 +472,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 
   if(m_debug) Info("execute()", "Apply Jet Calibration Tool ");
   for(unsigned int iJet=0; iJet < originalSignalJets->size(); ++iJet){
+//cout << "original Pt is " << originalSignalJets->at(iJet)->pt() << endl;
     applyJetCalibrationTool( originalSignalJets->at(iJet) );
     originalSignalJets->at(iJet)->auxdecor< float >( "jetCorr") = originalSignalJets->at(iJet)->pt() / rawJetKinematics.at(iJet).Pt() ;
   }
@@ -483,12 +484,13 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   if(m_debug) Info("execute()", "Trigger ");
   float prescale = 1.;
   bool passedTriggers = false;
-  float prescaleCut = 0.;
-//cout << "LB is " << eventInfo->lumiBlock() << endl;
   for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
 
     auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
     if( triggerChainGroup->isPassed() && originalSignalJets->at(0)->pt() > m_triggerThresholds.at(iT)){
+      passedTriggers = true;
+      prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
+      break;
 
 //      std::string l1string = "";
 //      if (m_triggers.at(iT).find("HLT_j360") != std::string::npos){
@@ -504,16 +506,15 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 //cout << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << ":" << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT),TrigDefs::requireDecision) << " : " << m_trigDecTools.at(iT)->getPrescale(l1string.c_str()) << endl;
 //cout << "Final? " << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << std::endl;
 //cout << "Prescale cut " << prescaleCut << endl;
-
-
-      //Check that it's also below another trigger region ??
-      passedTriggers = true;
-//      cout << "fixed " << TrigConf::PrescaleSet::getPrescaleFromCut(prescale) << endl;
-
-//      HLT_j360 (unp) = L1_J100 (unp)
-//      HLT_j260 (p) = L1_J75 (unp)
-//      HLT_j150 (p) = L1_J40 (p)
-      break;
+//
+//
+//      //Check that it's also below another trigger region ??
+////      cout << "fixed " << TrigConf::PrescaleSet::getPrescaleFromCut(prescale) << endl;
+//
+////      HLT_j360 (unp) = L1_J100 (unp)
+////      HLT_j260 (p) = L1_J75 (unp)
+////      HLT_j150 (p) = L1_J40 (p)
+//      break;
     }
   }
 
@@ -625,6 +626,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
           signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
         } else { //Use GSC Correction for lead jet
           xAOD::JetFourMom_t jetCalibGSCCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetGSCScaleMomentum");
+//cout << "GSC Pt is " << jetCalibGSCCopy.Pt() << endl;
           signalJets->at(iJet)->auxdata< float >("pt") = jetCalibGSCCopy.Pt();
           signalJets->at(iJet)->auxdata< float >("eta") = jetCalibGSCCopy.Eta();
           signalJets->at(iJet)->auxdata< float >("phi") = jetCalibGSCCopy.Phi();
@@ -839,7 +841,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 
     /////////////////////////////////////// SystTool ////////////////////////////////////////
     if( m_bootstrap ){
-      systTool->fillSyst(m_sysVar.at(iVar), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt(), (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
+      systTool->fillSyst(m_sysVar.at(iVar), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt()/GeV, (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
     }
 
   }//For each iVar
@@ -1188,7 +1190,7 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
       m_sysVar.push_back("MJB_b15_pos");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 15 ); m_sysSign.push_back(1);
       m_sysVar.push_back("MJB_b05_neg");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 5  ); m_sysSign.push_back(0);
       m_sysVar.push_back("MJB_pta90_pos"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 90 ); m_sysSign.push_back(1);
-      if(m_PtAsym == 0.8){ // don't do it for 1.0 ...
+      if(m_PtAsym < 0.9){ // don't do it for 1.0 ...
         m_sysVar.push_back("MJB_pta70_neg"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 70 ); m_sysSign.push_back(0);
       }
       m_sysVar.push_back("MJB_ptt30_pos"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 30 ); m_sysSign.push_back(1);
@@ -1277,19 +1279,20 @@ EL::StatusCode MultijetAlgorithim :: setupJetCalibrationStages() {
   // Setup calibration stages tools //
   // Create a map from the CalibSequence string components to the xAOD aux data
   std::map <std::string, std::string> JCSMap;
-  if (m_inContainerName.find("EMTopo") != std::string::npos )
+  if (m_inContainerName.find("EMTopo") != std::string::npos || m_inContainerName.find("EMPFlow") != std::string::npos)
     JCSMap["RAW"] = "JetEMScaleMomentum";
   else if( m_inContainerName.find("LCTopo") != std::string::npos )
     JCSMap["RAW"] = "JetConstitScaleMomentum";
   else{
-    Error( "setupJetCalibrationStages()", " Input jets are not EMScale or LCTopo.  Exiting.");
+    Error( "setupJetCalibrationStages()", " Input jets are not EMScale, EMPFlow or LCTopo.  Exiting.");
     return EL::StatusCode::FAILURE;
   }
   JCSMap["JetArea"] = "JetPileupScaleMomentum";
   JCSMap["Origin"] = "JetOriginConstitScaleMomentum";
   JCSMap["EtaJES"] = "JetEtaJESScaleMomentum";
   JCSMap["GSC"] = "JetGSCScaleMomentum";
-  JCSMap["Insitu"] = "JetInsituScaleMomentum";
+//!!  JCSMap["Insitu"] = "JetInsituScaleMomentum";
+  JCSMap["Insitu"] = "JetConstitScaleMomentum";
 
 
   //// Now break up the Jet Calib string into the components
@@ -1542,6 +1545,9 @@ EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int 
 
 EL::StatusCode MultijetAlgorithim :: applyMJBCalibration( xAOD::Jet* jet , int iVar, bool isLead /*=false*/ ){
 
+  if(m_isMC)
+    return EL::StatusCode::SUCCESS;
+
   //No correction for first iteration
   if (m_MJBIteration == 0 && !m_closureTest)
     return EL::StatusCode::SUCCESS;
@@ -1572,7 +1578,7 @@ EL::StatusCode MultijetAlgorithim :: applyMJBCalibration( xAOD::Jet* jet , int i
     float errY = m_MJBHists.at(iVar)->GetBinError( index );
     if( m_sysSign.at(iVar) == 1) // then it's negative
       errY = -errY;
-    thisCalibration = 1./ (m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) ) * 1+errY);
+    thisCalibration = 1./ (m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) ) * (1+errY) );
 
   }
 

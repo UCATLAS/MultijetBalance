@@ -139,17 +139,17 @@ def combinedPlotNominal(files, normalize, ratio):
 #      else:
       nomHist.SetMaximum(1.5*nomHist.GetMaximum())
       nomHist.SetMinimum(0.0000101)
-      nomHist.GetYaxis().SetTitle("AU")
       #nomHist.SetMinimum(0.000101)
-      if( "Pt" in histName) :
-        nomHist.GetXaxis().SetRangeUser( 200, 2500 )
       if( "MJB" in histName) :
-        nomHist.GetXaxis().SetRangeUser( 400, 2500 )
-        #nomHist.GetXaxis().SetRangeUser( 300, 2000 )
+        nomHist.GetXaxis().SetRangeUser( 400, 3500 )
         nomHist.SetMaximum(1.05)
         nomHist.SetMinimum(0.90)
         nomHist.GetXaxis().SetMoreLogLabels(True)
 #      nomHist.SetMarkerSize(.75)
+      elif( "Pt" in histName) :
+        nomHist.GetXaxis().SetRangeUser( 200, 3500 )
+      else:
+        nomHist.GetYaxis().SetTitle("AU")
       if not type(nomHist) == TGraphErrors:
         drawString = "psame"
       else:
@@ -183,25 +183,34 @@ def combinedPlotNominal(files, normalize, ratio):
       oneLine.SetLineWidth(1)
       oneLine.SetLineStyle(7)
       oneLine.SetLineColor(kBlack)
-      oneLine.GetXaxis().SetLabelSize(.1)
-      oneLine.GetXaxis().SetLabelOffset(.015)
-      oneLine.GetXaxis().SetTitleSize(.1)
-      oneLine.GetXaxis().SetTitle(nomHists[0].GetXaxis().GetTitle());
-      oneLine.GetXaxis().SetMoreLogLabels()
-      oneLine.GetYaxis().SetLabelSize(.11)
-      oneLine.GetYaxis().SetLabelOffset(.01)
-      oneLine.GetYaxis().SetTitleSize(.13)
-      oneLine.GetYaxis().SetTitleOffset(0.3)
-      oneLine.GetYaxis().SetTitle("Significance")
-      oneLine.GetYaxis().SetNdivisions(7)
-      oneLine.GetYaxis().SetRangeUser(-0.5,0.5)
-      oneLine.Draw()
+
 
       for iDir in range(1,len(nomDirs)):
         ratioHists.append( nomHists[0].Clone() )
         ratioHists[iDir-1].Add(nomHists[iDir], -1.)
         ratioHists[iDir-1].Divide(nomHists[iDir])
-        ratioHists[iDir-1].Draw( drawString )
+        if iDir == 1:
+          ratioHists[iDir-1].GetXaxis().SetLabelOffset(.015)
+          ratioHists[iDir-1].GetXaxis().SetLabelSize(0.11)
+          ratioHists[iDir-1].GetXaxis().SetTitleSize(0.12)
+          ratioHists[iDir-1].GetXaxis().SetTitle(nomHists[0].GetXaxis().GetTitle());
+          ratioHists[iDir-1].GetXaxis().SetMoreLogLabels()
+          ratioHists[iDir-1].GetYaxis().SetLabelSize(0.11)
+          ratioHists[iDir-1].GetYaxis().SetTitleSize(0.12)
+          ratioHists[iDir-1].GetYaxis().SetLabelOffset(.01)
+          ratioHists[iDir-1].GetYaxis().SetTitleOffset(0.5)
+          ratioHists[iDir-1].GetYaxis().SetTitle("Significance")
+          ratioHists[iDir-1].GetYaxis().SetNdivisions(7)
+          if( "Pt" in histName) :
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 200, 3500 )
+          if( "MJB" in histName) :
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 400, 3500 )
+            ratioHists[iDir-1].SetMaximum(0.05)
+            ratioHists[iDir-1].SetMinimum(-0.05)
+          ratioHists[iDir-1].Draw( "p" )
+        else:
+          ratioHists[iDir-1].Draw( "psame" )
+      oneLine.Draw("same")
 
 
     c1.cd()

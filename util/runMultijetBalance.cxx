@@ -31,8 +31,9 @@ int main( int argc, char* argv[] ) {
   std::string inputTag = "";
   std::string outputTag = "";
   std::string submitDir = "submitDir";
-  std::string configName = "$ROOTCOREBIN/data/MultijetBalanceAlgo/MultijetAlgo.config";
+  std::string configName = "$ROOTCOREBIN/data/MultijetBalanceAlgo/MultijetAlgo_EM.config";
   std::string productionName = "";
+  bool f_oneJobPerFile = false;
 
   /////////// Retrieve runDijetResonance's arguments //////////////////////////
   std::vector< std::string> options;
@@ -51,7 +52,8 @@ int main( int argc, char* argv[] ) {
          << "  --tag             Version string to be appended to job name" << std::endl
          << "  --submitDir       Name of output directory" << std::endl
          << "  --config          Path to config file" << std::endl
-         << "  -production      Group name for the production role" << std::endl
+         << "  --production      Group name for the production role" << std::endl
+         << "  --oneJobPerFile      Only 1 job per file" << std::endl
          << std::endl;
     exit(1);
   }
@@ -70,6 +72,9 @@ int main( int argc, char* argv[] ) {
          samplePath = options.at(iArg+1);
          iArg += 2;
        }
+    } else if (options.at(iArg).compare("--oneJobPerFile") == 0) {
+      ++iArg;
+      f_oneJobPerFile = true;
     } else if (options.at(iArg).compare("--inputTag") == 0) {
        char tmpChar = options.at(iArg+1)[0];
        if (iArg+1 == argc || tmpChar == '-' ) {
@@ -269,10 +274,10 @@ cout << outputName << endl;
   if(f_grid){
     EL::PrunDriver driver;
     driver.options()->setString("nc_outputSampleName", outputName);
-//    if( samplePath.find("Data") == std::string::npos){
-    std::cout << "Setting code to 1 file per job " << std::endl;
-    driver.options()->setDouble(EL::Job::optGridNFilesPerJob, 1);
-//    }
+    if( f_oneJobPerFile ){
+      std::cout << "Setting code to 1 file per job " << std::endl;
+      driver.options()->setDouble(EL::Job::optGridNFilesPerJob, 1);
+    }
     //driver.options()->setString("nc_grid_filter", "*.AOD.*");
     if (f_production)
       driver.options()->setString(EL::Job::optSubmitFlags, "--official");

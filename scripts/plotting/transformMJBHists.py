@@ -4,11 +4,15 @@ import glob, os
 import argparse
 
 
+
 parser = argparse.ArgumentParser(description="%prog [options]", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-b", dest='batchMode', action='store_true', default=False, help="Batch mode for PyRoot")
+#parser.add_argument("--dir", dest='workDir', default='gridOutput/Oct21_2nd_corrected_area', help="Typically gridOutput")
+#parser.add_argument("--dir", dest='workDir', default='gridOutput/Oct21_2nd_area', help="Typically gridOutput")
 parser.add_argument("--dir", dest='workDir', default='gridOutput/Oct20_area', help="Typically gridOutput")
 #parser.add_argument("--dir", dest='workDir', default='gridOutput/combinedArea', help="Typically gridOutput")
 args = parser.parse_args()
+
 
 
 import getRecoilPtTree
@@ -22,6 +26,10 @@ import plotMJBvEta
 import plotAll
 
 
+#mcTypes = ["Pythia", "Sherpa", "Herwig"]
+#mcType = "Pythia"
+mcType = "Sherpa"
+
 
 f_getPtHist = False
 f_scale = False
@@ -33,15 +41,15 @@ f_plotSL = False
 
 #f_getPtHist = True
 #f_scale = True #Scale MC files
-#f_combine = True #Combine MC files
-#f_calculateMJB = True # Calculate new histograms to be added to root file
+f_combine = True #Combine MC files
+f_calculateMJB = True # Calculate new histograms to be added to root file
 f_plotRelevant = True # Most important Plots
-#f_plotAll = True # All plots
+f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 
 doData = True
 doMC = True
-doSys = True
+doSys = False
 doJZSlices = False
 doFinal = False
 
@@ -53,7 +61,7 @@ if not os.path.exists(args.workDir+'/workarea/initialFiles'):
 
 args.workDir = args.workDir+'/workarea/'
 
-if(f_getPtHist):
+if(f_getPtHist and doFinal):
   treeDir = args.workDir+'/../tree/'
   if not os.path.exists( treeDir ):
     print "Warning, there is no tree directory in ", args.workDir+'/../'
@@ -82,14 +90,14 @@ if(f_scale and doMC):
 if(f_combine):
   if( doMC ):
     ## scaled -> all*scaled ##
-    print 'hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc15*_hist.scaled.root'
-    os.system('hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc*_hist.scaled.root')
+    print 'hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc*'+mcType+'*_hist.scaled.root'
+    os.system('hadd '+args.workDir+'/hist.mc.all.scaled.root '+args.workDir+'/initialFiles/*.mc*'+mcType+'*_hist.scaled.root')
   if( doData ):
     print 'hadd '+args.workDir+'/hist.data.all.scaled.root '+args.workDir+'/../hist/*.data*_hist.root'
     os.system('hadd '+args.workDir+'/hist.data.all.scaled.root '+args.workDir+'/../hist/*.data*_hist.root')
 
   if(doJZSlices):
-    files = glob.glob(args.workDir+'/initialFiles/*.mc15*_hist.scaled.root')
+    files = glob.glob(args.workDir+'/initialFiles/*.mc*'+mcType+'*_hist.scaled.root')
     for file in files:
       JZString = os.path.basename(file).split('.')[4].split('_')[-1]
       os.system('cp '+file+' '+args.workDir+'/hist.mc.'+JZString+'.scaled.root')
