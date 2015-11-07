@@ -22,8 +22,8 @@ parser.add_argument("--container", dest='container', default="None",
      help="Name of dataset to be downloaded, may include wildcards")
 parser.add_argument("--file", dest='fileOfContainers', default="None",
      help="A text file containing names of datasets to be downloaded")
-#parser.add_argument("--types", dest='types', default="tree,hist",
-parser.add_argument("--types", dest='types', default="tree,hist,SystToolOutput",
+parser.add_argument("--types", dest='types', default="tree,hist",
+#parser.add_argument("--types", dest='types', default="tree,hist,SystToolOutput",
      help="Comma separated list of types of datasets to be downloaded")
 parser.add_argument("--outPath", dest='outPath', default="./gridOutput/",
      help="Output path")

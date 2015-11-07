@@ -48,13 +48,20 @@ class MiniTree : public HelpTreeBase
     MiniTree(xAOD::TEvent * event, TTree* tree, TFile* file);
     ~MiniTree();
 
-    void AddMJB(std::string detailStringMJB = "");
+    void AddEventUser( const std::string detailStr = "" );
+    void AddJetsUser( const std::string detailStr = "" , const std::string jetName = "jet");
     void FillEventUser( const xAOD::EventInfo* eventInfo );
-    void FillJetsUser( const xAOD::Jet* jet );
-    void ClearMJB();
-    void FillMuonsUser( const xAOD::Muon* muon );
-    void FillElectronsUser( const xAOD::Electron* electron );
-    void FillFatJetsUser( const xAOD::Jet* fatJet );
+    void FillJetsUser( const xAOD::Jet* jet, const std::string jetName = "jet" );
+    void ClearEventUser();
+    void ClearJetsUser(const std::string jetName = "jet");
+
+//    void AddMJB(std::string detailStringMJB = "");
+//    void FillEventUser( const xAOD::EventInfo* eventInfo );
+//    void FillJetsUser( const xAOD::Jet* jet );
+//    void ClearMJB();
+///    void FillMuonsUser( const xAOD::Muon* muon );
+///    void FillElectronsUser( const xAOD::Electron* electron );
+///    void FillFatJetsUser( const xAOD::Jet* fatJet );
 
 };
 #endif

@@ -103,6 +103,7 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_noLimitJESPt      = config->GetValue("NoLimitJESPt" ,    false);
   m_reverseSubleading = config->GetValue("ReverseSubleading" ,    false);
   m_leadingInsitu     = config->GetValue("LeadingInsitu", false);
+  m_MJBStatsOn        = config->GetValue("MJBStatsOn", false);
 
   m_bootstrap = config->GetValue("BootStrap", false);
 
@@ -150,9 +151,13 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
     m_jetCalibConfig          = config->GetValue("JetCalibConfig",  "JES_Full2012dataset_May2014.config");
   }
 
-  if ( !m_isMC && m_jetCalibSequence.find("Insitu") == std::string::npos) m_jetCalibSequence += "_Insitu";
+  if ( (m_inContainerName.find("LCTopo") == std::string::npos)
+      && !m_isMC
+      && m_jetCalibSequence.find("Insitu") == std::string::npos)
+    m_jetCalibSequence += "_Insitu";
 
-  if( m_isMC && m_jetCalibSequence.find("Insitu") != std::string::npos){
+  if( (m_isMC || (m_inContainerName.find("LCTopo") != std::string::npos) )
+      && m_jetCalibSequence.find("Insitu") != std::string::npos ){
     Error("initialize()", "Attempting to use an Insitu calibration sequence on MC.  Exiting.");
     return EL::StatusCode::FAILURE;
   }
@@ -269,7 +274,8 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   // Fix this to be elegent and take any binning
   if( m_bootstrap ){
     systTool_nToys = 100;
-    double theseBins[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
+    //double theseBins[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
+    double theseBins[] = {125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1300, 1500, 2000, 5000.};
     int binSize = sizeof(theseBins)/sizeof(theseBins[0]);
     for( int iBin=0; iBin < binSize; ++iBin){
       systTool_ptBins.push_back(theseBins[iBin]);
@@ -382,7 +388,7 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
     for( unsigned int iTree=0; iTree < m_treeList.size(); ++iTree){
       m_treeList.at(iTree)->AddEvent(m_eventDetailStr);
       m_treeList.at(iTree)->AddJets(m_jetDetailStr);
-      m_treeList.at(iTree)->AddMJB(m_MJBDetailStr);
+//      m_treeList.at(iTree)->AddMJB(m_MJBDetailStr);
     }//for iTree
 
   }//if m_writeTree
@@ -827,7 +833,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
         if(eventInfo)   m_treeList.at(iTree)->FillEvent( eventInfo    );
         if(signalJets)  m_treeList.at(iTree)->FillJets(  plottingJets, m_pvLocation  );
         m_treeList.at(iTree)->Fill();
-        m_treeList.at(iTree)->ClearMJB();
+//        m_treeList.at(iTree)->ClearMJB();
 
         //if(eventInfo)   m_nominalTree->FillEvent( eventInfo    );
         //if(signalJets)  m_nominalTree->FillJets(  *plottingJets  );
@@ -1195,7 +1201,7 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
       }
       m_sysVar.push_back("MJB_ptt30_pos"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 30 ); m_sysSign.push_back(1);
       m_sysVar.push_back("MJB_ptt20_neg"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 20 ); m_sysSign.push_back(0);
-      if (m_MJBIteration > 0){
+      if (m_MJBIteration > 0 && m_MJBStatsOn){
         m_sysVar.push_back("MJB_stat0_pos"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 0  ); m_sysSign.push_back(1);
         m_sysVar.push_back("MJB_stat0_neg"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 0  ); m_sysSign.push_back(0);
         m_sysVar.push_back("MJB_stat1_pos"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 1  ); m_sysSign.push_back(1);
@@ -1291,8 +1297,7 @@ EL::StatusCode MultijetAlgorithim :: setupJetCalibrationStages() {
   JCSMap["Origin"] = "JetOriginConstitScaleMomentum";
   JCSMap["EtaJES"] = "JetEtaJESScaleMomentum";
   JCSMap["GSC"] = "JetGSCScaleMomentum";
-//!!  JCSMap["Insitu"] = "JetInsituScaleMomentum";
-  JCSMap["Insitu"] = "JetConstitScaleMomentum";
+  JCSMap["Insitu"] = "JetInsituScaleMomentum";
 
 
   //// Now break up the Jet Calib string into the components

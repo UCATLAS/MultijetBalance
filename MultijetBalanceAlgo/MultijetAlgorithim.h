@@ -88,6 +88,7 @@ class MultijetAlgorithim : public EL::Algorithm
     bool m_leadingInsitu;
     bool m_noLimitJESPt;
     bool m_reverseSubleading;
+    bool m_MJBStatsOn;
     float m_PtAsym;
     float m_SubLeadingPt;
 

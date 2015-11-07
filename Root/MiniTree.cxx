@@ -15,7 +15,7 @@ MiniTree :: ~MiniTree()
 {
 }
 
-void MiniTree::AddMJB(std::string detailStringMJB)
+void MiniTree::AddEventUser(std::string detailStringMJB)
 {
   // event variables
   m_tree->Branch("njet", &m_njet, "njet/I");
@@ -42,6 +42,11 @@ void MiniTree::AddMJB(std::string detailStringMJB)
   m_tree->Branch("recoilM", &m_recoilM, "recoilM/F");
   m_tree->Branch("recoilE", &m_recoilE, "recoilE/F");
 
+
+}
+
+void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetName)
+{
   // jet things
   m_tree->Branch("jet_detEta", &m_jet_detEta);
   m_tree->Branch("jet_beta", &m_jet_beta);
@@ -55,19 +60,6 @@ void MiniTree::AddMJB(std::string detailStringMJB)
     //just do this for first jet?
 //  vector < vector< float > >  = jets->at(iJet)->auxdata< vector<float> >("EnergyPerSampling").at(iLayer)/1e3
 //
-
-
-
-}
-
-void MiniTree::ClearMJB() {
-  m_jet_detEta.clear();
-  m_jet_beta.clear();
-  m_jet_corr.clear();
-//  m_jet_EMFrac.clear();
-//  m_jet_HECFrac.clear();
-  m_jet_TileFrac.clear();
-//  m_jet_EnergyPerSampling.clear();
 }
 
 void MiniTree::FillEventUser( const xAOD::EventInfo* eventInfo ) {
@@ -100,7 +92,7 @@ void MiniTree::FillEventUser( const xAOD::EventInfo* eventInfo ) {
 
 }
 
-void MiniTree::FillJetsUser( const xAOD::Jet* jet ) {
+void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
 
   if( jet->isAvailable< float >( "detEta" ) ) {
     m_jet_detEta.push_back( jet->auxdata< float >("detEta") );
@@ -141,10 +133,26 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet ) {
 //  m_jet_EnergyPerSampling.push_back( tempVector );
 
 }
-void MiniTree::FillMuonsUser( const xAOD::Muon* muon ) {
-}
-void MiniTree::FillElectronsUser( const xAOD::Electron* electron ){
-}
-void MiniTree::FillFatJetsUser( const xAOD::Jet* fatJet ){
+
+
+void MiniTree::ClearEventUser() {
 }
 
+void MiniTree::ClearJetsUser(const std::string jetName ) {
+  m_jet_detEta.clear();
+  m_jet_beta.clear();
+  m_jet_corr.clear();
+//  m_jet_EMFrac.clear();
+//  m_jet_HECFrac.clear();
+  m_jet_TileFrac.clear();
+//  m_jet_EnergyPerSampling.clear();
+}
+
+
+//void MiniTree::FillMuonsUser( const xAOD::Muon* muon ) {
+//}
+//void MiniTree::FillElectronsUser( const xAOD::Electron* electron ){
+//}
+//void MiniTree::FillFatJetsUser( const xAOD::Jet* fatJet ){
+//}
+//
