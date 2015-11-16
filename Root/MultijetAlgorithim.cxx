@@ -493,10 +493,13 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
 
     auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
-    if( triggerChainGroup->isPassed() && originalSignalJets->at(0)->pt() > m_triggerThresholds.at(iT)){
-      passedTriggers = true;
-      prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
+    if( triggerChainGroup->isPassed() ){
+      if(originalSignalJets->at(0)->pt() > m_triggerThresholds.at(iT)){
+        passedTriggers = true;
+        prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
+      }
       break;
+    // need to break after the first isPassed, even if trigger Thresholds is low!
 
 //      std::string l1string = "";
 //      if (m_triggers.at(iT).find("HLT_j360") != std::string::npos){
@@ -805,7 +808,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     if(m_isMC)
       eventInfo->auxdecor< float >("weight") = m_mcEventWeight*m_xs*m_acceptance;
     else
-      eventInfo->auxdecor< float >("weight") = m_mcEventWeight*prescale;
+      eventInfo->auxdecor< float >("weight") = prescale;
 
 
     /////////////// Output Plots ////////////////////////////////

@@ -112,12 +112,25 @@ if(f_calculateMJB):
     calculateMJBHists.calculateMJBHists(file, binnings, f_extraPlots)
     #os.system('mv '+file+' '+args.workDir+'/initialFiles/')
 
+
+  if( doFit ):
+    files = glob.glob(args.workDir+'/hist.*.all.appended.root')
+    for file in files:
+      do appended -> fit here
+
+
   ## data and MC .MJB_initial -> .DoubleMJB_initial ##
   if(doData and doMC):
     dataFile = glob.glob(args.workDir+'/hist.data.all.MJB_initial.root')[0]
     mcFile = glob.glob(args.workDir+'/hist.mc.all.MJB_initial.root')[0]
     print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
     calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
+
+    if( doFit ):
+      dataFile = glob.glob(args.workDir+'/hist.data.all.fit_MJB_initial.root')[0]
+      mcFile = glob.glob(args.workDir+'/hist.mc.all.fit_MJB_initial.root')[0]
+      print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
+      calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
 
 ## Needs recoilPt_center
 

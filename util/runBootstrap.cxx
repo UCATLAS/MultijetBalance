@@ -15,34 +15,34 @@
 
 using namespace std;
 
-vector<double> vectorize(string bins)
-{
-    istringstream stream(bins);
-    string bin;
-
-    vector<double> output;
-
-    while (getline(stream, bin, ',')) {
-        output.push_back( atof(bin.c_str()) );
-    }
-
-    return output;
-}
-
-vector<string> vectorizeStr(string bins)
-{
-    istringstream stream(bins);
-    string bin;
-
-    vector<string> output;
-
-    while (getline(stream, bin, ',')) {
-        while (bin[0] == ' ') bin.erase(bin.begin());
-        output.push_back(bin);
-    }
-
-    return output;
-}
+//vector<double> vectorize(string bins)
+//{
+//    istringstream stream(bins);
+//    string bin;
+//
+//    vector<double> output;
+//
+//    while (getline(stream, bin, ',')) {
+//        output.push_back( atof(bin.c_str()) );
+//    }
+//
+//    return output;
+//}
+//
+//vector<string> vectorizeStr(string bins)
+//{
+//    istringstream stream(bins);
+//    string bin;
+//
+//    vector<string> output;
+//
+//    while (getline(stream, bin, ',')) {
+//        while (bin[0] == ' ') bin.erase(bin.begin());
+//        output.push_back(bin);
+//    }
+//
+//    return output;
+//}
 
 /** Example program to get JES systematics */
 int main(int argc, char *argv[])
