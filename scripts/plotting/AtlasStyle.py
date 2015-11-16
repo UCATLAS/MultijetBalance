@@ -5,6 +5,27 @@
 import ROOT
 import array
 
+def ATLAS_LABEL(x, y, color=1, label = "Internal"):
+    l = ROOT.TLatex()  #l.SetTextAlign(12); l.SetTextSize(tsize);
+    l.SetTextSize(0.05)
+    l.SetNDC()
+    l.SetTextFont(72)
+    l.SetTextColor(color)
+    l.DrawLatex(x,y,"ATLAS")
+    l2 = ROOT.TLatex()  #l.SetTextAlign(12); l.SetTextSize(tsize);
+    l2.SetNDC()
+    l2.SetTextColor(color)
+    l2.DrawLatex(x+0.08,y, label)
+
+def myText(x, y, color, text):
+  #tsize=0.05
+    l = ROOT.TLatex()  #l.SetTextAlign(12); l.SetTextSize(tsize);
+    l.SetTextSize(0.05)
+    l.SetNDC()
+    l.SetTextColor(color)
+    l.DrawLatex(x,y,text)
+
+
 def SetAtlasStyle():
     print "Applying ATLAS style settings..."
     atlasStyle = AtlasStyle()
