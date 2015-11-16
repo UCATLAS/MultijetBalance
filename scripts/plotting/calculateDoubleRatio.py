@@ -19,25 +19,28 @@ import argparse
 
 from ROOT import *
 
-def calculateDoubleRatio(dataFile, mcFile):
+def calculateDoubleRatio(dataFileName, mcFileName):
 
-  if not "MJB_initial" in mcFile or not "MJB_initial" in dataFile:
-    print "Error, trying to run calculateDoubleRatio.py on non \"MJB_initial\" input ", mcFile, dataFile
+  if not "MJB_initial" in mcFileName or not "MJB_initial" in dataFileName:
+    print "Error, trying to run calculateDoubleRatio.py on non \"MJB_initial\" input ", mcFileName, dataFileName
     print "Exiting"
     return
 ##################### Get Double MJB Correction  #################################
 
-  dirName = os.path.dirname(dataFile)+'/'
+  dirName = os.path.dirname(dataFileName)+'/'
 
-  mcFile = TFile.Open(mcFile, "READ");
+  mcFile = TFile.Open(mcFileName, "READ");
   mcKeyList = [key.GetName() for key in mcFile.GetListOfKeys()] #List of top level objects
   mcDirList = [key for key in mcKeyList if "Iteration" in key] #List of all directories
+  mcType = mcFileName.split('.')[-3]
 
-  dataFile = TFile.Open(dataFile, "READ");
+
+  dataFile = TFile.Open(dataFileName, "READ");
   dataKeyList = [key.GetName() for key in dataFile.GetListOfKeys()] #List of top level objects
   dataDirList = [key for key in dataKeyList if "Iteration" in key] #List of all directories
 
-  outFile = TFile.Open(dirName+"DoubleMJB_initial.root", "RECREATE");
+  outName = 'hist.combined.'+mcType+'.DoubleMJB_initial.root'
+  outFile = TFile.Open(dirName+outName, "RECREATE");
 
 
   print "Creating Double MJB Correction Hist"
@@ -79,7 +82,7 @@ def calculateDoubleRatio(dataFile, mcFile):
 
 ############ Calculate systematic differences for Double MJB Corrections #####################3
 
-  inFile = TFile.Open(dirName+"/DoubleMJB_initial.root", "READ");
+  inFile = TFile.Open(dirName+outName, "READ");
   keyList = [key.GetName() for key in inFile.GetListOfKeys()] #List of top level objects
   dirList = [key for key in keyList if "Iteration" in key] #List of all directories
   nomDirName = [dir for dir in dirList if "Nominal" in dir]
@@ -89,7 +92,8 @@ def calculateDoubleRatio(dataFile, mcFile):
   else:
     nomDir = inFile.Get( nomDirName[0] )
 
-  outFile = TFile.Open(dirName+"/DoubleMJB_sys_initial.root", "RECREATE");
+  outName = outName.replace("DoubleMJB", "DoubleMJB_sys")
+  outFile = TFile.Open(dirName+outName, "RECREATE");
 
   print "Creating Systematic Differences for Double MJB Correction Hists"
   for dir in dirList:

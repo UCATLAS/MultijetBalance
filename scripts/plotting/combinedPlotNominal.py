@@ -29,8 +29,11 @@ import AtlasStyle
 def combinedPlotNominal(files, normalize, ratio):
 
   files = files.split(',')
+  dataFile = [file for file in files if ".data." in file][0]
+  files.remove(dataFile)
+  files.insert(0, dataFile)
   # Save output to directory of first file
-  outDir = files[0][:-5]+'/'
+  outDir = dataFile[:-5]+'/'
   if not os.path.exists(outDir):
     os.mkdir(outDir)
   if normalize:
@@ -64,16 +67,17 @@ def combinedPlotNominal(files, normalize, ratio):
 
 
   ################ Set Color Palate ####################3
-  colorMax = 240.
-  colorMin = 0. #20.
-  numInputs = len( nomDirs )
-  colors = []
-  if len(nomDirs) == 2:
-    colors = [kBlack, kRed]
-  else:
-    for iDir, nomDir in enumerate(nomDirs):
-      colorNum = int( colorMin+(colorMax-colorMin)*iDir/numInputs)
-      colors.append( gStyle.GetColorPalette( colorNum ))
+  colors = [kBlack, kRed, kBlue, kViolet, kGreen, kCyan]
+#  colorMax = 240.
+#  colorMin = 0. #20.
+#  numInputs = len( nomDirs )
+#  colors = []
+#  if len(nomDirs) == 2:
+#    colors = [kBlack, kRed]
+#  else:
+#    for iDir, nomDir in enumerate(nomDirs):
+#      colorNum = int( colorMin+(colorMax-colorMin)*iDir/numInputs)
+#      colors.append( gStyle.GetColorPalette( colorNum ))
 
 ##################### Plot All Nominal #################################
 
@@ -89,17 +93,21 @@ def combinedPlotNominal(files, normalize, ratio):
     if not type(tmpHist) == TH1F and not type(tmpHist) == TH1D and not type(tmpHist) == TGraphErrors:  #Can't draw bands if not 1D
       continue
 
-    leg = TLegend(0.83, 0.15, 0.99, 0.95)
+    leg = TLegend(0.6, 0.7, 0.9, 0.93)
+    leg.SetFillStyle(0)
+#!    leg = TLegend(0.83, 0.15, 0.99, 0.95)
     if ratio:
-      pad1 = TPad("pad1", "", 0, 0.3, 0.83, 1)
-      pad2 = TPad("pad2", "", 0, 0, 0.83, 0.3)
+      pad1 = TPad("pad1", "", 0, 0.3, 1, 1)
+      pad2 = TPad("pad2", "", 0, 0, 1, 0.3)
+#!      pad1 = TPad("pad1", "", 0, 0.3, 0.83, 1)
+#!      pad2 = TPad("pad2", "", 0, 0, 0.83, 0.3)
       pad1.SetBottomMargin(0)
       pad2.SetTopMargin(0)
       pad2.SetBottomMargin(0.3)
       pad1.Draw()
       pad2.Draw()
     else:
-      pad1 = TPad("pad1", "", 0, 0, 0.83, 1)
+#!      pad1 = TPad("pad1", "", 0, 0, 0.83, 1)
       pad1.Draw()
     pad1.cd()
 
@@ -142,8 +150,8 @@ def combinedPlotNominal(files, normalize, ratio):
       #nomHist.SetMinimum(0.000101)
       if( "MJB" in histName) :
         nomHist.GetXaxis().SetRangeUser( 400, 3500 )
-        nomHist.SetMaximum(1.05)
-        nomHist.SetMinimum(0.90)
+        nomHist.SetMaximum(1.1)
+        nomHist.SetMinimum(0.9601)
         nomHist.GetXaxis().SetMoreLogLabels(True)
 #      nomHist.SetMarkerSize(.75)
       elif( "Pt" in histName) :
@@ -169,6 +177,7 @@ def combinedPlotNominal(files, normalize, ratio):
         nomHists[iDir].GetXaxis().SetRange(1, maxBinX )
     for iDir, nomDir in enumerate(nomDirs):
       nomHists[iDir].Draw( drawString )
+    nomHists[0].Draw( drawString ) ## Draw data on top
 
 
     if ratio:
@@ -189,6 +198,8 @@ def combinedPlotNominal(files, normalize, ratio):
         ratioHists.append( nomHists[0].Clone() )
         ratioHists[iDir-1].Add(nomHists[iDir], -1.)
         ratioHists[iDir-1].Divide(nomHists[iDir])
+        ratioHists[iDir-1].SetMarkerColor( colors[iDir] )
+        ratioHists[iDir-1].SetLineColor( colors[iDir] )
         if iDir == 1:
           ratioHists[iDir-1].GetXaxis().SetLabelOffset(.015)
           ratioHists[iDir-1].GetXaxis().SetLabelSize(0.11)
@@ -215,6 +226,10 @@ def combinedPlotNominal(files, normalize, ratio):
 
     c1.cd()
     leg.Draw()
+    AtlasStyle.ATLAS_LABEL(0.25,0.88, 1,"    Internal")
+    AtlasStyle.myText(0.25,0.80,1, "#sqrt{s}=13 TeV, 3.4 fb^{-1}")
+#    AtlasStyle.myText(0.1,0.75,1, "m_{jj} Correction")
+
     if "MJB" in histName:
       pad1.SetLogx()
       if ratio:
