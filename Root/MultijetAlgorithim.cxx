@@ -87,6 +87,7 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_eventDetailStr    = config->GetValue("EventDetailStr",   "");
   m_jetDetailStr      = config->GetValue("JetDetailStr",     "kinematic");
   m_MJBDetailStr      = config->GetValue("MJBDetailStr",     "");
+  m_trigDetailStr            = config->GetValue("TrigDetailStr",         m_trigDetailStr.c_str());
   m_MJBIteration      = config->GetValue("MJBIteration",     0);
   m_MJBCorrectionFile = config->GetValue("MJBCorrectionFile",     "");
   m_MJBCorrectionBinning      = config->GetValue("MJBCorrectionBinning",     "");
@@ -104,8 +105,11 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_reverseSubleading = config->GetValue("ReverseSubleading" ,    false);
   m_leadingInsitu     = config->GetValue("LeadingInsitu", false);
   m_MJBStatsOn        = config->GetValue("MJBStatsOn", false);
+  m_allJetBeta        = config->GetValue("AllJetBeta", false);
 
   m_bootstrap = config->GetValue("BootStrap", false);
+
+  m_numJets = config->GetValue("NumJets", 3);
 
   if( m_writeNominalTree )
     m_writeTree = true;
@@ -388,6 +392,7 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
     for( unsigned int iTree=0; iTree < m_treeList.size(); ++iTree){
       m_treeList.at(iTree)->AddEvent(m_eventDetailStr);
       m_treeList.at(iTree)->AddJets(m_jetDetailStr);
+      m_treeList.at(iTree)->AddTrigger( m_trigDetailStr );
 //      m_treeList.at(iTree)->AddMJB(m_MJBDetailStr);
     }//for iTree
 
@@ -438,7 +443,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     const xAOD::JetContainer* inJets = 0;
     HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store);
 
-    if(inJets->size() <3){
+    if(inJets->size() < m_numJets){
       wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
   passCutAll(); //njets
@@ -490,11 +495,14 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   if(m_debug) Info("execute()", "Trigger ");
   float prescale = 1.;
   bool passedTriggers = false;
+  if (m_triggers.size() == 0)
+    passedTriggers = true;
+
   for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
 
     auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
-    if( triggerChainGroup->isPassed() ){
-      if(originalSignalJets->at(0)->pt() > m_triggerThresholds.at(iT)){
+    if(originalSignalJets->at(0)->pt() > m_triggerThresholds.at(iT)){
+      if( triggerChainGroup->isPassed() ){
         passedTriggers = true;
         prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
       }
@@ -553,7 +561,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
       --iJet;
     }
   }
-  if (originalSignalJets->size() < 3){
+  if (originalSignalJets->size() < m_numJets){
     delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
@@ -679,7 +687,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
         --iJet;
       }
     }
-    if (signalJets->size() < 3)
+    if (signalJets->size() < m_numJets)
       continue;
     passCut(iVar); //ptThreshold
 
@@ -701,7 +709,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
         }
       }
     }
-    if (signalJets->size() < 3)
+    if (signalJets->size() < m_numJets)
       continue;
     passCut(iVar); //JVF
 
@@ -748,7 +756,9 @@ EL::StatusCode MultijetAlgorithim :: execute ()
       // !! thisBeta = fabs(TVector2::Phi_mpi_pi( signalJets->at(iJet)->phi() - signalJets->at(0)->phi() ));
       thisBeta = DeltaPhi(signalJets->at(iJet)->phi(), signalJets->at(0)->phi() );
       //std::cout << thisBeta << " " << signalJets->at(iJet)->pt() << std::endl;
-      if( (thisBeta < smallestBeta) && (signalJets->at(iJet)->pt() > signalJets->at(0)->pt()*0.25) )
+      if( m_allJetBeta )
+        smallestBeta = thisBeta;
+      else if( (thisBeta < smallestBeta) && (signalJets->at(iJet)->pt() > signalJets->at(0)->pt()*0.25) )
         smallestBeta = thisBeta;
       avgBeta += thisBeta;
       signalJets->at(iJet)->auxdecor< float >( "beta") = thisBeta;
@@ -835,6 +845,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
           iTree = 0;
         if(eventInfo)   m_treeList.at(iTree)->FillEvent( eventInfo    );
         if(signalJets)  m_treeList.at(iTree)->FillJets(  plottingJets, m_pvLocation  );
+        m_treeList.at(iTree)->FillTrigger( eventInfo );
         m_treeList.at(iTree)->Fill();
 //        m_treeList.at(iTree)->ClearMJB();
 

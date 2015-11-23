@@ -20,7 +20,7 @@ def ATLAS_LABEL(x, y, color=1, label = "Internal"):
 def myText(x, y, color, text):
   #tsize=0.05
     l = ROOT.TLatex()  #l.SetTextAlign(12); l.SetTextSize(tsize);
-    l.SetTextSize(0.05)
+    l.SetTextSize(0.045)
     l.SetNDC()
     l.SetTextColor(color)
     l.DrawLatex(x,y,text)

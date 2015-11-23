@@ -28,7 +28,8 @@ class MultijetHists : public JetHists
   private:
 
     //NLeadingJets
-    std::vector< std::vector< TH1F* > > m_MJBNjetsPt;       //!
+    //std::vector< std::vector< TH1F* > > m_MJBNjetsPt;       //!
+    std::vector< TH1F* > m_MJBNjetsPt;       //!
     std::vector< TH1F* > m_MJBNjetsEta;      //!
     std::vector< TH1F* > m_MJBNjetsPhi;      //!
     std::vector< TH1F* > m_MJBNjetsM;        //!

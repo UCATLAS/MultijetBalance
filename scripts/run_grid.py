@@ -15,7 +15,7 @@ files = []
 outputTags = []
 
 validation = True
-jetTypes = ["EM"]
+jetTypes = ["EM"]  # no LC for Insitu validation!
 valTypes = ["VA"]
 #valTypes = ["VA", "VF"]
 
@@ -23,7 +23,7 @@ valTypes = ["VA"]
 #jetTypes = ["EM"]
 #jetTypes = ["EM", "LC"]
 
-extraTag = ""
+extraTag = "Trig2"
 
 
 #files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/BootStrap_test_gridSamples.txt")
@@ -31,14 +31,14 @@ extraTag = ""
 
 files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDPythia8_EXOT2_gridSamples.txt")
 outputTags.append("QCDPy")
-files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDSherpa_gridSamples.txt")
-outputTags.append("QCDS")
-files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDHerwig_EXOT2_gridSamples.txt")
-outputTags.append("QCDH")
+#files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDSherpa_gridSamples.txt")
+#outputTags.append("QCDS")
+#files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDHerwig_EXOT2_gridSamples.txt")
+#outputTags.append("QCDH")
 files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/MJBD_EXOT2_gridSamples.txt")
 outputTags.append("Ex")
-files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/MJBD_Debug_gridSamples.txt")
-outputTags.append("Db")
+#files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/MJBD_Debug_gridSamples.txt")
+#outputTags.append("Db")
 
 if validation:
   for iFile, file_in in enumerate(files):

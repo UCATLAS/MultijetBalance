@@ -12,6 +12,9 @@
 #include <TKey.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TROOT.h>
+#include <sys/time.h>
+
 
 //#include "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/JES_ResponseFitter/JES_ResponseFitter/JES_BalanceFitter.h"
 #include "JES_ResponseFitter/JES_BalanceFitter.h"
@@ -21,8 +24,10 @@ using namespace std;
 int main(int argc, char *argv[])
 //int runFit()
 {
-
+  std::time_t initialTime = std::time(0);
+  gErrorIgnoreLevel = 2000;
   std::string inFileName = "";
+  bool f_nominal = false;
   /////////// Retrieve runFit's arguments //////////////////////////
   std::vector< std::string> options;
   for(int ii=1; ii < argc; ++ii){
@@ -36,6 +41,7 @@ int main(int argc, char *argv[])
          << " Optional arguments:" << std::endl
          << "  -h                Prints this menu" << std::endl
          << "  --file            Path to a file ending in appended" << std::endl
+         << "  --nominal         Only Nominal Hists" << std::endl
          << std::endl;
     exit(1);
   }
@@ -54,6 +60,9 @@ int main(int argc, char *argv[])
          inFileName = options.at(iArg+1);
          iArg += 2;
        }
+    } else if (options.at(iArg).compare("--nominal") == 0) {
+      f_nominal = true;
+      iArg++;
     }else{
       std::cout << "Couldn't understand argument " << options.at(iArg) << std::endl;
       return 1;
@@ -77,9 +86,11 @@ cout << "here" << endl;
     exit(1);
   }
   std::string outFileName = inFileName;
-  outFileName.replace(pos, 8, "fit");
+  outFileName.replace(pos, 8, "fit_MJB_initial");
   cout << "Creating Output File " << outFileName << endl;
 
+  std::string fitPlotsOutName = outFileName;
+  fitPlotsOutName.erase(0, fitPlotsOutName.find_last_of("/"));
 
   // Get binning and systematics from SystToolOutput file //
   TFile *inFile = TFile::Open(inFileName.c_str(), "READ");
@@ -93,22 +104,38 @@ cout << "here" << endl;
   double NsigmaForFit = 1.6;
   JES_BalanceFitter* m_BalFit = new JES_BalanceFitter(NsigmaForFit);
 
+  TCanvas* c1 = new TCanvas("c1");
   while ((key = (TKey*)next() )){
     std::string sysName = key->GetName();
-    if( sysName.find("Nominal") == std::string::npos)
+    if( f_nominal && sysName.find("Nominal") == std::string::npos)
       continue;
     // Get Relevant Histograms
     TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
     TH1F* h_recoilPt_center = (TH1F*) inFile->Get((sysName+"/recoilPt_center").c_str());
 
     // Get Binning of output histogram
-    TH1D* h_template = h_recoilPt_PtBal->ProjectionX();
-    h_template->SetName("Template"); h_template->SetTitle("Template");
+    TArrayD* xBins = (TArrayD*) h_recoilPt_PtBal->GetXaxis()->GetXbins();
+    Double_t* xBinsD = xBins->GetArray();
+    int numBins = h_recoilPt_PtBal->GetNbinsX();
+    xBinsD[numBins] = 3100;
+    cout << "last bin " << xBinsD[numBins] << endl;
+    TH1D* h_template = new TH1D("Template", "Template", numBins, xBinsD);
     for( int iBin=1; iBin < h_template->GetNbinsX()+1; ++iBin){
-      h_template->SetBinContent(iBin, 0); h_template->SetBinError(iBin, 0);
+      cout << "Bin edge " << iBin << " is " << h_template->GetXaxis()->GetBinLowEdge(iBin) << endl;
     }
 
+//    TH1D* h_template = h_recoilPt_PtBal->ProjectionX();
+//    h_template->SetName("Template"); h_template->SetTitle("Template");
+//    for( int iBin=1; iBin < h_template->GetNbinsX()+1; ++iBin){
+//      h_template->SetBinContent(iBin, 0); h_template->SetBinError(iBin, 0);
+//    }
+
     TH1D* h_mean = (TH1D*) h_template->Clone("MJB_Fine");  h_mean->SetTitle("MJB_Fine");
+    TH1D* h_error = (TH1D*) h_template->Clone("Error");  h_mean->SetTitle("Error");
+    TH1D* h_redchi = (TH1D*) h_template->Clone("ReducedChi");  h_mean->SetTitle("ReducedChi");
+    TH1D* h_median = (TH1D*) h_template->Clone("Median");  h_mean->SetTitle("Median");
+    TH1D* h_width = (TH1D*) h_template->Clone("Width");  h_mean->SetTitle("Width");
+    TH1D* h_medianHist = (TH1D*) h_template->Clone("MedianHist");  h_mean->SetTitle("MedianHist");
 
 //    // Original Profile
 //    TProfile* prof_MJBcorrection = (TProfile*) h_recoilPt_PtBal->ProfileX("prof_MJBcorrection", 1, -1, "");
@@ -116,10 +143,10 @@ cout << "here" << endl;
 
 
     // Loop over all projections, and fit
-    TCanvas* c1 = new TCanvas("c1");
     for( int iBin=1; iBin < h_recoilPt_PtBal->GetNbinsX()+1; ++iBin){
       TH1D* h_proj = h_recoilPt_PtBal->ProjectionY( "h_proj", iBin, iBin, "ed");
       m_BalFit->Fit(h_proj, 0); // Rebin histogram and fit
+      m_BalFit->ReFit(h_proj, 0); // Rebin histogram and fit
       TF1* thisFit = (TF1*) m_BalFit->GetFit();
       TH1D* thisHisto = (TH1D*) m_BalFit->GetHisto();
       thisHisto->Draw();
@@ -132,16 +159,24 @@ cout << "here" << endl;
 
       thisMean = m_BalFit->GetMean();
       thisError = m_BalFit->GetMeanError();
-      thisMedian = m_BalFit->GetMedian();
-      thisRedChi = m_BalFit->GetChi2Ndof();
-      thisWidth = m_BalFit->GetSigma();
-
-      if (thisError < 0.5)
-        thisMedianHist = m_BalFit->GetHistoMedian();
-
-
       h_mean->SetBinContent( iBin, thisMean );
       h_mean->SetBinError( iBin, thisError );
+      h_error->SetBinContent(iBin, thisError );
+
+      thisMedian = m_BalFit->GetMedian();
+      h_median->SetBinContent(iBin, thisMedian);
+      thisRedChi = m_BalFit->GetChi2Ndof();
+      h_redchi->SetBinContent(iBin, thisRedChi);
+      thisWidth = m_BalFit->GetSigma();
+      h_width->SetBinContent(iBin, thisWidth);
+
+      if (thisError < 0.5){
+        thisMedianHist = m_BalFit->GetHistoMedian();
+        h_medianHist->SetBinContent(iBin, thisMedianHist);
+      }else
+        h_medianHist->SetBinContent(iBin, -1.);
+
+
 //      if (thisError <= 0.001 && thisRedChi < 3){
 //        h_mean->SetBinContent( iBin, thisMean );
 //        h_mean->SetBinError( iBin, thisError );
@@ -159,8 +194,6 @@ cout << "here" << endl;
 
       char name[200];
 
-      float error = m_BalFit->GetMeanError();
-
       sprintf(name, "Bin: %i", iBin);
       lt->DrawLatex(ltx,lty,name);
       lty -= 0.05;
@@ -177,7 +210,7 @@ cout << "here" << endl;
       lt->DrawLatex(ltx,lty,name);
       lty -= 0.05;
 
-      if (error < 0.5){
+      if (thisError < 0.5){
         sprintf(name,"Hist Median: %.3f", thisMedianHist);
         lt->DrawLatex(ltx,lty,name);
         lty -= 0.05;
@@ -204,12 +237,12 @@ cout << "here" << endl;
       lty -= 0.05;
 
       c1->Update();
-      c1->SaveAs( ("fits/fit_"+to_string(iBin)+".png").c_str() );
+      c1->SaveAs( ("fits/"+fitPlotsOutName+"_"+to_string(iBin)+".png").c_str() );
     }
 
     h_mean->Draw();
     c1->Update();
-    c1->SaveAs( "fits/preprofMJB.png" );
+    c1->SaveAs( ("fits/"+fitPlotsOutName+"_preprofMJB.png").c_str() );
 
 
 
@@ -222,12 +255,20 @@ cout << "here" << endl;
     h_recoilPt_PtBal->SetDirectory(sysDir); h_recoilPt_PtBal->Write();
     h_recoilPt_center->SetDirectory(sysDir); h_recoilPt_center->Write();
     h_mean->SetDirectory(sysDir); h_mean->Write();
+    h_error->SetDirectory(sysDir); h_error->Write();
+    h_redchi->SetDirectory(sysDir); h_redchi->Write();
+    h_median->SetDirectory(sysDir); h_median->Write();
+    h_width->SetDirectory(sysDir); h_width->Write();
+    h_medianHist->SetDirectory(sysDir); h_medianHist->Write();
+
+    c1->Clear();
   }
 
   outFile->Close();
   inFile->Close();
 
 
+  std::cout << "Finished Fitting after " << (std::time(0) - initialTime) << " seconds" << std::endl;
 
     return 0;
 }

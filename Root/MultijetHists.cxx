@@ -81,11 +81,12 @@ StatusCode MultijetHists::initialize(std::string binning) {
   for(int iJet=0; iJet < m_numSavedJets; ++iJet){
     ss << iJet;
 
-    m_MJBNjetsPt.push_back(tmpVec);
-    for(int iB = 0; iB < m_numPtBinnings; ++iB){
-      m_MJBNjetsPt.at(iJet).push_back( book(m_name, ("jetPt_jet"+ss.str()+binningNames.at(iB)),       "jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB]) );
-    }
+//    m_MJBNjetsPt.push_back(tmpVec);
+//    for(int iB = 0; iB < m_numPtBinnings; ++iB){
+//      m_MJBNjetsPt.at(iJet).push_back( book(m_name, ("jetPt_jet"+ss.str()+binningNames.at(iB)),       "jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB]) );
+//    }
 
+    m_MJBNjetsPt.push_back( book(m_name, ("jetPt_jet"+ss.str()),       "jet p_{T} [GeV]", 400, 0, 4000. ) );
     m_MJBNjetsEta.push_back(      book(m_name, ("jetEta_jet"+ss.str()),      ("jet_{"+ss.str()+"} #eta"), 80, -4., 4.) );
     m_MJBNjetsPhi.push_back(      book(m_name, ("jetPhi_jet"+ss.str()),      ("jet_{"+ss.str()+"} #phi"),60, -TMath::Pi(), TMath::Pi() ) );
     m_MJBNjetsM.push_back(        book(m_name, ("jetMass_jet"+ss.str()),     ("jet_{"+ss.str()+"} Mass [GeV]"), 80, 0, 400.) );
@@ -141,7 +142,7 @@ StatusCode MultijetHists::initialize(std::string binning) {
   m_recoilM = book(m_name, "recoilM", "Recoil System Mass (GeV)", 100, 0, 3000.);
   m_recoilE = book(m_name, "recoilE", "Recoil System Energy (GeV)", 100, 0., 3000.);
   m_subOverRecoilPt = book( m_name, "subOverRecoilPt", "Subleading Jet p_{T} / Recoil System p_{T}", 100, 0., 1.);
-  m_recoilPt_center = book(m_name, "recoilPt_center", "Recoil System p_{T}", 3000, 0, 3000.);
+  m_recoilPt_center = book(m_name, "recoilPt_center", "Recoil System p_{T}", 2000, 0, 4000.);
 
   Double_t ptBalBins[501];
   int numPtBalBins = 500;
@@ -172,21 +173,22 @@ StatusCode MultijetHists::initialize(std::string binning) {
 //            "Actual Interactions Per Crossing", 60., 0., 60.) );
 
     m_leadJetPt_jet1Pt.push_back( book(m_name, ("leadJetPt_jet1Pt"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+//            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "Subleading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB]) );
     m_leadJetPt_avgBeta.push_back( book(m_name, ("leadJetPt_avgBeta"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "Average #beta", 90, 1.6, 3.15) );
     m_leadJetPt_alpha.push_back( book(m_name, ("leadJetPt_alpha"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "Alpha", 80, 2.74, 3.15) );
     m_leadJetPt_njet.push_back( book(m_name, ("leadJetPt_njet"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "Number of Jets", 12, 0., 12.) );
 
     /////////////////jetPt vs correction ///////////////////////
     m_leadJetPt_ptBal.push_back( book(m_name, ("leadJetPt_PtBal"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "p_{T} Balance",  numPtBalBins, ptBalBins) );
     m_recoilPt_ptBal.push_back( book(m_name, ("recoilPt_PtBal"+binningNames.at(iB)),
             "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
@@ -205,19 +207,19 @@ StatusCode MultijetHists::initialize(std::string binning) {
 
     //////////////// jetPt vs sampling Pt /////////////////////////////////
     m_leadJetPt_EMFrac.push_back( book(m_name, ("leadJetPt_EMFrac"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "EMFrac", 100, 0., 1.) );
     m_recoilPt_EMFrac.push_back( book(m_name, ("recoilPt_EMFrac"+binningNames.at(iB)),
             "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
             "EMFrac", 100, 0., 1.) );
     m_leadJetPt_HECFrac.push_back( book(m_name, ("leadJetPt_HECFrac"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "HECFrac", 100, 0., 1.) );
     m_recoilPt_HECFrac.push_back( book(m_name, ("recoilPt_HECFrac"+binningNames.at(iB)),
             "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
             "HECFrac", 100, 0., 1.) );
     m_leadJetPt_TileFrac.push_back( book( m_name, ("leadJetPt_TileFrac"+binningNames.at(iB)),
-            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "TileFrac", 100, 0., 1.) );
     m_recoilPt_TileFrac.push_back( book( m_name, ("recoilPt_TileFrac"+binningNames.at(iB)),
             "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
@@ -263,9 +265,10 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
   /////////////////// Fill individual Jet Hists //////////////////////////
   int numJets = std::min( m_numSavedJets, (int)jets->size() );
   for(int iJet=0; iJet < numJets; ++iJet){
-    for(int iB = 0; iB < m_numPtBinnings; ++iB){
-      m_MJBNjetsPt.at(iJet).at(iB)->        Fill( jets->at(iJet)->pt()/1e3,   eventWeight);
-    }
+//    for(int iB = 0; iB < m_numPtBinnings; ++iB){
+//      m_MJBNjetsPt.at(iJet).at(iB)->        Fill( jets->at(iJet)->pt()/1e3,   eventWeight);
+//    }
+    m_MJBNjetsPt.at(iJet)->        Fill( jets->at(iJet)->pt()/1e3,   eventWeight);
     m_MJBNjetsEta.at(iJet)->       Fill( jets->at(iJet)->eta(),      eventWeight);
     m_MJBNjetsPhi.at(iJet)->       Fill( jets->at(iJet)->phi(),      eventWeight);
     m_MJBNjetsM.at(iJet)->         Fill( jets->at(iJet)->m()/1e3,    eventWeight);

@@ -76,6 +76,7 @@ class MultijetAlgorithim : public EL::Algorithm
     std::string m_eventDetailStr;            // Will print out extra histograms
     std::string m_jetDetailStr;              // Will print out extra histograms
     std::string m_MJBDetailStr;              // Will print out extra histograms
+    std::string m_trigDetailStr;              // Will print out extra histograms
     int m_MJBIteration;               // Number of previous MJB iterations
     std::string m_MJBCorrectionFile;
     std::string m_MJBCorrectionBinning;
@@ -91,6 +92,9 @@ class MultijetAlgorithim : public EL::Algorithm
     bool m_MJBStatsOn;
     float m_PtAsym;
     float m_SubLeadingPt;
+    bool m_allJetBeta;
+
+    int m_numJets;
 
     bool m_bootstrap;
     std::string m_triggerConfig;

@@ -39,7 +39,11 @@ def calculateDoubleRatio(dataFileName, mcFileName):
   dataKeyList = [key.GetName() for key in dataFile.GetListOfKeys()] #List of top level objects
   dataDirList = [key for key in dataKeyList if "Iteration" in key] #List of all directories
 
-  outName = 'hist.combined.'+mcType+'.DoubleMJB_initial.root'
+  outName = 'hist.combined.'+mcType
+  if "fit_MJB" in dataFileName:
+    outName += '.Fit_DoubleMJB_initial.root'
+  else:
+    outName += '.DoubleMJB_initial.root'
   outFile = TFile.Open(dirName+outName, "RECREATE");
 
 
