@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
   gErrorIgnoreLevel = 2000;
   std::string inFileName = "";
   bool f_nominal = false;
+
   /////////// Retrieve runFit's arguments //////////////////////////
   std::vector< std::string> options;
   for(int ii=1; ii < argc; ++ii){

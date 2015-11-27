@@ -104,6 +104,12 @@ def plotNominal(file, f_plotSys, f_addGagik):
       nomHist.SetMinimum(0.9)
       nomHist.GetXaxis().SetMoreLogLabels(True)
 #    nomHist.SetMarkerSize(.75)
+    if( "recoilPt" in histName):
+      nomHist.GetYaxis().SetTitle("Entries / GeV")
+      nomHist.GetXaxis().SetRangeUser( 500, 3100 )
+      if( "recoilPt" in histName):
+        for iBin in range(1, nomHist.GetNbinsX()+1):
+          nomHist.SetBinContent(iBin, nomHist.GetBinContent(iBin)/ nomHist.GetBinWidth(iBin))
     nomHist.Draw()
     if not type(nomHist) == TGraphErrors:
       nomHist.Draw("p")
@@ -210,6 +216,9 @@ def plotNominal(file, f_plotSys, f_addGagik):
     nomHist.Draw("same p")
     c1.cd()
     leg.Draw()
+    AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Internal")
+    AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.3 fb^{-1}")
+
     if "Pt" in histName or "alpha" in histName:
       pad1.SetLogy()
       c1.SaveAs(outDir+nomHist.GetName()+"_logy.png" )

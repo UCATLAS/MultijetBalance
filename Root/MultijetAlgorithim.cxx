@@ -266,7 +266,8 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   //maximum subleading pt for each iteration
   m_maxSub.push_back(m_SubLeadingPt*GeV);  //iteration 0
   //m_maxSub.push_back(800.*GeV);  //iteration 0
-  m_maxSub.push_back( 1400.*GeV);  //iteration 1
+  m_maxSub.push_back( 1260.*GeV);  //iteration 1
+  m_maxSub.push_back( 9999.*GeV);  //iteration 2
 
 
 
@@ -279,7 +280,8 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   if( m_bootstrap ){
     systTool_nToys = 100;
     //double theseBins[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
-    double theseBins[] = {125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1300, 1500, 2000, 5000.};
+    //double theseBins[] = {125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1300, 1500, 2000, 5000.};
+    double theseBins[] = {300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1080, 1140, 1200, 1260, 1320, 1380, 1480, 1700, 2000, 2700};
     int binSize = sizeof(theseBins)/sizeof(theseBins[0]);
     for( int iBin=0; iBin < binSize; ++iBin){
       systTool_ptBins.push_back(theseBins[iBin]);
@@ -297,8 +299,8 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
 
     m_cutflowFirst = origCutflowHist->GetXaxis()->FindBin("njets");
     origCutflowHistW->GetXaxis()->FindBin("njets");
-    origCutflowHist->GetXaxis()->FindBin("trigger2");
-    origCutflowHistW->GetXaxis()->FindBin("trigger2");
+    origCutflowHist->GetXaxis()->FindBin( "QuickTrigger");
+    origCutflowHistW->GetXaxis()->FindBin("QuickTrigger");
     origCutflowHist->GetXaxis()->FindBin( "centralLead");
     origCutflowHistW->GetXaxis()->FindBin("centralLead");
     origCutflowHist->GetXaxis()->FindBin( "detEta");
@@ -313,6 +315,8 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
     origCutflowHistW->GetXaxis()->FindBin("JVT");
     origCutflowHist->GetXaxis()->FindBin( "cleanJet");
     origCutflowHistW->GetXaxis()->FindBin("cleanJet");
+    origCutflowHist->GetXaxis()->FindBin( "TriggerEff");
+    origCutflowHistW->GetXaxis()->FindBin("TriggerEff");
     origCutflowHist->GetXaxis()->FindBin( "ptAsym");
     origCutflowHistW->GetXaxis()->FindBin("ptAsym");
     origCutflowHist->GetXaxis()->FindBin( "alpha");
@@ -490,56 +494,13 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   reorderJets( originalSignalJets );
 //start
 
-
-  ////  trigger ////
-  if(m_debug) Info("execute()", "Trigger ");
-  float prescale = 1.;
-  bool passedTriggers = false;
-  if (m_triggers.size() == 0)
-    passedTriggers = true;
-
-  for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
-
-    auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
-    if(originalSignalJets->at(0)->pt() > m_triggerThresholds.at(iT)){
-      if( triggerChainGroup->isPassed() ){
-        passedTriggers = true;
-        prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
-      }
-      break;
-    // need to break after the first isPassed, even if trigger Thresholds is low!
-
-//      std::string l1string = "";
-//      if (m_triggers.at(iT).find("HLT_j360") != std::string::npos){
-//        l1string = "L1_J100";
-//      }else if(m_triggers.at(iT).find("HLT_j260") != std::string::npos){
-//        l1string = "L1_J75";
-//      }else if(m_triggers.at(iT).find("HLT_j150") != std::string::npos){
-//        l1string = "L1_J40";
-//      }
-//
-//      prescaleCut = triggerChainGroup->getPrescale();
-//cout << m_triggers.at(iT) << " : " << l1string << endl;
-//cout << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << ":" << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT),TrigDefs::requireDecision) << " : " << m_trigDecTools.at(iT)->getPrescale(l1string.c_str()) << endl;
-//cout << "Final? " << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << std::endl;
-//cout << "Prescale cut " << prescaleCut << endl;
-//
-//
-//      //Check that it's also below another trigger region ??
-////      cout << "fixed " << TrigConf::PrescaleSet::getPrescaleFromCut(prescale) << endl;
-//
-////      HLT_j360 (unp) = L1_J100 (unp)
-////      HLT_j260 (p) = L1_J75 (unp)
-////      HLT_j150 (p) = L1_J40 (p)
-//      break;
-    }
-  }
-
-  if( !passedTriggers ){
+  if(m_debug) Info("execute()", "QuickTrigger");
+  //Initial check of lead jet pt
+  if( originalSignalJets->at(0)->pt() < 200.*GeV  ){
     delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
-  passCutAll(); //trigger2
+  passCutAll(); // QuickTrigger
 
   //Assign detEta for jets .  Will this be changed by calibrations?
   if(m_debug) Info("execute()", "DetEta ");
@@ -566,6 +527,89 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
   passCutAll(); //detEta
+
+
+//  float prescale = 1.;
+//  bool passedTriggers = false;
+//  if (m_triggers.size() == 0)
+//    passedTriggers = true;
+//
+//  vector<int> triggerJetList;
+//  for (unsigned int iJet = 0; iJet < originalSignalJets->size(); ++iJet){
+//    triggerJetList.push_back(iJet);
+//  }
+//
+//  //Get nominal recoilPt used to derive efficiency curve
+//  for (unsigned int iTrigJet = 0; iTrigJet < triggerJetList.size(); ++iTrigJet){
+//    unsigned int iJet = triggerJetList.at(iTrigJet);
+//    if( originalSignalJets->at(iJet)->pt() < ptThresholdCut ){ //Default 25 GeV
+//      triggerJetList.erase(triggerJetList.begin()+iTrigJet); --iTrigJet;
+//      continue;
+//    }
+//    float triggerJVT = m_JVTToolHandle->updateJvt( *(originalSignalJets->at(iJet)) );
+//    if( triggerJVT < m_JVTCut && originalSignalJets->at(iJet)->pt() < 50.*GeV && fabs(originalSignalJets->at(iJet)->auxdecor< float >("detEta")) < 2.4 ){
+//      triggerJetList.erase(triggerJetList.begin()+iTrigJet); --iTrigJet;
+//      continue;
+//    }
+//    if(! m_JetCleaningTool->accept( *(originalSignalJets->at(iJet))) ){
+//      delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
+//      wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+//    }//clean jet
+//  }
+//  if (triggerJetList.size() < m_numJets){
+//    delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
+//    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+//  }
+//  //Create recoilJets object from all nonleading, passing jets
+//  TLorentzVector triggerRecoilJets;
+//  for (unsigned int iTrigJet = 1; iTrigJet < triggerJetList.size(); ++iTrigJet){
+//    unsigned iJet = triggerJetList.at(iTrigJet);
+//    TLorentzVector tmpJet;
+//    tmpJet.SetPtEtaPhiE(originalSignalJets->at(iJet)->pt(), originalSignalJets->at(iJet)->eta(), originalSignalJets->at(iJet)->phi(), originalSignalJets->at(iJet)->e());
+//    triggerRecoilJets += tmpJet;
+//  }
+//
+//  for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
+//
+//    auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
+//    if(triggerRecoilJets.Pt() > m_triggerThresholds.at(iT)){
+//      if( triggerChainGroup->isPassed() ){
+//        passedTriggers = true;
+//        prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
+//      }
+//      break;
+//    }//recoil Pt
+//  } // each Trigger
+//  if( !passedTriggers ){
+//    delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
+//    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+//  }
+//  passCutAll(); //trigger2
+//
+//      // need to break after the first isPassed, even if trigger Thresholds is low!
+//  //      std::string l1string = "";
+//  //      if (m_triggers.at(iT).find("HLT_j360") != std::string::npos){
+//  //        l1string = "L1_J100";
+//  //      }else if(m_triggers.at(iT).find("HLT_j260") != std::string::npos){
+//  //        l1string = "L1_J75";
+//  //      }else if(m_triggers.at(iT).find("HLT_j150") != std::string::npos){
+//  //        l1string = "L1_J40";
+//  //      }
+//  //
+//  //      prescaleCut = triggerChainGroup->getPrescale();
+//  //cout << m_triggers.at(iT) << " : " << l1string << endl;
+//  //cout << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << ":" << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT),TrigDefs::requireDecision) << " : " << m_trigDecTools.at(iT)->getPrescale(l1string.c_str()) << endl;
+//  //cout << "Final? " << m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT)) << std::endl;
+//  //cout << "Prescale cut " << prescaleCut << endl;
+//  //
+//  //
+//  //      //Check that it's also below another trigger region ??
+//  ////      cout << "fixed " << TrigConf::PrescaleSet::getPrescaleFromCut(prescale) << endl;
+//  //
+//  ////      HLT_j360 (unp) = L1_J100 (unp)
+//  ////      HLT_j260 (p) = L1_J75 (unp)
+//  ////      HLT_j150 (p) = L1_J40 (p)
+//  //      break;
 
 
   if(m_debug) Info("execute()", "MC Cleaning ");
@@ -731,6 +775,28 @@ EL::StatusCode MultijetAlgorithim :: execute ()
       recoilJets += tmpJet;
     }
 
+    ///// Trigger Efficiency /////
+    float prescale = 1.;
+    bool passedTriggers = false;
+    if (m_triggers.size() == 0)
+      passedTriggers = true;
+
+    for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
+      auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
+      if(recoilJets.Pt() > m_triggerThresholds.at(iT)){
+        if( triggerChainGroup->isPassed() ){
+          passedTriggers = true;
+          prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
+        }
+        break;
+      }//recoil Pt
+    } // each Trigger
+    if( !passedTriggers ){
+      continue;
+    }
+    passCut(iVar); //TriggerEff
+
+
     //Remove dijet events, i.e. events where subleading jet dominates the recoil jets
     if(m_debug) Info("execute()", "Pt asym selection ");
     double ptAsym = signalJets->at(1)->pt() / recoilJets.Pt();
@@ -745,7 +811,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     double alpha = fabs(DeltaPhi( signalJets->at(0)->phi(), recoilJets.Phi() )) ;
     eventInfo->auxdecor< float >( "alpha" ) = alpha;
     if( (M_PI-alpha) > alphaCut ){  //0.3 by default
-        continue;
+      continue;
     }
     passCut(iVar); //alpha
 
@@ -1113,7 +1179,12 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
 
   // Add the configuration if AllSystematics is used //
   if( m_varString.find("AllSystematics") != std::string::npos){
-    m_varString = "Nominal-JetCalibSequence-Special-MJB-AllZjet-AllGjet-AllLAr";
+    if(m_isMC){
+      m_varString = "Nominal-MJB";
+    }else{
+      m_varString = "Nominal-Special-MJB-AllZjet-AllGjet";
+    }
+    //m_varString = "Nominal-JetCalibSequence-Special-MJB-AllZjet-AllGjet-AllLAr";
   }
 
   m_NominalIndex = -1; //The index of the nominal
@@ -1206,15 +1277,37 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
     } else if( varVector.at(iVar).compare("MJB") == 0 ){
       //Name - MJB Variation - MJB Value - sign
       m_sysVar.push_back("MJB_a40_pos");   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( 40 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_a35_pos");   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( 35 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_a25_neg");   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( 25 ); m_sysSign.push_back(0);
       m_sysVar.push_back("MJB_a20_neg");   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( 20 ); m_sysSign.push_back(0);
+
       m_sysVar.push_back("MJB_b15_pos");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 15 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_b12_pos");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 12 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_b08_neg");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 5  ); m_sysSign.push_back(0);
       m_sysVar.push_back("MJB_b05_neg");   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( 5  ); m_sysSign.push_back(0);
-      m_sysVar.push_back("MJB_pta90_pos"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 90 ); m_sysSign.push_back(1);
-      if(m_PtAsym < 0.9){ // don't do it for 1.0 ...
-        m_sysVar.push_back("MJB_pta70_neg"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 70 ); m_sysSign.push_back(0);
-      }
+
+
+      int pTAsymValue = round( m_PtAsym*100);
+      string ptAsymString = to_string( pTAsymValue + 5);
+      m_sysVar.push_back(("MJB_pta"+ptAsymString+"_pos")); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( pTAsymValue+5 ); m_sysSign.push_back(1);
+      ptAsymString = to_string( pTAsymValue + 10);
+      m_sysVar.push_back(("MJB_pta"+ptAsymString+"_pos")); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( pTAsymValue+10 ); m_sysSign.push_back(1);
+      ptAsymString = to_string( pTAsymValue - 5);
+      m_sysVar.push_back(("MJB_pta"+ptAsymString+"_neg")); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( pTAsymValue-5 ); m_sysSign.push_back(1);
+      ptAsymString = to_string( pTAsymValue - 10);
+      m_sysVar.push_back(("MJB_pta"+ptAsymString+"_neg")); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( pTAsymValue-10 ); m_sysSign.push_back(1);
+
+
+//      m_sysVar.push_back("MJB_pta90_pos"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 90 ); m_sysSign.push_back(1);
+//      if(m_PtAsym < 0.9){ // don't do it for 1.0 ...
+//        m_sysVar.push_back("MJB_pta70_neg"); m_sysTool.push_back( 4 ); m_sysToolIndex.push_back( 70 ); m_sysSign.push_back(0);
+//      }
+//
       m_sysVar.push_back("MJB_ptt30_pos"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 30 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_ptt27_pos"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 27 ); m_sysSign.push_back(1);
+      m_sysVar.push_back("MJB_ptt23_neg"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 23 ); m_sysSign.push_back(0);
       m_sysVar.push_back("MJB_ptt20_neg"); m_sysTool.push_back( 5 ); m_sysToolIndex.push_back( 20 ); m_sysSign.push_back(0);
+
       if (m_MJBIteration > 0 && m_MJBStatsOn){
         m_sysVar.push_back("MJB_stat0_pos"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 0  ); m_sysSign.push_back(1);
         m_sysVar.push_back("MJB_stat0_neg"); m_sysTool.push_back( 6 ); m_sysToolIndex.push_back( 0  ); m_sysSign.push_back(0);

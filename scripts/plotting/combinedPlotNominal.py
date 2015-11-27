@@ -146,6 +146,11 @@ def combinedPlotNominal(files, normalize, ratio):
 
       if "Eta" in histName and not type(nomHist) == TGraphErrors:
         nomHist.Rebin(4)
+
+      if( "recoilPt" in histName):
+        for iBin in range(1, nomHist.GetNbinsX()+1):
+          nomHist.SetBinContent(iBin, nomHist.GetBinContent(iBin)/ nomHist.GetBinWidth(iBin))
+
       if normalize and not type(nomHist) == TGraphErrors and nomHist.Integral() > 0.:
         nomHist.Scale( 1./nomHist.Integral() )
 
@@ -182,11 +187,15 @@ def combinedPlotNominal(files, normalize, ratio):
         nomHist.SetMarkerSize(.7)
       elif( "Pt" in histName) :
         nomHist.GetXaxis().SetRangeUser( 200, 3500 )
+        nomHist.GetYaxis().SetTitle()
       else:
         nomHist.GetYaxis().SetTitle("AU")
+      if( "recoilPt" in histName):
+        nomHist.GetYaxis().SetTitle("1/N dp_{T}^{recoil}/dN")
+        nomHist.GetXaxis().SetRangeUser( 500, 3200 )
       if not type(nomHist) == TGraphErrors:
-        drawString = "histlsamep"
-        #drawString = "psame"
+        #drawString = "histsamep"
+        drawString = "psame"
       else:
         drawString = "apsame"
         nomHist.SetMarkerStyle(33)
@@ -247,6 +256,8 @@ def combinedPlotNominal(files, normalize, ratio):
             ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 )
             ratioHists[iDir-1].SetMaximum(1.05)
             ratioHists[iDir-1].SetMinimum(0.95)
+          if( "recoilPt" in histName):
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 3200 )
 
           if( "jetBeta" in histName):
             ratioHists[iDir-1].SetMaximum(1)

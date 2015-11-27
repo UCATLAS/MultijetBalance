@@ -94,7 +94,7 @@ class MultijetAlgorithim : public EL::Algorithm
     float m_SubLeadingPt;
     bool m_allJetBeta;
 
-    int m_numJets;
+    unsigned int m_numJets;
 
     bool m_bootstrap;
     std::string m_triggerConfig;

@@ -26,8 +26,8 @@ import plotMJBvEta
 import plotAll
 
 
-mcTypes = ["Pythia", "Sherpa", "Herwig"]
-#mcTypes = ["Pythia", "Sherpa"]
+mcTypes = ["Pythia", "Herwig"]
+#mcTypes = ["Pythia", "Sherpa", "Herwig"]
 
 
 f_getPtHist = False
@@ -39,8 +39,8 @@ f_plotAll = False
 f_plotSL = False
 
 #f_getPtHist = True
-#f_scale = True #Scale MC files
-#f_combine = True #Combine MC files
+f_scale = True #Scale MC files
+f_combine = True #Combine MC files
 f_calculateMJB = True # Calculate new histograms to be added to root file
 f_plotRelevant = True # Most important Plots
 #f_plotAll = True # All plots
@@ -49,7 +49,7 @@ f_plotRelevant = True # Most important Plots
 doFit = True
 doData = True
 doMC = True
-doSys = False
+doSys = True
 doJZSlices = False
 doFinal = False
 
@@ -174,32 +174,32 @@ if(f_plotRelevant):
 #    print 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files
 #    os.system('python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files)
 #
-#  if(doMC and doData):
-#    files = sorted(glob.glob(args.workDir+'/*.appended.root'))
-#    files = ','.join(files)
-#    command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --normalize --files '+files
-#    print command
-#    os.system(command)
-
-    files = sorted(glob.glob(args.workDir+'/*.MJB_initial.root'))
+  if(doMC and doData):
+    files = sorted(glob.glob(args.workDir+'/*.appended.root'))
     files = ','.join(files)
-    command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+    command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --normalize --files '+files
     print command
     os.system(command)
 
-    if(doFit):
-      files = sorted(glob.glob(args.workDir+'/*.fit_MJB_initial.root'))
-      files = ','.join(files)
-      command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
-      print command
-      os.system(command)
-
-    if(doFinal):
-      files = sorted(glob.glob(args.workDir+'/*.MJB_final.root'))
-      files = ','.join(files)
-      command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
-      print command
-      os.system(command)
+#    files = sorted(glob.glob(args.workDir+'/*.MJB_initial.root'))
+#    files = ','.join(files)
+#    command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+#    print command
+#    os.system(command)
+#
+#    if(doFit):
+#      files = sorted(glob.glob(args.workDir+'/*.fit_MJB_initial.root'))
+#      files = ','.join(files)
+#      command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+#      print command
+#      os.system(command)
+#
+#    if(doFinal):
+#      files = sorted(glob.glob(args.workDir+'/*.MJB_final.root'))
+#      files = ','.join(files)
+#      command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+#      print command
+#      os.system(command)
 
 #  ## plotMJBvEta.py ##
 #  files = glob.glob(args.workDir+'/*.MJB_initial.root')+glob.glob(args.workDir+'/*.DoubleMJB_initial.root')
