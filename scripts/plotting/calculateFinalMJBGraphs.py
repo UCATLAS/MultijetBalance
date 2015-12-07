@@ -72,7 +72,8 @@ def calculateFinalMJBGraphs(file, binnings):
     if os.path.isfile(ptBinFile):
       ptFile = TFile.Open( ptBinFile , 'READ' )
       ptTree = ptFile.Get('ptBinTree')
-      xValues, xErrors = getXaxisFromTree(tmpMJBHist, ptTree)
+#      xValues, xErrors = getXaxisFromTree_recoil(tmpMJBHist, ptTree)
+      xValues, xErrors = getXaxisFromTree_leadJet(tmpMJBHist, ptTree)
 
     else:
       print "No ptBinTree file found, instead looking for recoilPt_center TH1F in ", file
@@ -141,7 +142,7 @@ def getXaxisFromHist(MJBHist, ptHist):
 
   return xValueArr, xValueErrorArr
 
-def getXaxisFromTree(MJBHist, ptTree):
+def getXaxisFromTree_recoil(MJBHist, ptTree):
   xValues = []
   xValueErrors = []
   ptHist = TH1F("ptHist", "ptHist", 1, 0, 1e10)
@@ -152,6 +153,28 @@ def getXaxisFromTree(MJBHist, ptTree):
     #binning doesn't matter as GetMean() is unbinned
     ptTree.Draw('recoilPt >> ptHist', 'weight*(recoilPt>='+str(edgeLow)+' && recoilPt<'+str(edgeUp)+')')
     xValues.append( ptHist.GetMean()/1e3 )
+    if( xValues[-1] == 0. ): #If no events, then set to average of bin edges
+      xValues[-1] = (edgeUp+edgeLow)/2./1e3
+
+    xValueErrors.append( 0. )
+
+  print "Using xValues", xValues
+  xValueArr = array('d', xValues)
+  xValueErrorArr = array('d', xValueErrors)
+
+  return xValueArr, xValueErrorArr
+
+def getXaxisFromTree_leadJet(MJBHist, ptTree):
+  xValues = []
+  xValueErrors = []
+  ptHist = TH1F("ptHist", "ptHist", 1, 0, 1e7)
+  for iBin in range(1, MJBHist.GetNbinsX()+1):
+    edgeLow = MJBHist.GetXaxis().GetBinLowEdge(iBin)*1e3
+    edgeUp = MJBHist.GetXaxis().GetBinUpEdge(iBin)*1e3
+
+    #binning doesn't matter as GetMean() is unbinned
+    ptTree.Draw('leadJetPt >> ptHist', 'weight*(recoilPt>='+str(edgeLow)+' && recoilPt<'+str(edgeUp)+')')
+    xValues.append( ptHist.GetMean() )
     if( xValues[-1] == 0. ): #If no events, then set to average of bin edges
       xValues[-1] = (edgeUp+edgeLow)/2./1e3
 

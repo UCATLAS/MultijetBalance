@@ -49,19 +49,33 @@ def plotSysRatios(file):
   for sysDirName in sysDirNameList:
     sysDirList.append( inFile.Get(sysDirName) )
 
+  ## This removes extra MJB systematics
+  MJBsToUse = ["a40","a20","b15","b05","pta90","pta70","ptt30","ptt20"]
+  sysDirList = [sysDir for sysDir in sysDirList if (not "MJB" in sysDir.GetName() or any(MJBtouse in sysDir.GetName() for MJBtouse in MJBsToUse) )]
+
   ## Combine systematics in types ##
-  sysTypes = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "All"]
-  #sysTypes = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "MJB", "All"]
+  sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "MJB", "MCType"]
 #  sysTypes = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "All"]
 # SingleParticle, RelativeNonClosure, Pileup, BJES, PunchThrough
+
+  sysTypes = []
+  for sysType in sysTypesToUse:
+    if any(sysType in sysDir for sysDir in sysDirNameList):
+      sysTypes.append( sysType )
+  if len(sysTypes) > 1:
+    sysTypes.append("All")
   if "All" in sysTypes:
     colorOffset = 240./(len(sysTypes)-1)
   else:
     colorOffset = 240./len(sysTypes)
 
-  print "Plotting systematic differences "
+  #print "Plotting systematic differences "
+  #print sysTypes
 
   histList = [key.GetName() for key in nomDir.GetListOfKeys()]
+
+
+
   for histName in histList:
     if "prof_" in histName or "ptSlice" in histName:
       continue
@@ -95,7 +109,7 @@ def plotSysRatios(file):
     settingsHist.SetMarkerColor(kWhite)
     settingsHist.GetYaxis().SetRangeUser(-1., 2.)
     if("MJB" in histName):
-      settingsHist.GetXaxis().SetRangeUser( 400, 3000 )
+      settingsHist.GetXaxis().SetRangeUser( 300, 3000 )
       settingsHist.GetXaxis().SetMoreLogLabels(True)
       settingsHist.GetYaxis().SetRangeUser(-0.02, 0.02)
 
@@ -126,7 +140,9 @@ def plotSysRatios(file):
       sysHistUp.Draw("same hist lp")
       sysHistDn.Draw("same hist lp")
       if( topSysName == "EtaIntercalibration"):
-        leg.AddEntry( sysHistUp, "EIC", "lp")
+        leg.AddEntry( sysHistUp, "Eta IC", "lp")
+      elif( topSysName == "PunchThrough"):
+        leg.AddEntry( sysHistUp, "PunchTh", "lp")
       else:
         leg.AddEntry( sysHistUp, topSysName, "lp")
 

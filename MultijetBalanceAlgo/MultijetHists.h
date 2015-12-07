@@ -11,6 +11,7 @@ class MultijetHists : public JetHists
   public:
 
     bool f_extraMJBHists;
+    bool f_minimalMJBHists;
     bool m_debug;
 
     int m_numSavedJets;
@@ -60,6 +61,7 @@ class MultijetHists : public JetHists
     std::vector<TH1F*> m_recoilPt;    //!
 
 
+    std::vector<TH2F*> m_recoilPt_jet0Pt;          //!
     std::vector<TH2F*> m_recoilPt_jet1Pt;          //!
     std::vector<TH2F*> m_recoilPt_avgBeta;         //!
     std::vector<TH2F*> m_recoilPt_alpha;           //!

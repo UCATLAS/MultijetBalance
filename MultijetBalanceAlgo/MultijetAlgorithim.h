@@ -80,6 +80,8 @@ class MultijetAlgorithim : public EL::Algorithm
     int m_MJBIteration;               // Number of previous MJB iterations
     std::string m_MJBCorrectionFile;
     std::string m_MJBCorrectionBinning;
+    std::string m_MJBIterationThreshold;
+    std::vector<float> m_subLeadingPtThreshold;
     std::string m_varString;                  // Systematic Variations to use
     std::string m_MCPileupCheckContainer; // Name of truth container for MC Pileup Check
     bool m_useMCPileupCheck;
@@ -97,6 +99,7 @@ class MultijetAlgorithim : public EL::Algorithm
     unsigned int m_numJets;
 
     bool m_bootstrap;
+    bool m_iterateBootstrap;
     std::string m_triggerConfig;
     float m_JVTCut;
 
@@ -140,8 +143,6 @@ class MultijetAlgorithim : public EL::Algorithm
     int m_mcChannelNumber; //!
     int m_runNumber; //!
     std::stringstream m_ss; //!
-
-    std::vector<int> m_maxSub; //!
 
     std::vector<std::string> m_sysVar; //!
     std::vector<int> m_sysTool; //!

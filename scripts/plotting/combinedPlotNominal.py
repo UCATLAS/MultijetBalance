@@ -32,12 +32,15 @@ def combinedPlotNominal(files, normalize, ratio):
   dataFile = [file for file in files if ".data." in file][0]
   files.remove(dataFile)
   files.insert(0, dataFile)
-  pythiaFile = [file for file in files if "Pythia" in file][0]
-  files.remove(pythiaFile)
-  files.insert(1, pythiaFile)
-  sherpaFile = [file for file in files if "Sherpa" in file][0]
-  files.remove(sherpaFile)
-  files.insert(2, sherpaFile)
+  if any("Pythia" in file for file in files):
+    pythiaFile = [file for file in files if "Pythia" in file][0]
+    files.remove(pythiaFile)
+    files.insert(1, pythiaFile)
+
+  if any("Sherpa" in file for file in files):
+    sherpaFile = [file for file in files if "Sherpa" in file][0]
+    files.remove(sherpaFile)
+    files.insert(2, sherpaFile)
   # Save output to directory of first file
   outDir = dataFile[:-5]+'/'
   if not os.path.exists(outDir):
@@ -74,8 +77,8 @@ def combinedPlotNominal(files, normalize, ratio):
 
   ################ Set Color Palate ####################3
 # Data, Herwig, Pythia8, Sherpa
-  colors = [kBlack, kViolet, kBlue, kRed, kCyan]
-  markers = [20, 22, 23, 21, 33, 34]
+  colors = [kBlack, kRed, kBlue, kViolet, kCyan]
+  markers = [20, 21, 23, 22, 33, 34]
 #  colorMax = 240.
 #  colorMin = 0. #20.
 #  numInputs = len( nomDirs )
@@ -155,7 +158,6 @@ def combinedPlotNominal(files, normalize, ratio):
         nomHist.Scale( 1./nomHist.Integral() )
 
 
-      print files[iDir]
       if "Sherpa" in files[iDir] and "MJB" in histName:
         for iBin in range(31, nomHist.GetNbinsX()+1):
           nomHist.SetBinContent(iBin, 0)
@@ -164,7 +166,8 @@ def combinedPlotNominal(files, normalize, ratio):
       nomHist.SetLineColor(colors[iDir])
       nomHist.SetMarkerColor(colors[iDir])
       nomHist.SetMarkerStyle(markers[iDir])
-      leg.AddEntry( nomHist, thisFileStr.replace('d','D'), "lp" )
+      thisEntry = leg.AddEntry( nomHist, thisFileStr.replace('d','D').replace('Sherpa', 'Sherpa 2.1').replace('Herwig','Herwig++'), "lp" )
+      thisEntry.SetTextColor( colors[iDir] )
       #nomHist.SetMinimum(0.9)
 #      if( "jetPt" in histName or "jetEnergy" in histName):
 #        maxBinX.append(nomHist.FindLastBinAbove(0)+1)
@@ -172,27 +175,34 @@ def combinedPlotNominal(files, normalize, ratio):
 #        nomHist.SetMinimum(0.000101)
 #      else:
       nomHist.SetMaximum(1.5*nomHist.GetMaximum())
-      nomHist.SetMinimum(0.0000101)
       #nomHist.SetMinimum(0.000101)
       if( "MJB" in histName) :
-        nomHist.GetXaxis().SetRangeUser( 500, 2800 )
-        nomHist.SetMaximum(1.06)
-        nomHist.SetMinimum(0.9701)
+        nomHist.SetMinimum(0.0000101)
+        nomHist.GetXaxis().SetRangeUser( 500, 2800 ) #!!public
+        nomHist.SetMaximum(1.06) #!!public
+        nomHist.SetMinimum(0.9701) #!!public
+        #nomHist.GetXaxis().SetRangeUser( 300, 2800 )
+        #nomHist.SetMaximum(1.2)
+        #nomHist.SetMinimum(0.8999)
         nomHist.GetXaxis().SetMoreLogLabels(True)
-        nomHist.GetYaxis().SetTitle("<p_{T}^{lead jet}/p_{T}^{recoil}>")
+        nomHist.GetYaxis().SetTitle("#LT p_{T}^{lead jet}/p_{T}^{recoil} #GT")
         nomHist.GetYaxis().SetTitleSize(0.09)
         nomHist.GetYaxis().SetTitleOffset(0.7)
         nomHist.GetYaxis().SetLabelSize(0.06)
         nomHist.GetYaxis().SetLabelOffset(0.01)
-        nomHist.SetMarkerSize(.7)
+        nomHist.SetMarkerSize(.8)
+        nomHist.SetLineWidth(1)
       elif( "Pt" in histName) :
-        nomHist.GetXaxis().SetRangeUser( 200, 3500 )
-        nomHist.GetYaxis().SetTitle()
+        nomHist.GetYaxis().SetTitle("AU")
+        if( "jet0" in histName):
+          nomHist.GetXaxis().SetRangeUser( 200, 2000 )
+        else:
+          nomHist.GetXaxis().SetRangeUser( 0, 800 )
       else:
         nomHist.GetYaxis().SetTitle("AU")
       if( "recoilPt" in histName):
         nomHist.GetYaxis().SetTitle("1/N dp_{T}^{recoil}/dN")
-        nomHist.GetXaxis().SetRangeUser( 500, 3200 )
+        nomHist.GetXaxis().SetRangeUser( 300, 3000 )
       if not type(nomHist) == TGraphErrors:
         #drawString = "histsamep"
         drawString = "psame"
@@ -236,11 +246,12 @@ def combinedPlotNominal(files, normalize, ratio):
         ratioHists[iDir-1].SetMarkerStyle( markers[iDir] )
         ratioHists[iDir-1].SetLineColor( colors[iDir] )
         if iDir == 1:
+          ratioHists[iDir-1].SetMaximum(2)
+          ratioHists[iDir-1].SetMinimum(0.5)
           ratioHists[iDir-1].GetXaxis().SetLabelOffset(.015)
           ratioHists[iDir-1].GetXaxis().SetTitleOffset(1.3)
           ratioHists[iDir-1].GetXaxis().SetLabelSize(0.13)
           ratioHists[iDir-1].GetXaxis().SetTitleSize(0.16)
-          ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
 #          ratioHists[iDir-1].GetXaxis().SetTitle(nomHists[0].GetXaxis().GetTitle());
           ratioHists[iDir-1].GetXaxis().SetMoreLogLabels()
           ratioHists[iDir-1].GetYaxis().SetLabelSize(0.13)
@@ -251,17 +262,23 @@ def combinedPlotNominal(files, normalize, ratio):
           ratioHists[iDir-1].GetYaxis().SetTitle("   MC / Data")
           ratioHists[iDir-1].GetYaxis().SetNdivisions(7)
           if( "Pt" in histName) :
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 200, 3500 )
+            if( "jet0" in histName):
+              ratioHists[iDir-1].GetXaxis().SetRangeUser( 200, 2000 )
+            else:
+              ratioHists[iDir-1].GetXaxis().SetRangeUser( 0, 800 )
           if( "MJB" in histName) :
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 )
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 ) #!!public
+            #ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 2800 )
             ratioHists[iDir-1].SetMaximum(1.05)
             ratioHists[iDir-1].SetMinimum(0.95)
+            ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
           if( "recoilPt" in histName):
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 3200 )
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 3000 )
+            ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
 
-          if( "jetBeta" in histName):
-            ratioHists[iDir-1].SetMaximum(1)
-            ratioHists[iDir-1].SetMinimum(-1)
+     #     if( "jetBeta" in histName):
+     #       ratioHists[iDir-1].SetMaximum(1)
+     #       ratioHists[iDir-1].SetMinimum(-1)
 
       ratioHists[0].Draw( "p" )
       oneLine.Draw("same")
@@ -271,15 +288,16 @@ def combinedPlotNominal(files, normalize, ratio):
 
     c1.cd()
     leg.Draw()
-    AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Internal")
+    AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Preliminary")
     AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.3 fb^{-1}")
+    AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events")
     typeText = "anti-k_{t} R = 0.4"
     if "_LC_" in dataFile:
       typeText += ", LC+JES (in-situ)"
     else:
       typeText += ", EM+JES (in-situ)"
-    AtlasStyle.myText(0.2,0.76,1, typeText)
-    AtlasStyle.myText(0.2,0.7,1, "#left|#eta^{lead jet}#right| < 1.2")
+    AtlasStyle.myText(0.2,0.7,1, typeText)
+    AtlasStyle.myText(0.2,0.64,1, "#left|#eta^{lead jet}#right| < 1.2")
 #    AtlasStyle.myText(0.1,0.75,1, "m_{jj} Correction")
 
     if "MJB" in histName:

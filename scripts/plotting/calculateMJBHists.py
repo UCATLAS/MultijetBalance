@@ -47,7 +47,8 @@ def calculateMJBHists(file, binnings, f_extraPlots):
   keyList = [key.GetName() for key in inFile.GetListOfKeys()] #List of top level objects
   dirList = [key for key in keyList if "Iteration" in key] #List of all directories
 
-  MJBcorrectionTags = ["", "_eta1", "_eta2", "_eta3"]
+  MJBcorrectionTags = [""]
+  #MJBcorrectionTags = ["", "_eta1", "_eta2", "_eta3"]
   numSamplingLayers = 24
 
 

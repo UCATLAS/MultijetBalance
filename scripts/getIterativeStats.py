@@ -15,10 +15,10 @@ sys.path.insert(0, '/home/jdandoy/Documents/Dijet/DijetFW/DijetHelpers/scripts/'
 import AtlasStyle
 AtlasStyle.SetAtlasStyle()
 
-f_getHist = False
+f_getHist = True
 f_getBinning = True
 
-fileName = "../../gridOutput/Trigger_VA_EM_Nov23/workarea/DataTrigger/allData.root"
+fileName = "../../gridOutput/workarea/Trigger_VA_EM_Nov23/workarea/DataTrigger/allData.root"
 treeName = "outTree_Nominal"
 branchName = "recoilPt"
 #1p = 10000, 3p = 1111, 5p = 400
@@ -74,7 +74,7 @@ if (f_getHist):
         if triggers[iT] in passedTriggers:
           if( jet_pt[1] <= 800):
             run1.Fill( b_pt[0] / 1e3 )
-          if( jet_pt[1] <= 1260):
+          if( jet_pt[1] <= 1380):
             run2.Fill( b_pt[0] / 1e3 )
           run3.Fill( b_pt[0] / 1e3 )
 
@@ -104,7 +104,7 @@ if (f_getBinning):
   c1 = ROOT.TCanvas()
   leg = ROOT.TLegend(0.6, 0.6, 0.9, 0.9)
   leg.AddEntry( run1, "800 GeV", "l")
-  leg.AddEntry( run2, "1320 GeV", "l")
+  leg.AddEntry( run2, "1380 GeV", "l")
   leg.AddEntry( run3, "No Limit", "l")
 
 

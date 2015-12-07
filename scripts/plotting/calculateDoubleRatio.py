@@ -33,13 +33,21 @@ def calculateDoubleRatio(dataFileName, mcFileName):
   mcKeyList = [key.GetName() for key in mcFile.GetListOfKeys()] #List of top level objects
   mcDirList = [key for key in mcKeyList if "Iteration" in key] #List of all directories
   mcType = mcFileName.split('.')[-3]
+  mcDirName_nominal = [dir for dir in mcDirList if "Nominal" in dir][0]
 
 
   dataFile = TFile.Open(dataFileName, "READ");
   dataKeyList = [key.GetName() for key in dataFile.GetListOfKeys()] #List of top level objects
   dataDirList = [key for key in dataKeyList if "Iteration" in key] #List of all directories
+  dataDirName_nominal = [dir for dir in dataDirList if "Nominal" in dir][0]
 
   outName = 'hist.combined.'+mcType
+
+  # If we're doing a bootstrap, then empty for MC!
+  if os.path.basename(dataFileName).startswith('bootstrap'):
+    outName = 'bootstrap.combined.'+mcType
+    mcDirList = []
+
   if "fit_MJB" in dataFileName:
     outName += '.Fit_DoubleMJB_initial.root'
   else:
@@ -47,21 +55,46 @@ def calculateDoubleRatio(dataFileName, mcFileName):
   outFile = TFile.Open(dirName+outName, "RECREATE");
 
 
-  print "Creating Double MJB Correction Hist"
-  for dir in mcDirList:
-    if not dir in dataDirList:
-      print "Error, dir ", dir, " is in MC but not in data"
-      continue
+  print "Creating Double MJB Correction Hist ", outFile
+  ## There are more systematics for data than in MC
+  ## If the systematic name only exists in Data, then grab the nominal version for MC
+  new_mcDirList = []
+  new_dataDirList = []
+  new_bothDirList = []
+  for dataDirName in dataDirList:
+    ## If systematic is in both
+    if dataDirName in mcDirList:
+      new_mcDirList.append( dataDirName )
+      new_dataDirList.append( dataDirName )
+      new_bothDirList.append( dataDirName )
+    else:
+    ## In data only, get nominal MC
+#      print "Dir ", dataDirName, " is in Data but not in MC, using", mcDirName_nominal
+      new_mcDirList.append( mcDirName_nominal )
+      new_dataDirList.append( dataDirName )
+      new_bothDirList.append( dataDirName )
+
+  ## In MC only, get nominal data
+  for mcDirName in mcDirList:
+    if not mcDirName in dataDirList:
+      new_mcDirList.append( mcDirName )
+      new_dataDirList.append( dataDirName_nominal )
+      new_bothDirList.append( mcDirName )
+
+  for iDir, bothDirName in enumerate(new_bothDirList):
+#    print bothDirName, "(", iDir, "/", len(new_bothDirList), ")"
+    dataDirName = new_dataDirList[iDir]
+    mcDirName = new_mcDirList[iDir]
 
     #print "           ", dir
-    outFile.mkdir( dir )
-    newDir = outFile.Get( dir )
-    mcDir = mcFile.Get( dir )
-    dataDir = dataFile.Get( dir )
+    outFile.mkdir( bothDirName )
+    newDir = outFile.Get( bothDirName )
+    dataDir = dataFile.Get( dataDirName )
+    mcDir = mcFile.Get( mcDirName )
 
     ##Get recoilPt histogram and save it ##
-    thisDataPtHist = dataDir.Get( "recoilPt_center" )
-    thisDataPtHist.SetDirectory( newDir )
+#old    thisDataPtHist = dataDir.Get( "recoilPt_center" )
+#old    thisDataPtHist.SetDirectory( newDir )
 
     mcHistList = [key.GetName() for key in mcDir.GetListOfKeys() if "MJB" in key.GetName()]
     dataHistList = [key.GetName() for key in dataDir.GetListOfKeys()]
@@ -79,19 +112,25 @@ def calculateDoubleRatio(dataFileName, mcFileName):
 #      for iBin in range(1, thisHist.GetNbinsX()+1):
 #        thisHist.SetBinError(iBin, 0.)
 
+  print "Writing file"
   outFile.Write()
   outFile.Close()
   mcFile.Close()
   dataFile.Close()
 
+  # If bootstrap, we're done
+  if os.path.basename(dataFileName).startswith('bootstrap'):
+    return;
+
 ############ Calculate systematic differences for Double MJB Corrections #####################3
+
 
   inFile = TFile.Open(dirName+outName, "READ");
   keyList = [key.GetName() for key in inFile.GetListOfKeys()] #List of top level objects
   dirList = [key for key in keyList if "Iteration" in key] #List of all directories
   nomDirName = [dir for dir in dirList if "Nominal" in dir]
   if( not len(nomDirName) == 1):
-    print "Error, nominal directories in new output file are ", nomDir
+    print "Error, nominal directories in new output file are ", nomDirName
     return
   else:
     nomDir = inFile.Get( nomDirName[0] )

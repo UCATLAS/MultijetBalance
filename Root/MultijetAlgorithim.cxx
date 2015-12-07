@@ -90,17 +90,18 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_trigDetailStr            = config->GetValue("TrigDetailStr",         m_trigDetailStr.c_str());
   m_MJBIteration      = config->GetValue("MJBIteration",     0);
   m_MJBCorrectionFile = config->GetValue("MJBCorrectionFile",     "");
+  m_MJBIterationThreshold = config->GetValue("MJBIterationThreshold", "800,1380");
   m_MJBCorrectionBinning      = config->GetValue("MJBCorrectionBinning",     "");
   if( m_MJBCorrectionBinning.size() > 0 && m_MJBCorrectionBinning[0] != '_')
     m_MJBCorrectionBinning = "_"+m_MJBCorrectionBinning;
-  m_leadJetMJBCorrection  = config->GetValue("LeadJetMJBCorrection",   "false");
+  m_leadJetMJBCorrection  = config->GetValue("LeadJetMJBCorrection",   false);
   m_varString         = config->GetValue("Variations",       "Nominal");
   m_MCPileupCheckContainer = config->GetValue("MCPileupCheckContainer", "AntiKt4TruthJets");
   m_triggerConfig     = config->GetValue("Triggers", "");
   m_closureTest       = config->GetValue("ClosureTest" ,    false);
 
   m_PtAsym            = config->GetValue("PtAsym", 0.8);
-  m_SubLeadingPt      = config->GetValue("SubLeadingPt", 800.);
+//  m_SubLeadingPt      = config->GetValue("SubLeadingPt", 800.);
   m_noLimitJESPt      = config->GetValue("NoLimitJESPt" ,    false);
   m_reverseSubleading = config->GetValue("ReverseSubleading" ,    false);
   m_leadingInsitu     = config->GetValue("LeadingInsitu", false);
@@ -108,6 +109,17 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   m_allJetBeta        = config->GetValue("AllJetBeta", false);
 
   m_bootstrap = config->GetValue("BootStrap", false);
+
+  m_iterateBootstrap = false;
+  if( m_bootstrap && m_MJBIteration > 0){
+    cout << "Attempting bootstrap on subsequent iteration.  Turning off cutflow, ttree, and unnecessary histograms." << endl;
+    m_iterateBootstrap = true;
+    m_bootstrap = false;
+    m_useCutFlow = false;
+    m_jetDetailStr += " bootstrapIteration";
+    m_writeTree = false;
+    m_writeNominalTree = false;
+  }
 
   m_numJets = config->GetValue("NumJets", 3);
 
@@ -121,14 +133,20 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
 
   // Save triggers to use
   std::stringstream ss(m_triggerConfig);
-  std::string thisTriggerStr;
+  std::string thisSubStr;
   std::string::size_type sz;
-  while (std::getline(ss, thisTriggerStr, ',')) {
-    m_triggers.push_back( thisTriggerStr.substr(0, thisTriggerStr.find_first_of(':')) );
-    m_triggerThresholds.push_back( std::stof(thisTriggerStr.substr(thisTriggerStr.find_first_of(':')+1, thisTriggerStr.size()) , &sz) *GeV );
+  while (std::getline(ss, thisSubStr, ',')) {
+    m_triggers.push_back( thisSubStr.substr(0, thisSubStr.find_first_of(':')) );
+    m_triggerThresholds.push_back( std::stof(thisSubStr.substr(thisSubStr.find_first_of(':')+1, thisSubStr.size()) , &sz) *GeV );
     cout << m_triggers.at(m_triggers.size()-1) << " " << m_triggerThresholds.at(m_triggers.size()-1) << endl;
   }
 
+  std::stringstream ss2(m_MJBIterationThreshold);
+  cout << "Subleading pT thresholds are set to: " << endl;
+  while( std::getline(ss2, thisSubStr, ',')) {
+    m_subLeadingPtThreshold.push_back( std::stof(thisSubStr, &sz) * GeV );
+    cout << m_subLeadingPtThreshold.at(m_subLeadingPtThreshold.size()-1) << endl;
+  }
 
   ///// Tool Config parameters /////
 
@@ -263,17 +281,24 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
 
   getLumiWeights(eventInfo);
 
-  //maximum subleading pt for each iteration
-  m_maxSub.push_back(m_SubLeadingPt*GeV);  //iteration 0
-  //m_maxSub.push_back(800.*GeV);  //iteration 0
-  m_maxSub.push_back( 1260.*GeV);  //iteration 1
-  m_maxSub.push_back( 9999.*GeV);  //iteration 2
-
-
-
   // load all variations
   setupJetCalibrationStages();
   loadVariations();
+
+  loadTriggerTool();
+  loadJVTTool();
+  //load Calibration and systematics files
+  loadJetCalibrationTool();
+  loadJetCleaningTool();
+  loadJetUncertaintyTool();
+//old  loadVjetCalibration();
+
+  if (loadMJBCalibration() == EL::StatusCode::FAILURE)
+    return EL::StatusCode::FAILURE;
+
+
+
+
 
   //Crap for Syst Tool
   // Fix this to be elegent and take any binning
@@ -347,25 +372,14 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   //Add output hists for each variation
   m_ss << m_MJBIteration;
   for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-    MultijetHists* thisJetHists = new MultijetHists( ( "Iteration"+m_ss.str()+"_"+m_sysVar.at(iVar) ), (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
+    MultijetHists* thisJetHists = new MultijetHists( ( "Iteration"+m_ss.str()+"_"+m_sysVar.at(iVar)+"_" ), (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
+    //MultijetHists* thisJetHists = new MultijetHists( ( "Iteration"+m_ss.str()+"_"+m_sysVar.at(iVar) ), (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
     m_jetHists.push_back(thisJetHists);
     m_jetHists.at(iVar)->initialize(m_MJBCorrectionBinning);
     m_jetHists.at(iVar)->record( wk() );
   }
   m_ss.str("");
 
-
-
-  loadTriggerTool();
-  loadJVTTool();
-  //load Calibration and systematics files
-  loadJetCalibrationTool();
-  loadJetCleaningTool();
-  loadJetUncertaintyTool();
-  loadVjetCalibration();
-
-  if (loadMJBCalibration() == EL::StatusCode::FAILURE)
-    return EL::StatusCode::FAILURE;
 
 
   //Writing nominal tree only requies this sample to have the nominal output
@@ -419,36 +433,36 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   ++m_eventCounter;
 
   if(m_eventCounter >  m_maxEvent){
-      wk()->skipEvent();  return EL::StatusCode::SUCCESS;
-    }
+    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+  }
 
-    if(m_eventCounter %100000 == 0)
-      Info("execute()", "Event # %i", m_eventCounter);
+  if(m_eventCounter %100000 == 0)
+    Info("execute()", "Event # %i", m_eventCounter);
 
-    m_iCutflow = m_cutflowFirst; //for cutflow histogram automatic filling
+  m_iCutflow = m_cutflowFirst; //for cutflow histogram automatic filling
 
-    //----------------------------
-    // Event information
-    //---------------------------
-    ///////////////////////////// Retrieve Containers /////////////////////////////////////////
-    if(m_debug) Info("execute()", "Retrieve Containers ");
+  //----------------------------
+  // Event information
+  //---------------------------
+  ///////////////////////////// Retrieve Containers /////////////////////////////////////////
+  if(m_debug) Info("execute()", "Retrieve Containers ");
 
-    //const xAOD::EventInfo* eventInfo = HelperFunctions::getContainer<xAOD::EventInfo>("EventInfo", m_event, m_store);
-    const xAOD::EventInfo* eventInfo = 0;
-    HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store);
-    m_mcEventWeight = (m_isMC ? eventInfo->mcEventWeight() : 1.) ;
+  //const xAOD::EventInfo* eventInfo = HelperFunctions::getContainer<xAOD::EventInfo>("EventInfo", m_event, m_store);
+  const xAOD::EventInfo* eventInfo = 0;
+  HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store);
+  m_mcEventWeight = (m_isMC ? eventInfo->mcEventWeight() : 1.) ;
 
-    //const xAOD::VertexContainer* vertices = HelperFunctions::getContainer<xAOD::VertexContainer>("PrimaryVertices", m_event, m_store);;
-    const xAOD::VertexContainer* vertices = 0;
-    HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store);
-    m_pvLocation = HelperFunctions::getPrimaryVertexLocation( vertices );  //Get primary vertex for JVF cut
+  //const xAOD::VertexContainer* vertices = HelperFunctions::getContainer<xAOD::VertexContainer>("PrimaryVertices", m_event, m_store);;
+  const xAOD::VertexContainer* vertices = 0;
+  HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store);
+  m_pvLocation = HelperFunctions::getPrimaryVertexLocation( vertices );  //Get primary vertex for JVF cut
 
-    //const xAOD::JetContainer* inJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_inContainerName, m_event, m_store);
-    const xAOD::JetContainer* inJets = 0;
-    HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store);
+  //const xAOD::JetContainer* inJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_inContainerName, m_event, m_store);
+  const xAOD::JetContainer* inJets = 0;
+  HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store);
 
-    if(inJets->size() < m_numJets){
-      wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+  if(inJets->size() < m_numJets){
+    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
   passCutAll(); //njets
 
@@ -650,24 +664,15 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 
     //Set relevant variations for this iVar
     if( m_sysTool.at(iVar) == 2 ){ //alpha
-//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_a")+5, 2 );
-//      alphaCut = std::stod(thisVarStr)  / 100;
       alphaCut = (double) m_sysToolIndex.at(iVar)  / 100.;
     }else if( m_sysTool.at(iVar) == 3 ){ //beta
-//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_b")+5, 2 );
-//      betaCut = std::stod(thisVarStr) / 10.;
       betaCut = (double) m_sysToolIndex.at(iVar)  / 10.;
     }else if( m_sysTool.at(iVar) == 4 ){ //pta
-//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_pta")+7, 2 );
-//      ptAsymCut = std::stod(thisVarStr) / 100.;
       ptAsymCut = (double) m_sysToolIndex.at(iVar)  / 100.;
     }else if( m_sysTool.at(iVar) == 5 ){ //ptt
-//      std::string thisVarStr = m_sysVar.at(iVar).substr( m_sysVar.at(iVar).find("MJB_ptt")+7, 2 );
-//      ptThresholdCut = std::stod(thisVarStr) * GeV;
       ptThresholdCut = (double) m_sysToolIndex.at(iVar) * GeV;
     }
 
-    //?? eta uncertainties should be applied before V+jet nominal?? This makes more sense to me, but is not what Gagik did. Ask Bogdan!
     if(m_debug) Info("execute()", "Apply other calibrations ");
     for (unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
 
@@ -685,7 +690,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
           signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
           signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
           signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
-        } else { //Use GSC Correction for lead jet
+        } else { //Get GSC Correction  for leading jet
           xAOD::JetFourMom_t jetCalibGSCCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetGSCScaleMomentum");
 //cout << "GSC Pt is " << jetCalibGSCCopy.Pt() << endl;
           signalJets->at(iJet)->auxdata< float >("pt") = jetCalibGSCCopy.Pt();
@@ -695,13 +700,19 @@ EL::StatusCode MultijetAlgorithim :: execute ()
         }
       }
 
-      if(iJet > 0){  //Don't apply systematic corrections to lead jet
+
+      if(iJet == 0){
+        if( m_leadingInsitu){ //Apply standard systematic to lead jet
+          applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
+        } else if( m_closureTest ){ //Apply MJB to lead jet
+          //apply previous correction for closure test??
+          applyMJBCalibration( signalJets->at(iJet), iVar, true );
+        }
+      }//leading jet
+
+      if(iJet > 0){  //Apply standard systematic to subleading jets
         applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
-        // Vjet currently removed!! What's the best way to apply these uncertainties?!
         applyMJBCalibration( signalJets->at(iJet) , iVar );
-      } else if( m_closureTest || m_leadingInsitu ){ //Apply MJB to lead jet
-        //apply previous correction for closure test??
-        applyMJBCalibration( signalJets->at(iJet), iVar, true );
       }
 
 //prev      if(iJet > 0){  //Don't apply systematic corrections to lead jet
@@ -715,11 +726,10 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     }
     reorderJets( signalJets );
 
-    //Z/y - jet balance is only valid up to 800 GeV
     if(m_debug) Info("execute()", "Subleading pt selection ");
-    if( !m_reverseSubleading && (signalJets->at(1)->pt() > m_maxSub.at(m_MJBIteration)) ){
+    if( !m_reverseSubleading && (signalJets->at(1)->pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //require subleading less than limit
         continue;
-    }else if( m_reverseSubleading && (signalJets->at(1)->pt() <= m_maxSub.at(m_MJBIteration)) ){
+    }else if( m_reverseSubleading && (signalJets->at(1)->pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //force subleading greater than limit
         continue;
     }
     passCut(iVar); //ptSub
@@ -970,6 +980,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
 
 EL::StatusCode MultijetAlgorithim :: postExecute ()
 {
+  if(m_debug) Info("postExecute()", "postExecute");
   // Here you do everything that needs to be done after the main event
   // processing.  This is typically very rare, particularly in user
   // code.  It is mainly used in implementing the NTupleSvc.
@@ -980,6 +991,7 @@ EL::StatusCode MultijetAlgorithim :: postExecute ()
 
 EL::StatusCode MultijetAlgorithim :: finalize ()
 {
+  if(m_debug) Info("finalize()", "finalize");
   // This method is the mirror image of initialize(), meaning it gets
   // called after the last event has been processed on the worker node
   // and allows you to finish up any objects you created in
@@ -1026,17 +1038,13 @@ EL::StatusCode MultijetAlgorithim :: finalize ()
         m_cutflowHistW.at(iVar)->SetBinContent(iBin, origCutflowHistW->GetBinContent(iBin) );
       }//for iBin
     }//for each m_sysVar
-  } //m_useCutflow
 
-
-  //Add one cutflow histogram to output for number of initial events
-  std::string thisName;
-  if(m_isMC)
-    m_ss << m_mcChannelNumber;
-  else
-    m_ss << m_runNumber;
-
-  if( m_useCutFlow) {
+    //Add one cutflow histogram to output for number of initial events
+    std::string thisName;
+    if(m_isMC)
+      m_ss << m_mcChannelNumber;
+    else
+      m_ss << m_runNumber;
 
     // Get Nominal Cutflow if it's available
     TH1D *histCutflow, *histCutflowW;
@@ -1052,7 +1060,7 @@ EL::StatusCode MultijetAlgorithim :: finalize ()
 
     wk()->addOutput(histCutflow);
     wk()->addOutput(histCutflowW);
-  }
+  }//m_useCutFlow
 
   //Only if Nominal is available
   if( m_writeTree && m_NominalIndex >= 0) {
@@ -1082,6 +1090,7 @@ EL::StatusCode MultijetAlgorithim :: finalize ()
 
 EL::StatusCode MultijetAlgorithim :: histFinalize ()
 {
+  if(m_debug) Info("histFinalize()", "histFinalize");
   // This method is the mirror image of histInitialize(), meaning it
   // gets called after the last event has been processed on the worker
   // node and allows you to finish up any objects you created in
@@ -1100,21 +1109,26 @@ EL::StatusCode MultijetAlgorithim :: histFinalize ()
 
 
 EL::StatusCode MultijetAlgorithim::passCut(int iVar){
-  if(m_debug) Info("passCut()", "Passing Cut %i", iVar);
-  m_cutflowHist.at(iVar)->Fill(m_iCutflow, 1);
-  m_cutflowHistW.at(iVar)->Fill(m_iCutflow, m_mcEventWeight);
-  m_iCutflow++;
+  if(m_useCutFlow) {
+    if(m_debug) Info("passCut()", "Passing Cut %i", iVar);
+    m_cutflowHist.at(iVar)->Fill(m_iCutflow, 1);
+    m_cutflowHistW.at(iVar)->Fill(m_iCutflow, m_mcEventWeight);
+    m_iCutflow++;
+  }
 
 return EL::StatusCode::SUCCESS;
 }
 
 
 EL::StatusCode MultijetAlgorithim::passCutAll(){
-  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-    m_cutflowHist.at(iVar)->Fill(m_iCutflow, 1);
-    m_cutflowHistW.at(iVar)->Fill(m_iCutflow, m_mcEventWeight);
+  if(m_useCutFlow) {
+    if(m_debug) Info("passCutAll()", "Passing Cut");
+    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+      m_cutflowHist.at(iVar)->Fill(m_iCutflow, 1);
+      m_cutflowHistW.at(iVar)->Fill(m_iCutflow, m_mcEventWeight);
+    }
+    m_iCutflow++;
   }
-  m_iCutflow++;
 
 return EL::StatusCode::SUCCESS;
 }
@@ -1122,6 +1136,7 @@ return EL::StatusCode::SUCCESS;
 //This grabs luminosity, acceptace, and eventNumber information from the respective text file
 //format     147915 2.3793E-01 5.0449E-03 499000
 EL::StatusCode MultijetAlgorithim::getLumiWeights(const xAOD::EventInfo* eventInfo) {
+  if(m_debug) Info("getLumiWeights()", "getLumiWeights");
 
   if(!m_isMC){
     m_runNumber = eventInfo->runNumber();
@@ -1176,6 +1191,7 @@ double MultijetAlgorithim::DeltaR(double eta1, double phi1,double eta2, double p
 }
 
 EL::StatusCode MultijetAlgorithim :: loadVariations (){
+  if(m_debug) Info("loadVariations()", "loadVariations");
 
   // Add the configuration if AllSystematics is used //
   if( m_varString.find("AllSystematics") != std::string::npos){
@@ -1234,8 +1250,8 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
             iss >> subStr;
 
             //Name - JES Tool - JES Number - sign
-            m_sysVar.push_back( subStr ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 1 );
-            m_sysVar.push_back( subStr ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 0 );
+            m_sysVar.push_back( subStr+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 1 );
+            m_sysVar.push_back( subStr+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 0 );
 
           } //if a Special JES
         }//if the relevant Name line
@@ -1489,56 +1505,103 @@ EL::StatusCode MultijetAlgorithim :: loadJetUncertaintyTool(){
   return EL::StatusCode::SUCCESS;
 }
 
-//Setup V+jet calibration and systematics files
-EL::StatusCode MultijetAlgorithim :: loadVjetCalibration(){
+//old  //Setup V+jet calibration and systematics files
+//old  EL::StatusCode MultijetAlgorithim :: loadVjetCalibration(){
+//old
+//old    std::string containerType;
+//old    if( m_inContainerName.find("AntiKt4EMTopo") != std::string::npos)
+//old      containerType = "EMJES_R4";
+//old    else if( m_inContainerName.find("AntiKt6EMTopo") != std::string::npos )
+//old      containerType = "EMJES_R6";
+//old    else if( m_inContainerName.find("AntiKt4LCTopo") != std::string::npos )
+//old      containerType = "LCJES_R4";
+//old    else if( m_inContainerName.find("AntiKt6LCTopo") != std::string::npos )
+//old      containerType = "LCJES_R6";
+//old
+//old    TFile *VjetFile = TFile::Open( gSystem->ExpandPathName("$ROOTCOREBIN/data/MultijetBalanceAlgo/Vjet/Vjet_Systematics.root") , "READ" );
+//old    TIter next(VjetFile->GetListOfKeys());
+//old    TKey* key;
+//old    std::string thisKeyName;
+//old
+//old    while ( (key = (TKey*) next()) ){
+//old      thisKeyName = key->GetName();
+//old      if( thisKeyName.find(containerType) != std::string::npos ){
+//old
+//old        /////Save histogram to memory in m_VjetHists
+//old        TH1F *h = (TH1F*) VjetFile->Get(thisKeyName.c_str());
+//old  //      TH1F *h = (TH1F*) key->Clone(); //This didn't work!
+//old        h->SetDirectory(0); //Detach histogram from file to memory
+//old        m_VjetHists.push_back(h);
+//old
+//old        ///// Integer mapping of systematics file with m_sysVar variation
+//old        //Map this latest histogram index to it's algorithim index
+//old        thisKeyName = thisKeyName.substr( thisKeyName.find("SystError_")+10 , thisKeyName.size() );
+//old        for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+//old          if( m_sysVar.at(iVar).find(thisKeyName) != std::string::npos){
+//old            m_VjetMap[iVar] = m_VjetHists.size()-1;
+//old          }
+//old        }//iVar
+//old
+//old      }
+//old    }//while key
+//old
+//old    VjetFile->Close();
+//old
+//old    return EL::StatusCode::SUCCESS;
+//old  }
 
-  std::string containerType;
-  if( m_inContainerName.find("AntiKt4EMTopo") != std::string::npos)
-    containerType = "EMJES_R4";
-  else if( m_inContainerName.find("AntiKt6EMTopo") != std::string::npos )
-    containerType = "EMJES_R6";
-  else if( m_inContainerName.find("AntiKt4LCTopo") != std::string::npos )
-    containerType = "LCJES_R4";
-  else if( m_inContainerName.find("AntiKt6LCTopo") != std::string::npos )
-    containerType = "LCJES_R6";
-
-  TFile *VjetFile = TFile::Open( gSystem->ExpandPathName("$ROOTCOREBIN/data/MultijetBalanceAlgo/Vjet/Vjet_Systematics.root") , "READ" );
-  TIter next(VjetFile->GetListOfKeys());
-  TKey* key;
-  std::string thisKeyName;
-
-  while ( (key = (TKey*) next()) ){
-    thisKeyName = key->GetName();
-    if( thisKeyName.find(containerType) != std::string::npos ){
-
-      /////Save histogram to memory in m_VjetHists
-      TH1F *h = (TH1F*) VjetFile->Get(thisKeyName.c_str());
-//      TH1F *h = (TH1F*) key->Clone(); //This didn't work!
-      h->SetDirectory(0); //Detach histogram from file to memory
-      m_VjetHists.push_back(h);
-
-      ///// Integer mapping of systematics file with m_sysVar variation
-      //Map this latest histogram index to it's algorithim index
-      thisKeyName = thisKeyName.substr( thisKeyName.find("SystError_")+10 , thisKeyName.size() );
-      for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-        if( m_sysVar.at(iVar).find(thisKeyName) != std::string::npos){
-          m_VjetMap[iVar] = m_VjetHists.size()-1;
-        }
-      }//iVar
-
-    }
-  }//while key
-
-  VjetFile->Close();
-
-  return EL::StatusCode::SUCCESS;
-}
+//old  //Setup Previous MJB calibration and systematics files
+//old  EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
+//old
+//old    if(m_MJBIteration == 0 && !m_closureTest)
+//old      return EL::StatusCode::SUCCESS;
+//old
+//old    if( m_isMC )
+//old      return EL::StatusCode::SUCCESS;
+//old
+//old
+//old    TFile* MJBFile = TFile::Open( gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalanceAlgo/"+m_MJBCorrectionFile).c_str() ), "READ" );
+//old    if (m_closureTest)
+//old      m_ss << m_MJBIteration;
+//old    else
+//old      m_ss << (m_MJBIteration-1);
+//old
+//old    std::string mjbIterPrefix = "Iteration"+m_ss.str()+"_";
+//old    std::string histPrefix = "DoubleMJB";
+//old    if (m_leadJetMJBCorrection){
+//old      cout << "how " << endl;
+//old      histPrefix += "_leadJet";
+//old  }
+//old
+//old
+//old    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+//old      TH1D *MJBHist;
+//old      if( m_sysVar.at(iVar).find("JCS") == std::string::npos && m_sysVar.at(iVar).find("MJB_stat") == std::string::npos ){
+//old        MJBHist = (TH1D*) MJBFile->Get( (mjbIterPrefix+m_sysVar.at(iVar)+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
+//old        if (! MJBHist){ //if it doesn't exists !!
+//old          Error("loadMJBCalibration()", "Can't find Systematic Variation %s%s/%s%s. Exiting...", mjbIterPrefix.c_str(), m_sysVar.at(iVar).c_str(), histPrefix.c_str(), m_MJBCorrectionBinning.c_str() );
+//old          return EL::StatusCode::FAILURE;
+//old        }
+//old        MJBHist->SetDirectory(0); //Detach historam from file to memory
+//old      }
+//old      m_MJBHists.push_back(MJBHist);
+//old    }
+//old
+//old    m_ss.str( std::string() );
+//old    MJBFile->Close();
+//old
+//old  return EL::StatusCode::SUCCESS;
+//old  }
 
 //Setup Previous MJB calibration and systematics files
 EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
 
   if(m_MJBIteration == 0 && !m_closureTest)
     return EL::StatusCode::SUCCESS;
+
+  if( m_isMC )
+    return EL::StatusCode::SUCCESS;
+
 
   TFile* MJBFile = TFile::Open( gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalanceAlgo/"+m_MJBCorrectionFile).c_str() ), "READ" );
   if (m_closureTest)
@@ -1548,24 +1611,96 @@ EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
 
   std::string mjbIterPrefix = "Iteration"+m_ss.str()+"_";
   std::string histPrefix = "DoubleMJB";
-  if (m_leadJetMJBCorrection)
+  if (m_leadJetMJBCorrection){
     histPrefix += "_leadJet";
-
-
-  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-    TH1D *MJBHist;
-    if( m_sysVar.at(iVar).find("JCS") == std::string::npos && m_sysVar.at(iVar).find("MJB_stat") == std::string::npos ){
-      MJBHist = (TH1D*) MJBFile->Get( (mjbIterPrefix+m_sysVar.at(iVar)+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
-      if (! MJBHist){ //if it doesn't exists !!
-        Error("loadMJBCalibration()", "Can't find Systematic Variation %s%s. Exiting...", mjbIterPrefix.c_str(), m_sysVar.at(iVar).c_str() );
-        return EL::StatusCode::FAILURE;
-      }
-      MJBHist->SetDirectory(0); //Detach historam from file to memory
-    }
-    m_MJBHists.push_back(MJBHist);
   }
 
   m_ss.str( std::string() );
+
+  // Get the MJB correction histograms in the input file
+  TKey *key;
+  TIter next(MJBFile->GetListOfKeys());
+  int thisCount = 0;
+  cout << "numKeys is " << MJBFile->GetNkeys() << endl;
+  while ((key = (TKey*) next() )){
+    thisCount++;
+    if ((thisCount%1000) == 0)
+      cout << thisCount << endl;
+//    if( thisCount > 10000)
+//      break;
+    std::string dirName = key->GetName();
+    if (dirName.find( mjbIterPrefix ) != std::string::npos) { //If it's a Iteration Dir
+      TH1D *MJBHist;
+      MJBHist = (TH1D*) MJBFile->Get( (dirName+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
+      //Remove Iteration part of name
+      std::string newHistName = dirName.substr(11);
+      MJBHist->SetName( newHistName.c_str() );
+      MJBHist->SetDirectory(0);
+      m_MJBHists.push_back(MJBHist);
+    }
+  }
+  // Fix the systematics mappings to match the input MJB corrections
+  std::vector<std::string> new_sysVar;
+  std::vector<int> new_sysTool;
+  std::vector<int> new_sysToolIndex;
+  std::vector<int> new_sysSign;
+
+
+  int foundCount = 0;
+  for(unsigned int i=0; i < m_MJBHists.size(); ++i){
+    bool foundMatch = false;
+    std::string histName = m_MJBHists.at(i)->GetName();
+    if( histName.find("MCType") != std::string::npos ){
+      new_sysVar.push_back( histName );
+      new_sysTool.push_back( m_sysTool.at(m_NominalIndex) );
+      new_sysToolIndex.push_back( m_sysToolIndex.at(m_NominalIndex) );
+      new_sysSign.push_back( m_sysSign.at(m_NominalIndex) );
+      foundMatch = true;
+    } else { //find the matching values
+
+      for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+        if( histName.find( m_sysVar.at(iVar) ) != std::string::npos ){
+          new_sysVar.push_back( histName );
+          new_sysTool.push_back( m_sysTool.at(iVar) );
+          new_sysToolIndex.push_back( m_sysToolIndex.at(iVar) );
+          new_sysSign.push_back( m_sysSign.at(iVar) );
+          foundMatch = true;
+          break;
+        }
+      }//for m_sysVar
+    }// if searching m_sysVar
+    foundCount++;
+    if( foundMatch == false){
+        Error("loadMJBCalibration()", "Can't find Systematic Variation corresponding to MJB Correction %s. Exiting...", histName.c_str() );
+        return EL::StatusCode::FAILURE;
+    }
+  }//for m_MJBHists
+
+  //Fix the m_NominalIndex
+  for(unsigned int i=0; i < m_MJBHists.size(); ++i){
+    std::string histName = m_MJBHists.at(i)->GetName();
+    if( histName.find("Nominal") != std::string::npos){
+      m_NominalIndex = i;
+      break;
+    }
+  }//for m_MJBHists
+
+  //Replace systematic vectors with their new versions
+  m_sysVar =       new_sysVar;
+  m_sysTool =      new_sysTool;
+  m_sysToolIndex = new_sysToolIndex;
+  m_sysSign =      new_sysSign;
+//
+//    for(unsigned int i=0; i < m_MJBHists.size(); ++i){
+//      cout << m_MJBHists.at(i)->GetName() << endl;
+//    }
+//    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+//      cout << "var " << m_sysVar.at(iVar) << endl;
+//    }
+//
+//cout << "Purposeful exit" << endl;
+//return EL::StatusCode::FAILURE;
+
   MJBFile->Close();
 
 return EL::StatusCode::SUCCESS;
@@ -1587,7 +1722,7 @@ EL::StatusCode MultijetAlgorithim :: applyJetUncertaintyTool( xAOD::Jet* jet , i
     || ( m_sysTool.at(iVar) != 0 ) ) //If not JetUncertaintyTool
     return EL::StatusCode::SUCCESS;
 
-  if( !m_noLimitJESPt && (jet->pt() > m_maxSub.at(0)) ){  //Can't be above 800 GeV
+  if( !m_noLimitJESPt && (jet->pt() > m_subLeadingPtThreshold.at(0)) ){  //Can't be above 800 GeV
     return EL::StatusCode::SUCCESS;
   }
 
@@ -1623,7 +1758,7 @@ EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int 
 
   if( (m_sysTool.at(iVar) == 1) || jet->pt() < 17.*GeV ) //If NoCorr or not in V+jet correction range
     return EL::StatusCode::SUCCESS;
-  if( !m_noLimitJESPt && jet->pt() > m_maxSub.at(0) )
+  if( !m_noLimitJESPt && jet->pt() > m_subLeadingPtThreshold.at(0) )
     return EL::StatusCode::SUCCESS;
 
 
@@ -1669,7 +1804,7 @@ EL::StatusCode MultijetAlgorithim :: applyMJBCalibration( xAOD::Jet* jet , int i
     return EL::StatusCode::SUCCESS;
 
   // if it's a subleading jet but below the 800 GeV limit
-  if( !isLead && jet->pt() <= m_maxSub.at(0))
+  if( !isLead && jet->pt() <= m_subLeadingPtThreshold.at(0))
     return EL::StatusCode::SUCCESS;
 
   // If it's for a subcalibration of JCS, don't apply this calibration

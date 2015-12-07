@@ -12,12 +12,20 @@ MultijetHists :: MultijetHists (std::string name, std::string detailStr) :
   else
     f_extraMJBHists = false;
 
+  if( detailStr.find( "bootstrapIteration" ) != std::string::npos)
+    f_minimalMJBHists = true;
+  else
+    f_minimalMJBHists = false;
+
   m_debug = false;
 }
 
 StatusCode MultijetHists::initialize(std::string binning) {
 
-  JetHists::initialize();
+  if( !f_minimalMJBHists ){
+    JetHists::initialize();
+  }
+
   //details for Multijet Balance
   if ( m_debug ) Info("MultijetHists::initialize()", "adding multijet balance plots");
   stringstream ss;
@@ -79,6 +87,22 @@ StatusCode MultijetHists::initialize(std::string binning) {
   vector<TH1F*> tmpVec;
   vector<TH2F*> tmpVec2;
   vector<TH3F*> tmpVec3;
+
+  Double_t ptBalBins[501];
+  int numPtBalBins = 500;
+  for(int i=0; i < numPtBalBins+1; ++i){
+    ptBalBins[i] = i/100.;
+  }
+
+  if( f_minimalMJBHists ){
+    for(int iB = 0; iB < m_numPtBinnings; ++iB){
+      m_recoilPt_ptBal.push_back( book(m_name, ("recoilPt_PtBal"+binningNames.at(iB)),
+              "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+              "p_{T} Balance", numPtBalBins, ptBalBins) );
+    }
+  return StatusCode::SUCCESS;
+  }
+
 
   for(int iJet=0; iJet < m_numSavedJets; ++iJet){
     ss << iJet;
@@ -144,20 +168,20 @@ StatusCode MultijetHists::initialize(std::string binning) {
   m_recoilM = book(m_name, "recoilM", "Recoil System Mass (GeV)", 100, 0, 3000.);
   m_recoilE = book(m_name, "recoilE", "Recoil System Energy (GeV)", 100, 0., 3000.);
   m_subOverRecoilPt = book( m_name, "subOverRecoilPt", "Subleading Jet p_{T} / Recoil System p_{T}", 100, 0., 1.);
-  m_recoilPt_center = book(m_name, "recoilPt_center", "Recoil System p_{T}", 2000, 0, 4000.);
+  //m_recoilPt_center = book(m_name, "recoilPt_center", "Recoil System p_{T}", 2000, 0, 4000.);
+  m_recoilPt_center = book(m_name, "recoilPt_center", "Recoil System p_{T}", 200, 0, 4000.);
 
-  Double_t ptBalBins[501];
-  int numPtBalBins = 500;
-  for(int i=0; i < numPtBalBins+1; ++i){
-    ptBalBins[i] = i/100.;
-  }
 
   for(int iB = 0; iB < m_numPtBinnings; ++iB){
     m_recoilPt.push_back( book(m_name, ("recoilPt"+binningNames.at(iB)), "Recoil System p_{T} (GeV)", binningSizes.at(iB), binArray[iB]) );
 
+    m_recoilPt_jet0Pt.push_back( book(m_name, ("recoilPt_leadJetPt"+binningNames.at(iB)),
+            "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+            "Leading Jet p_{T} [GeV]", 400, 0, 4000. ) );
+
     m_recoilPt_jet1Pt.push_back( book(m_name, ("recoilPt_jet1Pt"+binningNames.at(iB)),
             "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
-            "sub Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB]) );
+            "Subleading Jet p_{T} [GeV]", 300, 0, 3000) );
     m_recoilPt_avgBeta.push_back( book(m_name, ("recoilPt_avgBeta"+binningNames.at(iB)),
             "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
             "Average #beta", 90, 1.6, 3.15) );
@@ -177,7 +201,7 @@ StatusCode MultijetHists::initialize(std::string binning) {
     m_leadJetPt_jet1Pt.push_back( book(m_name, ("leadJetPt_jet1Pt"+binningNames.at(iB)),
 //            "Leading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
             "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
-            "Subleading Jet p_{T} [GeV]", binningSizes.at(iB), binArray[iB]) );
+            "Subleading Jet p_{T} [GeV]", 300, 0, 3000. ) );
     m_leadJetPt_avgBeta.push_back( book(m_name, ("leadJetPt_avgBeta"+binningNames.at(iB)),
             "Leading Jet p_{T} [GeV]", 400, 0, 4000.,
             "Average #beta", 90, 1.6, 3.15) );
@@ -235,26 +259,36 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
 
 
   //////// Grab Accessors and commonly accessed values ////////////////
+  static SG::AuxElement::ConstAccessor<float> recoilPt ("recoilPt");
+  float recoilJetPt = recoilPt( *eventInfo )/1e3;
+  static SG::AuxElement::ConstAccessor<float> ptBal ("ptBal");
+  float thisPtBal = ptBal( *eventInfo );
+  static SG::AuxElement::ConstAccessor<float> weight ("weight");
+  float eventWeight = weight( *eventInfo );
+
+  if( f_minimalMJBHists ){
+    for(int iB = 0; iB < m_numPtBinnings; ++iB){
+      m_recoilPt_ptBal.at(iB) ->Fill(recoilJetPt, thisPtBal, eventWeight);
+    }
+    return StatusCode::SUCCESS;
+  }
+
   static SG::AuxElement::ConstAccessor<float> avgBeta ("avgBeta");
   static SG::AuxElement::ConstAccessor<float> alpha ("alpha");
   static SG::AuxElement::ConstAccessor<int> njet ("njet");
   static SG::AuxElement::ConstAccessor<float> ptAsym ("ptAsym");
-  static SG::AuxElement::ConstAccessor<float> ptBal ("ptBal");
   static SG::AuxElement::ConstAccessor<float> ptBal2 ("ptBal2");
-  static SG::AuxElement::ConstAccessor<float> recoilPt ("recoilPt");
   static SG::AuxElement::ConstAccessor<float> recoilEta ("recoilEta");
   static SG::AuxElement::ConstAccessor<float> recoilPhi ("recoilPhi");
   static SG::AuxElement::ConstAccessor<float> recoilM ("recoilM");
   static SG::AuxElement::ConstAccessor<float> recoilE ("recoilE");
-  static SG::AuxElement::ConstAccessor<float> weight ("weight");
   static SG::AuxElement::ConstAccessor<float> detEta ("detEta");
   static SG::AuxElement::ConstAccessor<float> beta ("beta");
 
-  float eventWeight = weight( *eventInfo );
   float leadJetPt = jets->at(0)->pt()/1e3;
-  float recoilJetPt = recoilPt( *eventInfo )/1e3;
-  float thisPtBal = ptBal( *eventInfo );
 
+
+  //Fill Nominal Jet Info
   for(unsigned int iJet=0; iJet < jets->size(); ++iJet){
     JetHists::execute( jets->at(iJet), eventWeight, pvLoc);
   }
@@ -299,6 +333,7 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
 
     m_recoilPt.at(iB)->Fill( recoilJetPt, eventWeight);
 
+    m_recoilPt_jet0Pt.at(iB)      ->Fill(recoilJetPt, leadJetPt, eventWeight);
     m_recoilPt_jet1Pt.at(iB)      ->Fill(recoilJetPt, jets->at(1)->pt()/1e3, eventWeight);
     m_recoilPt_avgBeta.at(iB)     ->Fill(recoilJetPt, avgBeta( *eventInfo ), eventWeight);
     m_recoilPt_alpha.at(iB)       ->Fill(recoilJetPt, alpha( *eventInfo ), eventWeight);
