@@ -47,6 +47,12 @@ def calculateMJBHists(file, binnings, f_extraPlots):
   keyList = [key.GetName() for key in inFile.GetListOfKeys()] #List of top level objects
   dirList = [key for key in keyList if "Iteration" in key] #List of all directories
 
+  f_noDir = False
+  dirType = type( inFile.Get( dirList[0] ) )
+  if dirType == TH2F or dirType == TH2D:
+    print "Running without directory structure, assuming a bootstrap object!"
+    f_noDir = True
+
   MJBcorrectionTags = [""]
   #MJBcorrectionTags = ["", "_eta1", "_eta2", "_eta3"]
   numSamplingLayers = 24
@@ -56,87 +62,108 @@ def calculateMJBHists(file, binnings, f_extraPlots):
   print "Creating new hists "
   for dir in dirList:
     #print "           ", dir
-    outFile.mkdir( dir )
-    newDir = outFile.Get( dir )
-    oldDir = inFile.Get( dir )
-    correctionFile.mkdir( dir )
-    correctionDir = correctionFile.Get( dir )
+    if f_noDir:  # Get proper dir name
+      oldDir = inFile
+      dirName = dir.replace("_recoilPt_PtBal_Fine", "")
+      histList = [dir]
+    else:
+      dirName = dir
+      oldDir = inFile.Get( dir )
+      histList = [key.GetName() for key in oldDir.GetListOfKeys()]
 
-    histList = [key.GetName() for key in oldDir.GetListOfKeys()]
+    outFile.mkdir( dirName )
+    newDir = outFile.Get( dirName )
+    correctionFile.mkdir( dirName )
+    correctionDir = correctionFile.Get( dirName )
+
     ### Save all previous histograms ###
     for histName in histList:
       thisHist = oldDir.Get(histName)
+
       thisHist.SetDirectory( newDir )
       if( "Phi" in histName and type(thisHist) is TH1F):
         thisHist.Rebin(4)
       if( "Beta" in histName and type(thisHist) is TH1F):
         thisHist.Rebin(2)
 
-      if thisHist.GetName() == "recoilPt":
-        correctionDir.cd()
-        thisHist.Write()
 
-    if(f_extraPlots):
-      #### Create Sampling Layer unbinned histograms ####
-      for iSample in range(0, numSamplingLayers):
-        sampHist2D = oldDir.Get( ("recoilPt_SamplingLayerPercent"+str(iSample)) )
-        sampHist2D.SetDirectory(0)
-#        sampHist2D.Sumw2()
-        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName(), 1, -1, "")
-        prof_sampHist.SetDirectory(0)
-        sampHist = prof_sampHist.ProjectionX("prof_"+sampHist2D.GetName())
-        sampHist.SetTitle( "Profile "+sampHist2D.GetTitle() )
-        sampHist.SetDirectory(newDir)
 
-      #### Create Sampling Layer binned histograms ####
-      for iSample in range(0, numSamplingLayers):
-        sampHist2D = oldDir.Get( ("recoilPt_SamplingLayerPercent"+str(iSample)+binning) )
-        sampHist2D.SetDirectory(0)
-#        sampHist2D.Sumw2()
-        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName(), 1, -1, "")
-        prof_sampHist.SetDirectory(0)
-        sampHist = prof_sampHist.ProjectionX("prof_"+sampHist2D.GetName())
-        sampHist.SetTitle( "Profile "+sampHist2D.GetTitle() )
-        sampHist.SetDirectory(newDir)
-
-    ## Save finely binned recoilPt histogram for finalMJB calculation ##
-    recoilPt_center = oldDir.Get( "recoilPt_center" )
-    if recoilPt_center:
-      correctionDir.cd()
-      recoilPt_center.Write()
-
-    for binning in binnings:
-
-      for thisTag in MJBcorrectionTags:  ## for each eta range ##
-        ### Get actual MJB correction using ProfileX ###
-        recoilPt_PtBal = oldDir.Get( "recoilPt_PtBal"+thisTag+binning )
-#        recoilPt_PtBal.Rebin2D(2,1)
-#        recoilPt_PtBal.Sumw2()
-        prof_MJBcorrection = recoilPt_PtBal.ProfileX("prof_MJB"+thisTag+binning, 1, -1, "")
-        MJBcorrection = prof_MJBcorrection.ProjectionX("MJB"+thisTag+binning)
-        MJBcorrection.SetTitle("MJBcorrection"+thisTag)
+      if ("recoilPt_PtBal" in histName):
+        tag = histName[histName.find("recoilPt_PtBal")+14:]
+        prof_MJBcorrection = thisHist.ProfileX("prof_MJB"+tag, 1, -1, "")
+        MJBcorrection = prof_MJBcorrection.ProjectionX("MJB"+tag)
+        MJBcorrection.SetTitle("MJBcorrection"+tag)
         MJBcorrection.GetYaxis().SetTitle( "p_{T}^{Jet 1}/p_{T}^{Recoil}" )
         correctionDir.cd()
         MJBcorrection.Write()
         MJBcorrection.SetDirectory(newDir)
 
-        if(f_extraPlots):
-          ### Get numevents per correction for each pt slice using ProjectionY ###
-          for iBin in range(1,recoilPt_PtBal.GetNbinsX()+1):
-            histSlice = recoilPt_PtBal.ProjectionY( "recoilPt_PtBal"+thisTag+binning+"_ptSlice"+str(iBin), iBin, iBin)
-            histSlice.SetTitle(recoilPt_PtBal.GetTitle()+" for ptSlice "+str(iBin) )
-            histSlice.SetDirectory(newDir)
 
-      ### Get extra MJB correction based on leadpT ###
-      leadJetPt_PtBal = oldDir.Get( "leadJetPt_PtBal"+binning )
-#      leadJetPt_PtBal.Sumw2()
-      prof_MJBcorrection = leadJetPt_PtBal.ProfileX("prof_MJB_leadJet"+binning, 1, -1, "")
-      MJBcorrection = prof_MJBcorrection.ProjectionX("MJB_leadJet"+binning)
-      MJBcorrection.SetTitle("MJBcorrection_leadJet")
-      MJBcorrection.GetYaxis().SetTitle( "p_{T}^{Jet 1}/p_{T}^{Recoil}" )
-      correctionDir.cd()
-      MJBcorrection.Write()
-      MJBcorrection.SetDirectory(newDir)
+#      if thisHist.GetName() == "recoilPt":
+#        correctionDir.cd()
+#        thisHist.Write()
+
+#ExtraPlots    if(f_extraPlots):
+#ExtraPlots      #### Create Sampling Layer unbinned histograms ####
+#ExtraPlots      for iSample in range(0, numSamplingLayers):
+#ExtraPlots        sampHist2D = oldDir.Get( ("recoilPt_SamplingLayerPercent"+str(iSample)) )
+#ExtraPlots        sampHist2D.SetDirectory(0)
+#ExtraPlots#        sampHist2D.Sumw2()
+#ExtraPlots        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName(), 1, -1, "")
+#ExtraPlots        prof_sampHist.SetDirectory(0)
+#ExtraPlots        sampHist = prof_sampHist.ProjectionX("prof_"+sampHist2D.GetName())
+#ExtraPlots        sampHist.SetTitle( "Profile "+sampHist2D.GetTitle() )
+#ExtraPlots        sampHist.SetDirectory(newDir)
+#ExtraPlots
+#ExtraPlots      #### Create Sampling Layer binned histograms ####
+#ExtraPlots      for iSample in range(0, numSamplingLayers):
+#ExtraPlots        sampHist2D = oldDir.Get( ("recoilPt_SamplingLayerPercent"+str(iSample)+binning) )
+#ExtraPlots        sampHist2D.SetDirectory(0)
+#ExtraPlots#        sampHist2D.Sumw2()
+#ExtraPlots        prof_sampHist = sampHist2D.ProfileX("tmpProf_"+sampHist2D.GetName(), 1, -1, "")
+#ExtraPlots        prof_sampHist.SetDirectory(0)
+#ExtraPlots        sampHist = prof_sampHist.ProjectionX("prof_"+sampHist2D.GetName())
+#ExtraPlots        sampHist.SetTitle( "Profile "+sampHist2D.GetTitle() )
+#ExtraPlots        sampHist.SetDirectory(newDir)
+
+    ## Save finely binned recoilPt histogram for finalMJB calculation ##
+#    recoilPt_center = oldDir.Get( "recoilPt_center" )
+#    if recoilPt_center:
+#      correctionDir.cd()
+#      recoilPt_center.Write()
+
+#!!    for binning in binnings:
+#!!
+#!!      for thisTag in MJBcorrectionTags:  ## for each eta range ##
+#!!        ### Get actual MJB correction using ProfileX ###
+#!!        recoilPt_PtBal = oldDir.Get( "recoilPt_PtBal"+thisTag+binning )
+#!!#        recoilPt_PtBal.Rebin2D(2,1)
+#!!#        recoilPt_PtBal.Sumw2()
+#!!        prof_MJBcorrection = recoilPt_PtBal.ProfileX("prof_MJB"+thisTag+binning, 1, -1, "")
+#!!        MJBcorrection = prof_MJBcorrection.ProjectionX("MJB"+thisTag+binning)
+#!!        MJBcorrection.SetTitle("MJBcorrection"+thisTag)
+#!!        MJBcorrection.GetYaxis().SetTitle( "p_{T}^{Jet 1}/p_{T}^{Recoil}" )
+#!!        correctionDir.cd()
+#!!        MJBcorrection.Write()
+#!!        MJBcorrection.SetDirectory(newDir)
+#!!
+#!!        if(f_extraPlots):
+#!!          ### Get numevents per correction for each pt slice using ProjectionY ###
+#!!          for iBin in range(1,recoilPt_PtBal.GetNbinsX()+1):
+#!!            histSlice = recoilPt_PtBal.ProjectionY( "recoilPt_PtBal"+thisTag+binning+"_ptSlice"+str(iBin), iBin, iBin)
+#!!            histSlice.SetTitle(recoilPt_PtBal.GetTitle()+" for ptSlice "+str(iBin) )
+#!!            histSlice.SetDirectory(newDir)
+#!!
+#!!      ### Get extra MJB correction based on leadpT ###
+#!!      leadJetPt_PtBal = oldDir.Get( "leadJetPt_PtBal"+binning )
+#!!#      leadJetPt_PtBal.Sumw2()
+#!!      prof_MJBcorrection = leadJetPt_PtBal.ProfileX("prof_MJB_leadJet"+binning, 1, -1, "")
+#!!      MJBcorrection = prof_MJBcorrection.ProjectionX("MJB_leadJet"+binning)
+#!!      MJBcorrection.SetTitle("MJBcorrection_leadJet")
+#!!      MJBcorrection.GetYaxis().SetTitle( "p_{T}^{Jet 1}/p_{T}^{Recoil}" )
+#!!      correctionDir.cd()
+#!!      MJBcorrection.Write()
+#!!      MJBcorrection.SetDirectory(newDir)
 
 
 #  print "Writing file ", outFile.GetName()

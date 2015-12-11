@@ -146,8 +146,8 @@ def calculateDoubleRatio(dataFileName, mcFileName):
     thisDir = inFile.Get( dir )
 
     ##Get recoilPt histogram and save it ##
-    thisPtHist = thisDir.Get( "recoilPt_center" )
-    thisPtHist.SetDirectory( newDir )
+    #thisPtHist = thisDir.Get( "recoilPt_center" )
+    #thisPtHist.SetDirectory( newDir )
 
     histList = [key.GetName() for key in thisDir.GetListOfKeys() if "DoubleMJB" in key.GetName()]
     for histName in histList:

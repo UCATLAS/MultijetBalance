@@ -14,6 +14,7 @@
 #include <TH2.h>
 #include <TROOT.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 
 //#include "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/JES_ResponseFitter/JES_ResponseFitter/JES_BalanceFitter.h"
@@ -22,7 +23,6 @@
 using namespace std;
 
 int main(int argc, char *argv[])
-//int runFit()
 {
   std::time_t initialTime = std::time(0);
   gErrorIgnoreLevel = 2000;
@@ -94,22 +94,26 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  std::size_t pos = inFileName.find("appended");
+  std::size_t pos = inFileName.find("scaled");
 
   if( pos == std::string::npos ){
-    cout << "Only runs on appended files " << endl;
+    cout << "Only runs on scaled files " << endl;
     exit(1);
   }
+
   std::string outFileName = inFileName;
-  outFileName.replace(pos, 8, "fit_MJB_initial");
+  outFileName.replace(pos, 6, "fit_MJB_initial");
   if (sysType.size() > 0)
     outFileName += ("."+sysType);
-  outFileName = "fits/"+outFileName;
   cout << "Creating Output File " << outFileName << endl;
+
+  std::string fitPlotsOutDir = outFileName;
+  fitPlotsOutDir.erase(fitPlotsOutDir.find_last_of("/"));
+  fitPlotsOutDir += "/fits/";
+  mkdir(fitPlotsOutDir.c_str(), 0777);
 
   std::string fitPlotsOutName = outFileName;
   fitPlotsOutName.erase(0, fitPlotsOutName.find_last_of("/"));
-//  fitPlotsOutName.erase(fitPlotsOutName.find_last_of("."));
 
   // Get binning and systematics from SystToolOutput file //
   TFile *inFile = TFile::Open(inFileName.c_str(), "READ");
@@ -134,6 +138,9 @@ int main(int argc, char *argv[])
     std::string sysName = key->GetName();
     if( sysName.find(sysType) == std::string::npos)
       continue;
+    //For tests of 1 fit
+    //if( sysName.find("_99") == std::string::npos)
+    //  continue;
     //if( f_nominal && sysName.find("Nominal") == std::string::npos)
 
     keyCount++;
@@ -266,13 +273,13 @@ int main(int argc, char *argv[])
 
 
       c1->Update();
-      c1->SaveAs( ("fits/plots/"+fitPlotsOutName+"_"+to_string(iBin)+".png").c_str() );
+      c1->SaveAs( (fitPlotsOutDir+fitPlotsOutName+"_"+to_string(iBin)+".png").c_str() );
       h_proj->Delete();
     }
 
     h_mean->Draw();
     c1->Update();
-    c1->SaveAs( ("fits/plots/"+fitPlotsOutName+"_preprofMJB.png").c_str() );
+    c1->SaveAs( (fitPlotsOutDir+fitPlotsOutName+"_preprofMJB.png").c_str() );
 
 
 
