@@ -138,7 +138,8 @@ if(f_calculateMJB):
     for file in files:
       command = 'runFit --file '+file
 #      command += ' --sysType Nominal'
-#      command += ' --upperEdge 3100'  #To shrink the upper edge of the last bin to the given value
+      command += ' --upperEdge 2000'
+      command += ' -rebin '
       print command
       if (not f_printOnly):
         os.system(command)

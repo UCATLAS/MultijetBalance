@@ -44,17 +44,22 @@ int main(int argc, char *argv[])
          << "  --file            Path to a file ending in appended" << std::endl
          << "  --upperEdge       Upper edge for final bin" << std::endl
          << "  --sysType         String tag for which sys to run" << std::endl
+//         << "  --histStructure   Look for histograms, not TDirectories" << std::endl
          << std::endl;
     exit(1);
   }
 
   std::string sysType = "";
+//  bool f_histStructure = false;
 
   int iArg = 0;
   while(iArg < argc-1) {
     if (options.at(iArg).compare("-h") == 0) {
        // Ignore if not first argument
        ++iArg;
+//    }else if (options.at(iArg).compare("-histStructure") == 0) {
+//       f_histStructure = true;
+//       ++iArg;
     } else if (options.at(iArg).compare("--file") == 0) {
        char tmpChar = options.at(iArg+1)[0];
        if (iArg+1 == argc || tmpChar == '-' ) {
@@ -139,34 +144,33 @@ int main(int argc, char *argv[])
     if( sysName.find(sysType) == std::string::npos)
       continue;
     //For tests of 1 fit
-    //if( sysName.find("_99") == std::string::npos)
-    //  continue;
-    //if( f_nominal && sysName.find("Nominal") == std::string::npos)
+    if( sysName.find("_99") == std::string::npos)
+      continue;
+
+
+    TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
 
     keyCount++;
     cout << "Systematic " << sysName << " (" << keyCount << "/" << nKeys << ")" << endl;
-    // Get Relevant Histograms
-    TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
-//    TH1F* h_recoilPt_center = (TH1F*) inFile->Get((sysName+"/recoilPt_center").c_str());
 
     // Get Binning of output histogram
     TArrayD* xBins = (TArrayD*) h_recoilPt_PtBal->GetXaxis()->GetXbins();
     Double_t* xBinsD = xBins->GetArray();
     int numBins = h_recoilPt_PtBal->GetNbinsX();
-    if (upperEdge > 0){
-      xBinsD[numBins] = upperEdge;
-      cout << "Setting last bin upper edge to " << xBinsD[numBins] << endl;
-    }
-    TH1D* h_template = new TH1D("Template", "Template", numBins, xBinsD);
-//    for( int iBin=1; iBin < h_template->GetNbinsX()+1; ++iBin){
-//      cout << "Bin edge " << iBin << " is " << h_template->GetXaxis()->GetBinLowEdge(iBin) << endl;
-//    }
 
-//    TH1D* h_template = h_recoilPt_PtBal->ProjectionX();
-//    h_template->SetName("Template"); h_template->SetTitle("Template");
-//    for( int iBin=1; iBin < h_template->GetNbinsX()+1; ++iBin){
-//      h_template->SetBinContent(iBin, 0); h_template->SetBinError(iBin, 0);
-//    }
+    while( upperEdge > xBinsD[numBins]){
+      numBins--;
+    }
+    Double_t xBin[numBins];
+    for(int iBin = 0; iBin < numBins; ++iBin){
+      if (xBinsD[iBin] < upperEdge)
+        xBin[iBin] = xBinsD[iBin];
+      else
+        xBin[iBin] = upperEdge;
+    }
+    cout << "Setting last bin upper edge to " << xBin[numBins] << endl;
+
+    TH1D* h_template = new TH1D("Template", "Template", numBins, xBin);
 
     TH1D* h_mean = (TH1D*) h_template->Clone("MJB_Fine");  h_mean->SetTitle("MJB_Fine");
     TH1D* h_error = (TH1D*) h_template->Clone("Error");  h_mean->SetTitle("Error");
