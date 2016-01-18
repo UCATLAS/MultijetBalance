@@ -15,7 +15,7 @@ import subprocess, os, time, sys, glob
 import datetime, argparse
 import ROOT
 
-def runBootstrapFitting(inFile, f_rebin, sysType):
+def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
 
   pids = []
   logFiles = []
@@ -35,6 +35,7 @@ def runBootstrapFitting(inFile, f_rebin, sysType):
   if len(sysType) > 0:
     sysList = [sys for sys in sysList if sysType in sys]
 
+  ## For each systematic ##
   for iS, sys in enumerate(sysList):
     while len(pids) >= NCORES:
       wait_completion(pids, logFiles)
@@ -42,16 +43,19 @@ def runBootstrapFitting(inFile, f_rebin, sysType):
     logFile = "parallelLogs/runLog_"+str(iS)+'.txt'
 
     if (f_rebin):
-      command = "runBootstrapFit --file "+inFile+" --sysType "+sys
+      command = "runBootstrapRebin --file "+inFile+" --sysType "+sys
       command += " --upperEdge 2000 --RMS 100"
       #command += " --upperEdge 2000 --RMS 0.001"
+      if( f_fit ):
+        command += ' --fit'
     else:
       command = "runFit --file "+inFile+" --sysType "+sys
       command += " --upperEdge 2000"
 
-    res = submit_local_job( command, logFile )
-    pids.append(res[0])
-    logFiles.append(res[1])
+    print command
+#    res = submit_local_job( command, logFile )
+#    pids.append(res[0])
+#    logFiles.append(res[1])
 
   wait_all(pids, logFiles)
 
@@ -106,13 +110,13 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="%prog [options]", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("-b", dest='batchMode', action='store_true', default=False, help="Batch mode for PyRoot")
   parser.add_argument("-rebin", dest='rebin', action='store_true', default=False, help="Rebin the histograms, for the final stage")
+  parser.add_argument("-fit", dest='fit', action='store_true', default=False, help="Fit for the balance, rather than taking the average")
   parser.add_argument("--file", dest='file', default="", help="Input file name")
   parser.add_argument("--sysType", dest='sysType', default="", help="Run only on the given sysTypes")
   args = parser.parse_args()
 
-  runBootstrapFitting(args.file, args.rebin, args.sysType)
+  runBootstrapFitting(args.file, args.rebin, args.fit, args.sysType)
   print "Starting fitting at", beginTime
   print "Finished fitting at", datetime.datetime.now().time()
-
 
 

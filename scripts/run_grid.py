@@ -20,15 +20,24 @@ outputTags = []
 ###valTypes = ["VA", "VF"]
 
 validation = False
-jetTypes = ["EM"]
-#jetTypes = ["EM", "LC"]
+#jetTypes = ["EM"]
+jetTypes = ["EM", "LC"]
 
-extraTag = "_two"
+extraTag = ""
+
+
+files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDPythia8_JETM1_gridSamples.txt")
+outputTags.append("QCDPy")
+files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDHerwig_JETM1_gridSamples.txt")
+outputTags.append("QCDH")
+files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Main_JETM1_gridSamples.txt")
+outputTags.append("Ex")
+files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Debug_gridSamples.txt")
+outputTags.append("Db")
 
 
 #files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/BootStrap_test_gridSamples.txt")
 #outputTags.append("test")
-
 #files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDPythia8_EXOT2_gridSamples.txt")
 #outputTags.append("QCDPy")
 #files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDSherpa_JETM1_gridSamples.txt")
@@ -36,10 +45,10 @@ extraTag = "_two"
 #outputTags.append("QCDS")
 #files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/QCDHerwig_EXOT2_gridSamples.txt")
 #outputTags.append("QCDH")
-files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/MJBD_EXOT2_gridSamples.txt")
-outputTags.append("Ex")
-files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/MJBD_Debug_gridSamples.txt")
-outputTags.append("Db")
+#files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/MJBD_EXOT2_gridSamples.txt")
+#outputTags.append("Ex")
+#files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/MJBD_Debug_gridSamples.txt")
+#outputTags.append("Db")
 
 if validation:
   for iFile, file_in in enumerate(files):
