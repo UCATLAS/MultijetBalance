@@ -25,12 +25,16 @@ import plotSysRatios
 import plotMJBvEta
 import plotAll
 
+# Do not run commands, but print them in the order they are applied
 f_printOnly = False
 
-#mcTypes = ["Herwig", "Pythia"]
-mcTypes = ["Herwig", "Pythia", "Sherpa"]
+## Choose the MC types to run on
+## The first MC type will be the nominal, while the second will be a systematic variation
+mcTypes = ["Pythia", "Herwig"]
+#mcTypes = ["Herwig", "Pythia", "Sherpa"]
 
 
+## Order of steps to perform.  All are turned to False by default
 f_getPtHist = False
 f_scale = False
 f_combine = False
@@ -40,20 +44,42 @@ f_plotAll = False
 f_plotSL = False
 
 #f_getPtHist = True
-f_scale = True #Scale MC files
-f_combine = True #Combine MC files
+#f_scale = True #Scale MC files
+#f_combine = True #Combine MC files
 f_calculateMJB = True # Calculate new histograms to be added to root file
-f_plotRelevant = True # Most important Plots
+#f_plotRelevant = True # Most important Plots
 #f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 
-doBootstrap = False
+################# Running Options ########################3
+
+## lastPt to use for MJB result
+endPt = 2000
+
+#doFinal will turn on the final step of finding the proper bin center from the jet pt spectrum
+#it requires input TTrees
+doFinal = True
+
+#doBootstrap will combine bins based on previously derived bootstrap binnings
+doBootstrap = True
+rebinFile = "gridOutput/Bootstrap_Iter1_EM_Dec8_workarea/workarea/hist.data.all.significant.root"
+
+#doFit will perform a gaussian fit on each bin rather than get the mean
 doFit = True
+doNominalOnly = False #Fit only nominal (for quicker results)
+
+#doAverage will create extra output histograms and MJB histograms based on the mean values, not fits
+doAverage = False
+
+# Data and MC may be run separately for plotting purposes
 doData = True
-doMC = False
+doMC = True
+
+#Systematics may be turned off to speed things up
 doSys = True
+
+#Individual slices of MC may be run on separately for plotting purposes
 doJZSlices = False
-doFinal = False
 
 #binnings = "Fine,8TeV,Coarse"
 binnings = "Fine"
@@ -71,15 +97,10 @@ if(f_getPtHist and doFinal):
   else:
     print 'python multijetBalanceAlgo/scripts/plotting/getRecoilPtTree.py --pathToTrees '+treeDir
     getRecoilPtTree.getRecoilPtTree(treeDir, "outTree_Nominal")
-    if (doData):
+    if (doData):   #Only pt distribution for data
       command = 'hadd '+args.workDir+'/ptBinTree_data15.root '+treeDir+'/ptBinTree_*data15*.root'
       print command
       os.system(command)
-    if (doMC):
-      command = 'hadd '+args.workDir+'/ptBinTree_mc15.root '+treeDir+'/ptBinTree_*mc15*.root'
-      print command
-      os.system(command)
-
 
 
 if(f_scale and doMC):
@@ -95,14 +116,15 @@ if(f_scale and doMC):
 
 
 if(f_combine):
-  if( doBootstrap ):
-    print "Not yet implemented.  Needs to hadd all syst tool output into bootstrap.data.all.initial.root"
+
+  ## Hadd MC slices together into scaled ##
   if( doMC ):
     for mcType in mcTypes:
       command = 'hadd '+args.workDir+'/hist.mc.'+mcType+'.scaled.root '+args.workDir+'/initialFiles/*.mc*'+mcType+'*_hist.scaled.root'
       print command
       os.system(command)
 
+    ## Create MCType uncertainty using 2 different MC generators ##
     if len(mcTypes) > 1:
       nominalFile = args.workDir+'/hist.mc.'+mcTypes[0]+'.scaled.root'
       sysFile =     args.workDir+'/hist.mc.'+mcTypes[1]+'.scaled.root'
@@ -110,52 +132,70 @@ if(f_combine):
       print command
       os.system(command)
 
+
   if( doData ):
     command = 'hadd '+args.workDir+'/hist.data.all.scaled.root '+args.workDir+'/../hist/*.data*_hist.root'
     print command
     os.system(command)
 
+  ## Create output for individual MC slices
   if(doJZSlices):
     files = glob.glob(args.workDir+'/initialFiles/*.mc*'+mcType+'*_hist.scaled.root')
     for file in files:
       JZString = os.path.basename(file).split('.')[4].split('_')[-1]
       os.system('cp '+file+' '+args.workDir+'/hist.mc.'+mcType+'_'+JZString+'.scaled.root')
 
+  # Bootstrap rebinning requires fits encompassing several bins, where these bins vary for all systematics
+  # MC is required to mirror data, so to accomplish this the nominal MC results are copied for each data-only systematic
+  # Takes scaled_noDataSyst -> scaled
+  if( doBootstrap and doMC and doData):
+    for mcType in mcTypes:
+      command = 'mv '+args.workDir+'/hist.mc.'+mcType+'.scaled.root '+args.workDir+'/hist.mc.'+mcType+'.scaled_noDataSyst.root'
+      print command
+      os.system(command)
+      command = 'python MultijetBalanceAlgo/scripts/plotting/addDataSystToMC.py --mcFile '+args.workDir+'/hist.mc.'+mcType+'.scaled_noDataSyst.root --dataFile '+args.workDir+'/hist.data.all.scaled.root'
+      print command
+      os.system(command)
+
 
 if(f_calculateMJB):
+
+  ## Create extra plots (appended) and a MJB output using mean values
   ## scaled -> .appended and .MJB_initial ##
-  files = glob.glob(args.workDir+'/hist.*.*.scaled.root')
-  for file in files:
-    print 'python MultijetBalanceAlgo/scripts/plotting/calculateMJBHists.py --file '+file+' --binnings '+binnings
-    if (not f_printOnly):
-      f_extraPlots = False
-      calculateMJBHists.calculateMJBHists(file, binnings, f_extraPlots)
-      #os.system('mv '+file+' '+args.workDir+'/initialFiles/')
-
-
-  if( doFit ):
-    files = glob.glob(args.workDir+'/hist.*.*.appended.root')
+  if( doAverage ):
+    files = glob.glob(args.workDir+'/hist.*.*.scaled.root')
     for file in files:
-      command = 'runFit --file '+file
-#      command += ' --sysType Nominal'
-      command += ' --upperEdge 2000'
-      command += ' -rebin '
-      print command
+      print 'python MultijetBalanceAlgo/scripts/plotting/calculateMJBHists.py --file '+file+' --binnings '+binnings
       if (not f_printOnly):
-        os.system(command)
+        f_extraPlots = False
+        calculateMJBHists.calculateMJBHists(file, binnings, f_extraPlots)
+        #os.system('mv '+file+' '+args.workDir+'/initialFiles/')
 
-    if( doBootstrap ):
-      print "Not yet implemented, need to run bootstrap fitting python code"
+ #! if( doFit ):
+ #!   files = glob.glob(args.workDir+'/hist.*.*.scaled.root')
+
+ #!   for file in files:
+ #!     command = 'runFit --file '+file
+ #!     command += ' --upperEdge '+str(endPt)
+ #!     if (doNominalOnly):
+ #!       command += ' --sysType Nominal'
+ #!     if (doBootstrap):
+ #!       command += ' --rebinFileName '+rebinFile
+ #!     print command
+ #!     if (not f_printOnly):
+ #!       os.system(command)
+
 
 
   ## data and MC .MJB_initial -> .DoubleMJB_initial ##
   if(doData and doMC):
     for mcType in mcTypes:
-      dataFile = glob.glob(args.workDir+'/hist.data.all.MJB_initial.root')[0]
-      mcFile = glob.glob(args.workDir+'/hist.mc.'+mcType+'.MJB_initial.root')[0]
-      print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
-      if (not f_printOnly):
-        calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
+      if (doAverage):
+        dataFile = glob.glob(args.workDir+'/hist.data.all.MJB_initial.root')[0]
+        mcFile = glob.glob(args.workDir+'/hist.mc.'+mcType+'.MJB_initial.root')[0]
+        print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
+        if (not f_printOnly):
+          calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
 
       if( doFit ):
         dataFile = glob.glob(args.workDir+'/hist.data.all.fit_MJB_initial.root')[0]
@@ -164,16 +204,8 @@ if(f_calculateMJB):
         if (not f_printOnly):
           calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
 
-        if( doBootstrap ):
-          dataFile = glob.glob(args.workDir+'/bootstrap.data.all.fit_MJB_initial.root')[0]
-          mcFile = glob.glob(args.workDir+'/hist.mc.'+mcType+'.fit_MJB_initial.root')[0]
-          print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
-          if (not f_printOnly):
-            calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
 
-
-## Needs recoilPt_center
-
+  ## Needs recoilPt_center
   ## .(Double)MJB_initial -> .(Double)MJB_final ##
   if(doFinal):
     initialFiles = glob.glob(args.workDir+'/*_initial.root')

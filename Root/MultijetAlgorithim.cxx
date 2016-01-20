@@ -303,7 +303,7 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   //Crap for Syst Tool
   // Fix this to be elegent and take any binning
   if( m_bootstrap ){
-    systTool_nToys = 100;
+    systTool_nToys = 500;
     //double theseBins[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
     //double theseBins[] = {125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1300, 1500, 2000, 5000.};
     double theseBins[] = {300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1080, 1140, 1200, 1260, 1320, 1380, 1480, 1700, 2000, 2700};
@@ -372,8 +372,14 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   //Add output hists for each variation
   m_ss << m_MJBIteration;
   for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-    MultijetHists* thisJetHists = new MultijetHists( ( "Iteration"+m_ss.str()+"_"+m_sysVar.at(iVar)+"_" ), (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
-    //MultijetHists* thisJetHists = new MultijetHists( ( "Iteration"+m_ss.str()+"_"+m_sysVar.at(iVar) ), (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
+    std::string histOutputName = "Iteration"+m_ss.str()+"_"+m_sysVar.at(iVar);
+
+    // If the output is a bootstrap, then we need histograms to be written directly to the root file, and not in
+    // TDirectory structures.  This is done b/c hadding too many TDirectories is too slow.
+    // To turn off TDirectory structure, the name must end in "_"
+    if (m_iterateBootstrap || m_bootstrap)
+      histOutputName += "_";
+    MultijetHists* thisJetHists = new MultijetHists( histOutputName, (m_jetDetailStr+" "+m_MJBDetailStr).c_str() );
     m_jetHists.push_back(thisJetHists);
     m_jetHists.at(iVar)->initialize(m_MJBCorrectionBinning);
     m_jetHists.at(iVar)->record( wk() );
@@ -542,7 +548,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
   }
   passCutAll(); //detEta
 
-
+    // Complex trigger code, not needed
 //  float prescale = 1.;
 //  bool passedTriggers = false;
 //  if (m_triggers.size() == 0)

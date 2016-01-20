@@ -41,25 +41,22 @@ int main(int argc, char *argv[])
          << std::endl
          << " Optional arguments:" << std::endl
          << "  -h                Prints this menu" << std::endl
-         << "  --file            Path to a file ending in appended" << std::endl
+         << "  --file            Path to a file ending in scaled" << std::endl
          << "  --upperEdge       Upper edge for final bin" << std::endl
          << "  --sysType         String tag for which sys to run" << std::endl
-//         << "  --histStructure   Look for histograms, not TDirectories" << std::endl
+         << "  --rebinFileName       Path to rebin file.  No rebinning if this is not set." << std::endl
          << std::endl;
     exit(1);
   }
 
   std::string sysType = "";
-//  bool f_histStructure = false;
+  std::string rebinFileName = "";
 
   int iArg = 0;
   while(iArg < argc-1) {
     if (options.at(iArg).compare("-h") == 0) {
        // Ignore if not first argument
        ++iArg;
-//    }else if (options.at(iArg).compare("-histStructure") == 0) {
-//       f_histStructure = true;
-//       ++iArg;
     } else if (options.at(iArg).compare("--file") == 0) {
        char tmpChar = options.at(iArg+1)[0];
        if (iArg+1 == argc || tmpChar == '-' ) {
@@ -87,6 +84,15 @@ int main(int argc, char *argv[])
          upperEdge = std::stof(options.at(iArg+1));
          iArg += 2;
        }
+    } else if (options.at(iArg).compare("--rebinFileName") == 0) {
+       char tmpChar = options.at(iArg+1)[0];
+       if (iArg+1 == argc || tmpChar == '-' ) {
+         std::cout << " --rebinFileName should be followed by a file path" << std::endl;
+         return 1;
+       } else {
+         rebinFileName = options.at(iArg+1);
+         iArg += 2;
+       }
     }else{
       std::cout << "Couldn't understand argument " << options.at(iArg) << std::endl;
       return 1;
@@ -102,14 +108,30 @@ int main(int argc, char *argv[])
   std::size_t pos = inFileName.find("scaled");
 
   if( pos == std::string::npos ){
-    cout << "Only runs on scaled files " << endl;
+    cout << "Only runs on \"scaled\" files " << endl;
     exit(1);
   }
-
   std::string outFileName = inFileName;
   outFileName.replace(pos, 6, "fit_MJB_initial");
   if (sysType.size() > 0)
     outFileName += ("."+sysType);
+
+  TFile* rebinFile = NULL;
+  if (rebinFileName.size() > 0){
+
+    pos = rebinFileName.find("significant");
+    if( pos == std::string::npos){
+      cout << "Rebinning only accepts \"significant\" files " << endl;
+      exit(1);
+    }
+
+    rebinFile = TFile::Open(rebinFileName.c_str(), "READ");
+    if( rebinFile->IsZombie() ){
+      cout << "Error, rebin file " << rebinFileName << " does not exist. Exiting..." << endl;
+      exit(1);
+    }
+  }
+
   cout << "Creating Output File " << outFileName << endl;
 
   std::string fitPlotsOutDir = outFileName;
@@ -143,10 +165,6 @@ int main(int argc, char *argv[])
     std::string sysName = key->GetName();
     if( sysName.find(sysType) == std::string::npos)
       continue;
-    //For tests of 1 fit
-    if( sysName.find("_99") == std::string::npos)
-      continue;
-
 
     TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
 
@@ -158,19 +176,20 @@ int main(int argc, char *argv[])
     Double_t* xBinsD = xBins->GetArray();
     int numBins = h_recoilPt_PtBal->GetNbinsX();
 
-    while( upperEdge > xBinsD[numBins]){
+    while( upperEdge < xBinsD[numBins]){
       numBins--;
     }
-    Double_t xBin[numBins];
-    for(int iBin = 0; iBin < numBins; ++iBin){
+    Double_t final_xBins[numBins];
+    for(int iBin = 0; iBin <= numBins; ++iBin){
       if (xBinsD[iBin] < upperEdge)
-        xBin[iBin] = xBinsD[iBin];
+        final_xBins[iBin] = xBinsD[iBin];
       else
-        xBin[iBin] = upperEdge;
+        final_xBins[iBin] = upperEdge;
+//cout << "iBin: " << iBin << " : " << final_xBins[iBin] << endl;
     }
-    cout << "Setting last bin upper edge to " << xBin[numBins] << endl;
+    cout << "Setting last bin upper edge to " << final_xBins[numBins] << endl;
 
-    TH1D* h_template = new TH1D("Template", "Template", numBins, xBin);
+    TH1D* h_template = new TH1D("Template", "Template", numBins, final_xBins);
 
     TH1D* h_mean = (TH1D*) h_template->Clone("MJB_Fine");  h_mean->SetTitle("MJB_Fine");
     TH1D* h_error = (TH1D*) h_template->Clone("Error");  h_mean->SetTitle("Error");
@@ -183,10 +202,57 @@ int main(int argc, char *argv[])
 //    TProfile* prof_MJBcorrection = (TProfile*) h_recoilPt_PtBal->ProfileX("prof_MJBcorrection", 1, -1, "");
 //    TH1D* h_mean_prof = (TH1D*) prof_MJBcorrection->ProjectionX("h_mean_prof");
 
+    vector<int> binsToCombine;
+    if(rebinFile && (sysName.find("MCType") == std::string::npos) ){
+      std::string thisSysType = "significant_"+sysName.substr(11, sysName.size());
+      cout << thisSysType << endl;
+      TH1D* rebinHist = (TH1D*) rebinFile->Get(thisSysType.c_str());
+      //TH1D* rebinHist = (TH1D*) rebinFile->Get("significant_MJB_b08_neg");
+//!!    Get binning of this systematic
+//!!    Get actual fit binning, and loop over that
 
+      // Get Binning of rebin histogram
+      TArrayD* xBinsRebin = (TArrayD*) rebinHist->GetXaxis()->GetXbins();
+      Double_t* xBinsDRebin = xBinsRebin->GetArray();
+      int rebin_numBins = rebinHist->GetNbinsX();
+
+      while( upperEdge < xBinsDRebin[rebin_numBins]){
+        rebin_numBins--;
+      }
+
+      //Check that starting point is same between the two !!
+
+      //Find mapping between actual hist and rebin hist
+      //each index of binsToRebin will correspond to 1 fit (and to 1 bin of the rebin hist)
+      //each element of binsToRebin will be the end bin to fit to, with the previous element being the starting bin
+      int iRebin = 0;
+      for(int iBin = 0; iBin <= numBins; ++iBin){
+        if( xBinsDRebin[iRebin] == final_xBins[iBin]){
+          binsToCombine.push_back( iBin );
+          iRebin++;
+        }
+      }
+//      for( int iBin = 0; iBin < binsToCombine.size(); ++iBin){
+//        cout << iBin << " : " << binsToCombine.at(iBin) << endl;
+//        cout << xBinsDRebin[iBin] << " : " << final_xBins[binsToCombine.at(iBin)] << endl;
+//      }
+//      exit(1);
+    }else{
+      for(int iBin = 0; iBin <= numBins; ++iBin){
+        binsToCombine.push_back( iBin );
+      }
+//      for( int iBin = 0; iBin < binsToCombine.size(); ++iBin){
+//        cout << iBin << " : " << binsToCombine.at(iBin) << endl;
+//      }
+//      exit(1);
+    }
     // Loop over all projections, and fit
-    for( int iBin=1; iBin < h_recoilPt_PtBal->GetNbinsX()+1; ++iBin){
-      TH1D* h_proj = h_recoilPt_PtBal->ProjectionY( "h_proj", iBin, iBin, "ed");
+    //for( int iBin=1; iBin < h_recoilPt_PtBal->GetNbinsX()+1; ++iBin){
+    for( int iRange=1; iRange < binsToCombine.size(); ++iRange){
+      int iBin_start = binsToCombine.at(iRange-1)+1;
+      int iBin_end = binsToCombine.at(iRange);
+      cout << iRange << " : " << iBin_start << " : " << iBin_end << endl;
+      TH1D* h_proj = h_recoilPt_PtBal->ProjectionY( "h_proj", iBin_start, iBin_end, "ed");
       if (h_proj->GetEntries() < 1)
         continue;
 
@@ -201,43 +267,35 @@ int main(int argc, char *argv[])
 
       thisMean = m_BalFit->GetMean();
       thisError = m_BalFit->GetMeanError();
-      h_mean->SetBinContent( iBin, thisMean );
-      h_mean->SetBinError( iBin, thisError );
-      h_error->SetBinContent(iBin, thisError );
-
       thisMedian = m_BalFit->GetMedian();
-      h_median->SetBinContent(iBin, thisMedian);
       thisRedChi = m_BalFit->GetChi2Ndof();
-      h_redchi->SetBinContent(iBin, thisRedChi);
       thisWidth = m_BalFit->GetSigma();
-      h_width->SetBinContent(iBin, thisWidth);
-
-      if (thisError < 0.5){
+      if (thisError < 0.5)
         thisMedianHist = m_BalFit->GetHistoMedian();
+      else
+        thisError = -1.0;
+
+      //output histogram will have the same binning as the final result
+      for(int iBin = iBin_start; iBin <= iBin_end; ++iBin){
+        h_mean->SetBinContent( iBin, thisMean );
+        h_mean->SetBinError( iBin, thisError );
+        h_error->SetBinContent(iBin, thisError );
+        h_median->SetBinContent(iBin, thisMedian);
+        h_redchi->SetBinContent(iBin, thisRedChi);
+        h_width->SetBinContent(iBin, thisWidth);
         h_medianHist->SetBinContent(iBin, thisMedianHist);
-      }else
-        h_medianHist->SetBinContent(iBin, -1.);
-
-
-//      if (thisError <= 0.001 && thisRedChi < 3){
-//        h_mean->SetBinContent( iBin, thisMean );
-//        h_mean->SetBinError( iBin, thisError );
-//      } else {
-//        h_mean->SetBinContent( iBin, h_proj->GetMean() );
-//        h_mean->SetBinError( iBin, h_proj->GetMeanError() );
-//      }
-
+      }
 
       float ltx = 0.62;
       float lty = 0.80;
 
       char name[200];
 
-      sprintf(name, "Bin: %i", iBin);
+      sprintf(name, "Bins: %i to %i", iBin_start, iBin_end);
       lt->DrawLatex(ltx,lty,name);
       lty -= 0.05;
 
-      sprintf(name, "pT: %.0f %.0f", h_recoilPt_PtBal->GetXaxis()->GetBinLowEdge(iBin), h_recoilPt_PtBal->GetXaxis()->GetBinUpEdge(iBin));
+      sprintf(name, "pT: %.0f %.0f", h_recoilPt_PtBal->GetXaxis()->GetBinLowEdge(iBin_start), h_recoilPt_PtBal->GetXaxis()->GetBinUpEdge(iBin_end));
       lt->DrawLatex(ltx,lty,name);
       lty -= 0.05;
 
@@ -277,7 +335,7 @@ int main(int argc, char *argv[])
 
 
       c1->Update();
-      c1->SaveAs( (fitPlotsOutDir+fitPlotsOutName+"_"+to_string(iBin)+".png").c_str() );
+      c1->SaveAs( (fitPlotsOutDir+fitPlotsOutName+"_"+to_string(iRange)+".png").c_str() );
       h_proj->Delete();
     }
 

@@ -20,20 +20,20 @@ outputTags = []
 ###valTypes = ["VA", "VF"]
 
 validation = False
-#jetTypes = ["EM"]
+#jetTypes = ["LC"]
 jetTypes = ["EM", "LC"]
 
-extraTag = ""
+extraTag = "_2sub"
 
 
 files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDPythia8_JETM1_gridSamples.txt")
 outputTags.append("QCDPy")
 files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDHerwig_JETM1_gridSamples.txt")
 outputTags.append("QCDH")
-files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Main_JETM1_gridSamples.txt")
-outputTags.append("Ex")
-files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Debug_gridSamples.txt")
-outputTags.append("Db")
+#files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Main_JETM1_gridSamples.txt")
+#outputTags.append("Ex")
+#files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Debug_gridSamples.txt")
+#outputTags.append("Db")
 
 
 #files.append("../DijetFW/DijetResonanceAlgo/scripts/sampleLists/BootStrap_test_gridSamples.txt")

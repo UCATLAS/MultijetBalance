@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
   std::time_t initialTime = std::time(0);
   gErrorIgnoreLevel = 2000;
   std::string inFileName = "";
-  float upperEdge = 0;
+  float upperEdge = 999999;
 
   /////////// Retrieve arguments //////////////////////////
   std::vector< std::string> options;
@@ -115,14 +115,14 @@ int main(int argc, char *argv[])
          << "  --file            Path to a file ending in appended" << std::endl
          << "  --upperEdge       Upper edge for final bin" << std::endl
          << "  --sysType         String tag for which sys to run" << std::endl
-         << "  --RMS             Threshold RMS value to determine rebinning" << std::endl
+         << "  --threshold       Threshold value to determine rebinning (default 2 sigma)" << std::endl
          << "  --fit             Perform fits rather than a mean" << std::endl
          << std::endl;
     exit(1);
   }
 
   std::string sysType = "";
-  float thresholdRMS = 1000.;
+  float threshold = 2.; //sigma
   bool f_fit = false;
 
   int iArg = 0;
@@ -157,13 +157,13 @@ int main(int argc, char *argv[])
          upperEdge = std::stof(options.at(iArg+1));
          iArg += 2;
        }
-    } else if (options.at(iArg).compare("--RMS") == 0) {
+    } else if (options.at(iArg).compare("--threshold") == 0) {
        char tmpChar = options.at(iArg+1)[0];
        if (iArg+1 == argc || tmpChar == '-' ) {
-         std::cout << " --RMS should be followed by a float" << std::endl;
+         std::cout << " --threshold should be followed by a float" << std::endl;
          return 1;
        } else {
-         thresholdRMS = std::stof(options.at(iArg+1));
+         threshold = std::stof(options.at(iArg+1));
          iArg += 2;
        }
     } else if (options.at(iArg).compare("--fit") == 0) {
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 
   /// Get output name ///
   std::string outFileName = inFileName;
-  outFileName.replace(pos, 6, "RMS");
+  outFileName.replace(pos, 6, "significant");
   if (sysType.size() > 0)
     outFileName += ("."+sysType);
   cout << "Creating Output File " << outFileName << endl;
@@ -215,9 +215,14 @@ int main(int argc, char *argv[])
     if( sysName.find(sysType) == std::string::npos)
       continue;
 
+    //sysName formats are like: Iteration1_Zjet_Stat1_neg_97
+    std::string iteration = sysName.substr(0, sysName.find_first_of('_'));
+    std::string toyNum = sysName.substr(sysName.find_last_of('_')+1, sysName.size());
+    std::string nominalName = iteration+"_Nominal_"+toyNum;
+
     TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
     h_2D_sys.push_back( h_recoilPt_PtBal );
-    TH2F* h_recoilPt_PtBal_nominal = (TH2F*) inFile->Get(("Nominal/recoilPt_PtBal_Fine").c_str());
+    TH2F* h_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
     h_2D_nominal.push_back( h_recoilPt_PtBal_nominal );
   }
   cout << "numToys is " << h_2D_sys.size() << " and " << h_2D_nominal.size() << endl;
@@ -228,25 +233,27 @@ int main(int argc, char *argv[])
 
 
   //Ignore any bins above upperEdge
-  int largestBin = h_2D.at(0)->GetNbinsX();
+  int largestBin = h_2D_sys.at(0)->GetNbinsX();
   while( h_2D_sys.at(0)->GetXaxis()->GetBinLowEdge(largestBin) >= upperEdge){
     largestBin--;
   }
 
   vector<int> reverseBinEdges; //we start from upper end
   reverseBinEdges.push_back( largestBin );
-  vector<float> values_RMS;
+  vector<float> values_significant;
+
 
   // Loop over all bins //
   for( int iBin=reverseBinEdges.at(reverseBinEdges.size()-1); iBin > 0; --iBin){
 
+    cout << "Combining bins " << iBin << " to " << reverseBinEdges.at(reverseBinEdges.size()-1) << endl;
     vector<float> meanValues;
 
     // Loop over all toys //
     for(unsigned int iH = 0; iH < h_2D_sys.size(); ++iH){
       TH1D* h_proj_sys = h_2D_sys.at(iH)->ProjectionY("h_proj_sys", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
       TH1D* h_proj_nominal = h_2D_nominal.at(iH)->ProjectionY("h_proj_nominal", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
-      float sysVal = -1., nomVal = -1.;
+      float sysVal = -1., nominalVal = -1.;
 
       if(f_fit){
         m_BalFit->Fit(h_proj_nominal, 0); // Rebin histogram and fit
@@ -259,6 +266,7 @@ int main(int argc, char *argv[])
       }
       //!! Need to check here if fit failed, and otherwise give the projection?
       meanValues.push_back((sysVal-nominalVal)/sysVal);
+      //cout << (sysVal-nominalVal)/sysVal << " sys: " << sysVal << " nominalVal: " << nominalVal << endl;
 
       // Draw this fit for the first toy //
       if( f_fit && iH == 0){
@@ -267,7 +275,7 @@ int main(int argc, char *argv[])
       }
     }
 
-    RMS =  TMath::RMS(meanValues.size(), &meanValues[0]);
+    float RMS =  TMath::RMS(meanValues.size(), &meanValues[0]);
 
     // Get mean value //
     // Should mean value be from actual result, not toys?
@@ -284,33 +292,40 @@ int main(int argc, char *argv[])
 //    }
 //    RMS = sqrt( RMS / meanValues.size() );
 
-    mu = mean / RMS / RMS;
-    sig = 1.0/ RMS / RMS;
+    float mu = mean / RMS / RMS;
+    float sig = 1.0/ RMS / RMS;
     // If RMS is below threshold, then save this bin as an edge. //
     // If above RMS, then this bin will be added with the next bin //
     //if( RMS < thresholdRMS){
-    if (sig > 0 && fabs(mu)/sqrt(sig) > thres && sqrt(sig)/fabs(mu) < 1.0/sqrt(10.0)) { // 3 sigma sig + <30% error
+    cout << "mean: " << mean << " and RMS: " << RMS << endl;
+    cout << "sig: " << sig << " and mean/RMS " << fabs(mu)/sqrt(sig) << " and reverse " << sqrt(sig)/fabs(mu) << endl;
+//    if (RMS==0 || ( (fabs(mu)/sqrt(sig) > threshold)) ){ // 3 sigma sig + <30% error
+    if (RMS==0 || ( (fabs(mu)/sqrt(sig) > threshold) && ( sqrt(sig)/fabs(mu) < 1.0/sqrt(10.0) )) ){ // 3 sigma sig + <30% error
       reverseBinEdges.push_back(iBin-1);
-      values_RMS.push_back( RMS );
+      if (RMS == 0)
+        values_significant.push_back( 0 );
+      else
+        values_significant.push_back( sqrt(sig)/fabs(mu) );
     }
 
 
   }//for all bins
 
-  // Create histograms of the RMS values with the final binning //
+  // Create histograms of the significance values with the final binning //
   int numBins = reverseBinEdges.size()-1;
   Double_t newXbins[numBins];
   for(unsigned int i=0; i < reverseBinEdges.size(); ++i){
     newXbins[numBins-i] = h_2D_sys.at(0)->GetXaxis()->GetBinUpEdge(reverseBinEdges.at(i));
     if (newXbins[numBins-i] > upperEdge)
       newXbins[numBins-i] = upperEdge;
+    cout << "!! " << newXbins[numBins-i] << endl;
   }
-  TH1D* h_RMS = new TH1D( ("RMS_"+sysType).c_str(), ("RMS_"+sysType).c_str(), numBins, newXbins);
-  for(int iBin=1; iBin < h_RMS->GetNbinsX()+1; ++iBin){
-    h_RMS->SetBinContent(iBin, values_RMS.at(numBins-iBin) );
+  TH1D* h_significant = new TH1D( ("significant_"+sysType).c_str(), ("significant_"+sysType).c_str(), numBins, newXbins);
+  for(int iBin=1; iBin < h_significant->GetNbinsX()+1; ++iBin){
+    h_significant->SetBinContent(iBin, values_significant.at(numBins-iBin) );
   }
   TFile *outFile = TFile::Open(outFileName.c_str(), "RECREATE");
-  h_RMS->Write("", TObject::kOverwrite);
+  h_significant->Write("", TObject::kOverwrite);
   outFile->Close();
   inFile->Close();
 

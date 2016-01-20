@@ -44,8 +44,7 @@ def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
 
     if (f_rebin):
       command = "runBootstrapRebin --file "+inFile+" --sysType "+sys
-      command += " --upperEdge 2000 --RMS 100"
-      #command += " --upperEdge 2000 --RMS 0.001"
+      command += " --upperEdge 2000 --threshold 2.5"
       if( f_fit ):
         command += ' --fit'
     else:
@@ -53,15 +52,15 @@ def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
       command += " --upperEdge 2000"
 
     print command
-#    res = submit_local_job( command, logFile )
-#    pids.append(res[0])
-#    logFiles.append(res[1])
+    res = submit_local_job( command, logFile )
+    pids.append(res[0])
+    logFiles.append(res[1])
 
   wait_all(pids, logFiles)
 
   ##### Combine seperate outputs #####
   if (f_rebin):
-    histType = "RMS"
+    histType = "significant"
   else:
     histType = "fit_MJB_initial"
 

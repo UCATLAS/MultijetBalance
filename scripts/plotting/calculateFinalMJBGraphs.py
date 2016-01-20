@@ -62,12 +62,17 @@ def calculateFinalMJBGraphs(file, binnings):
     tmpMJBHist = nomDir.Get(histTag)
 
     ptBinFile = os.path.dirname(file)+'/'
-    if 'mc' in file:
-      print "Looking for ptBinTree_mc15.root in ",os.path.dirname(file)
-      ptBinFile += 'ptBinTree_mc15.root'
-    else:
-      print "Looking for ptBinTree_data15.root in ",os.path.dirname(file)
-      ptBinFile += 'ptBinTree_data15.root'
+#    if 'mc' in file:
+#      print "Looking for ptBinTree_mc15.root in ",os.path.dirname(file)
+#      ptBinFile += 'ptBinTree_mc15.root'
+#    else:
+#      print "Looking for ptBinTree_data15.root in ",os.path.dirname(file)
+#      ptBinFile += 'ptBinTree_data15.root'
+
+    ## Only look for data tree
+    print "Looking for ptBinTree_data15.root in ",os.path.dirname(file)
+    ptBinFile += 'ptBinTree_data15.root'
+
 
     if os.path.isfile(ptBinFile):
       ptFile = TFile.Open( ptBinFile , 'READ' )
