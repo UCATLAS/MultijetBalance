@@ -44,19 +44,21 @@ int main(int argc, char *argv[])
          << "  --file            Path to a file ending in scaled" << std::endl
          << "  --upperEdge       Upper edge for final bin" << std::endl
          << "  --sysType         String tag for which sys to run" << std::endl
-         << "  --rebinFileName       Path to rebin file.  No rebinning if this is not set." << std::endl
+         << "  --rebinFileName   Path to rebin file.  No rebinning if this is not set" << std::endl
+         << "  --fit             Fit the histograms, rather than retrieving their mean directly" << std::endl
          << std::endl;
     exit(1);
   }
 
   std::string sysType = "";
   std::string rebinFileName = "";
+  bool f_fit = false;
 
   int iArg = 0;
   while(iArg < argc-1) {
     if (options.at(iArg).compare("-h") == 0) {
-       // Ignore if not first argument
-       ++iArg;
+      // Ignore if not first argument
+      ++iArg;
     } else if (options.at(iArg).compare("--file") == 0) {
        char tmpChar = options.at(iArg+1)[0];
        if (iArg+1 == argc || tmpChar == '-' ) {
@@ -93,6 +95,9 @@ int main(int argc, char *argv[])
          rebinFileName = options.at(iArg+1);
          iArg += 2;
        }
+    } else if (options.at(iArg).compare("--fit") == 0) {
+      f_fit = true;
+      ++iArg;
     }else{
       std::cout << "Couldn't understand argument " << options.at(iArg) << std::endl;
       return 1;
@@ -112,7 +117,11 @@ int main(int argc, char *argv[])
     exit(1);
   }
   std::string outFileName = inFileName;
-  outFileName.replace(pos, 6, "fit_MJB_initial");
+  if( f_fit )
+    outFileName.replace(pos, 6, "fit_MJB_initial");
+  else
+    outFileName.replace(pos, 6, "mean_MJB_initial");
+
   if (sysType.size() > 0)
     outFileName += ("."+sysType);
 
@@ -256,86 +265,101 @@ int main(int argc, char *argv[])
       if (h_proj->GetEntries() < 1)
         continue;
 
-      m_BalFit->Fit(h_proj, 0); // Rebin histogram and fit
-//Refit      m_BalFit->ReFit(h_proj, 0); // Rebin histogram and fit
-      TF1* thisFit = (TF1*) m_BalFit->GetFit();
-      TH1D* thisHisto = (TH1D*) m_BalFit->GetHisto();
-      thisHisto->Draw();
-      thisFit->Draw("same");
-
       float thisMean = 0., thisError = 0., thisRedChi = 0., thisMedian = 0., thisWidth = 0., thisMedianHist = 0.;
 
-      thisMean = m_BalFit->GetMean();
-      thisError = m_BalFit->GetMeanError();
-      thisMedian = m_BalFit->GetMedian();
-      thisRedChi = m_BalFit->GetChi2Ndof();
-      thisWidth = m_BalFit->GetSigma();
-      if (thisError < 0.5)
-        thisMedianHist = m_BalFit->GetHistoMedian();
-      else
-        thisError = -1.0;
+      if( f_fit ){
+        m_BalFit->Fit(h_proj, 0); // Rebin histogram and fit
+//Refit       m_BalFit->ReFit(h_proj, 0); // Rebin histogram and fit
+        thisMean = m_BalFit->GetMean();
+        thisError = m_BalFit->GetMeanError();
+      } else {
+        thisMean = h_proj->GetMean();
+        thisError = h_proj->GetMeanError();
+      }
 
-      //output histogram will have the same binning as the final result
+      //Save nominal results
       for(int iBin = iBin_start; iBin <= iBin_end; ++iBin){
         h_mean->SetBinContent( iBin, thisMean );
         h_mean->SetBinError( iBin, thisError );
-        h_error->SetBinContent(iBin, thisError );
-        h_median->SetBinContent(iBin, thisMedian);
-        h_redchi->SetBinContent(iBin, thisRedChi);
-        h_width->SetBinContent(iBin, thisWidth);
-        h_medianHist->SetBinContent(iBin, thisMedianHist);
       }
 
-      float ltx = 0.62;
-      float lty = 0.80;
+      //Save extra fit information
+      if( f_fit ){
 
-      char name[200];
+        TF1* thisFit = (TF1*) m_BalFit->GetFit();
+        TH1D* thisHisto = (TH1D*) m_BalFit->GetHisto();
+        thisHisto->Draw();
+        thisFit->Draw("same");
 
-      sprintf(name, "Bins: %i to %i", iBin_start, iBin_end);
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
 
-      sprintf(name, "pT: %.0f %.0f", h_recoilPt_PtBal->GetXaxis()->GetBinLowEdge(iBin_start), h_recoilPt_PtBal->GetXaxis()->GetBinUpEdge(iBin_end));
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        thisMedian = m_BalFit->GetMedian();
+        thisRedChi = m_BalFit->GetChi2Ndof();
+        thisWidth = m_BalFit->GetSigma();
+        if (thisError < 0.5)
+          thisMedianHist = m_BalFit->GetHistoMedian();
+        else
+          thisMedianHist = -99.0;
 
-      sprintf(name,"Mean: %.3f", thisMean);
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        //output histogram will have the same binning as the final result
+        for(int iBin = iBin_start; iBin <= iBin_end; ++iBin){
+          h_error->SetBinContent(iBin, thisError );
+          h_median->SetBinContent(iBin, thisMedian);
+          h_redchi->SetBinContent(iBin, thisRedChi);
+          h_width->SetBinContent(iBin, thisWidth);
+          h_medianHist->SetBinContent(iBin, thisMedianHist);
+        }
 
-      sprintf(name,"Fit Median: %.3f", thisMedian);
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        float ltx = 0.62;
+        float lty = 0.80;
 
-      if (thisError < 0.5){
-        sprintf(name,"Hist Median: %.3f", thisMedianHist);
+        char name[200];
+
+        sprintf(name, "Bins: %i to %i", iBin_start, iBin_end);
         lt->DrawLatex(ltx,lty,name);
         lty -= 0.05;
-      }
 
-      sprintf(name,"Error: %.4f", thisError);
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        sprintf(name, "pT: %.0f %.0f", h_recoilPt_PtBal->GetXaxis()->GetBinLowEdge(iBin_start), h_recoilPt_PtBal->GetXaxis()->GetBinUpEdge(iBin_end));
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
 
-      sprintf(name,"RedChi2: %.2f", thisRedChi);
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        sprintf(name,"Mean: %.3f", thisMean);
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
 
-      sprintf(name,"Width: %.2f", thisWidth);
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        sprintf(name,"Fit Median: %.3f", thisMedian);
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
 
-      sprintf(name,"Projection Mean: %.3f", h_proj->GetMean());
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        if (thisError < 0.5){
+          sprintf(name,"Hist Median: %.3f", thisMedianHist);
+          lt->DrawLatex(ltx,lty,name);
+          lty -= 0.05;
+        }
 
-      sprintf(name,"Projection Error: %.4f", h_proj->GetMeanError());
-      lt->DrawLatex(ltx,lty,name);
-      lty -= 0.05;
+        sprintf(name,"Error: %.4f", thisError);
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
+
+        sprintf(name,"RedChi2: %.2f", thisRedChi);
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
+
+        sprintf(name,"Width: %.2f", thisWidth);
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
+
+        sprintf(name,"Projection Mean: %.3f", h_proj->GetMean());
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
+
+        sprintf(name,"Projection Error: %.4f", h_proj->GetMeanError());
+        lt->DrawLatex(ltx,lty,name);
+        lty -= 0.05;
 
 
-      c1->Update();
-      c1->SaveAs( (fitPlotsOutDir+fitPlotsOutName+"_"+to_string(iRange)+".png").c_str() );
+        c1->Update();
+        c1->SaveAs( (fitPlotsOutDir+fitPlotsOutName+"_"+to_string(iRange)+".png").c_str() );
+      }// if f_fit
       h_proj->Delete();
     }
 
@@ -354,11 +378,13 @@ int main(int argc, char *argv[])
     h_recoilPt_PtBal->SetDirectory(sysDir); h_recoilPt_PtBal->Write();
 //    h_recoilPt_center->SetDirectory(sysDir); h_recoilPt_center->Write();
     h_mean->SetDirectory(sysDir); h_mean->Write();
-    h_error->SetDirectory(sysDir); h_error->Write();
-    h_redchi->SetDirectory(sysDir); h_redchi->Write();
-    h_median->SetDirectory(sysDir); h_median->Write();
-    h_width->SetDirectory(sysDir); h_width->Write();
-    h_medianHist->SetDirectory(sysDir); h_medianHist->Write();
+    if (f_fit){
+      h_error->SetDirectory(sysDir); h_error->Write();
+      h_redchi->SetDirectory(sysDir); h_redchi->Write();
+      h_median->SetDirectory(sysDir); h_median->Write();
+      h_width->SetDirectory(sysDir); h_width->Write();
+      h_medianHist->SetDirectory(sysDir); h_medianHist->Write();
+    }
 
     c1->Clear();
     h_template->Delete();

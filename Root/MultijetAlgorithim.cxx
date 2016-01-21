@@ -173,13 +173,13 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
     m_jetCalibConfig          = config->GetValue("JetCalibConfig",  "JES_Full2012dataset_May2014.config");
   }
 
-  if ( (m_inContainerName.find("LCTopo") == std::string::npos)
-      && !m_isMC
-      && m_jetCalibSequence.find("Insitu") == std::string::npos)
-    m_jetCalibSequence += "_Insitu";
+////  if ( (m_inContainerName.find("LCTopo") == std::string::npos)
+//  if ( !m_isMC
+//      && m_jetCalibSequence.find("Insitu") == std::string::npos)
+//    m_jetCalibSequence += "_Insitu";
 
-  if( (m_isMC || (m_inContainerName.find("LCTopo") != std::string::npos) )
-      && m_jetCalibSequence.find("Insitu") != std::string::npos ){
+//  if( (m_isMC || (m_inContainerName.find("LCTopo") != std::string::npos) )
+  if( m_isMC && m_jetCalibSequence.find("Insitu") != std::string::npos ){
     Error("initialize()", "Attempting to use an Insitu calibration sequence on MC.  Exiting.");
     return EL::StatusCode::FAILURE;
   }
@@ -291,7 +291,7 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   loadJetCalibrationTool();
   loadJetCleaningTool();
   loadJetUncertaintyTool();
-//old  loadVjetCalibration();
+  loadVjetCalibration();
 
   if (loadMJBCalibration() == EL::StatusCode::FAILURE)
     return EL::StatusCode::FAILURE;
@@ -303,7 +303,7 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   //Crap for Syst Tool
   // Fix this to be elegent and take any binning
   if( m_bootstrap ){
-    systTool_nToys = 500;
+    systTool_nToys = 200;
     //double theseBins[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
     //double theseBins[] = {125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1300, 1500, 2000, 5000.};
     double theseBins[] = {300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1080, 1140, 1200, 1260, 1320, 1380, 1480, 1700, 2000, 2700};
@@ -653,6 +653,20 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     originalJetKinematics.push_back(thisJet);
   }
 
+  //This is a temporary method for determining whether the subleading jet pt passes.
+  //It is necessary as the subleading pt cut must be applied at the eta intercalibration level,
+  //But only for the first iteration!
+  if( m_MJBIteration == 0 ){
+    for( unsigned int iJet = 1; iJet < originalJetKinematics.size(); ++iJet){
+      if( (!m_reverseSubleading && (originalJetKinematics.at(iJet).Pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) )
+          || (m_reverseSubleading && (originalJetKinematics.at(iJet).Pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ) ){
+
+        delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
+        wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+      }
+    }
+  }
+
   int m_cutflowFirst_SystLoop = m_iCutflow; //Get cutflow position for systematic looping
   vector< xAOD::Jet*>* signalJets = new std::vector< xAOD::Jet* >();
 
@@ -678,6 +692,7 @@ EL::StatusCode MultijetAlgorithim :: execute ()
     }else if( m_sysTool.at(iVar) == 5 ){ //ptt
       ptThresholdCut = (double) m_sysToolIndex.at(iVar) * GeV;
     }
+
 
     if(m_debug) Info("execute()", "Apply other calibrations ");
     for (unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
@@ -717,28 +732,30 @@ EL::StatusCode MultijetAlgorithim :: execute ()
       }//leading jet
 
       if(iJet > 0){  //Apply standard systematic to subleading jets
-        applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
-        applyMJBCalibration( signalJets->at(iJet) , iVar );
+        //!! Changed it to manually select based on subleading pt, due to EIC issue
+        if( signalJets->at(iJet)->pt() <= m_subLeadingPtThreshold.at(0) ){
+          applyVjetCalibration( signalJets->at(iJet) , iVar );
+          applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
+        }else{
+          applyMJBCalibration( signalJets->at(iJet) , iVar );
+        }
       }
-
-//prev      if(iJet > 0){  //Don't apply systematic corrections to lead jet
-//prev        applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
-//prev        applyVjetCalibration( signalJets->at(iJet) , iVar );
-//prev        applyMJBCalibration( signalJets->at(iJet) , iVar );
-//prev      } else if( m_closureTest){ //Apply MJB to lead jet
-//prev        applyMJBCalibration( signalJets->at(iJet), iVar, true );
-//prev      }
 
     }
     reorderJets( signalJets );
 
     if(m_debug) Info("execute()", "Subleading pt selection ");
-    if( !m_reverseSubleading && (signalJets->at(1)->pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //require subleading less than limit
-        continue;
-    }else if( m_reverseSubleading && (signalJets->at(1)->pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //force subleading greater than limit
-        continue;
+    if( m_MJBIteration > 0 ){ //Temporary due to 1 TeV cutoff at EIC level !!
+
+      if( !m_reverseSubleading && (signalJets->at(1)->pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //require subleading less than limit
+          continue;
+      }else if( m_reverseSubleading && (signalJets->at(1)->pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //force subleading greater than limit
+          continue;
+      }
+      passCut(iVar); //ptSub
+    } else {
+      passCut(iVar); //because it already passed before
     }
-    passCut(iVar); //ptSub
 
     if(m_debug) Info("execute()", "Pt threshold ");
     for (unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
@@ -1511,50 +1528,56 @@ EL::StatusCode MultijetAlgorithim :: loadJetUncertaintyTool(){
   return EL::StatusCode::SUCCESS;
 }
 
-//old  //Setup V+jet calibration and systematics files
-//old  EL::StatusCode MultijetAlgorithim :: loadVjetCalibration(){
+//Setup V+jet calibration and systematics files
+EL::StatusCode MultijetAlgorithim :: loadVjetCalibration(){
+
+  std::string containerType;
+  if( m_inContainerName.find("AntiKt4EMTopo") != std::string::npos)
+    containerType = "EMJES_R4";
+  else if( m_inContainerName.find("AntiKt6EMTopo") != std::string::npos )
+    containerType = "EMJES_R6";
+  else if( m_inContainerName.find("AntiKt4LCTopo") != std::string::npos )
+    containerType = "LCJES_R4";
+  else if( m_inContainerName.find("AntiKt6LCTopo") != std::string::npos )
+    containerType = "LCJES_R6";
+
+  TFile *VjetFile = TFile::Open( gSystem->ExpandPathName("$ROOTCOREBIN/data/MultijetBalanceAlgo/Vjet/Vjet_Systematics.root") , "READ" );
+
+  //Only retrieve Nominal container
+  std::string correctionName = containerType+"_correction";
+  TH1F *h = (TH1F*) VjetFile->Get( correctionName.c_str() );
+  h->SetDirectory(0); //Detach histogram from file to memory
+  m_VjetHists.push_back(h);
+
+//old  TIter next(VjetFile->GetListOfKeys());
+//old  TKey* key;
+//old  std::string thisKeyName;
 //old
-//old    std::string containerType;
-//old    if( m_inContainerName.find("AntiKt4EMTopo") != std::string::npos)
-//old      containerType = "EMJES_R4";
-//old    else if( m_inContainerName.find("AntiKt6EMTopo") != std::string::npos )
-//old      containerType = "EMJES_R6";
-//old    else if( m_inContainerName.find("AntiKt4LCTopo") != std::string::npos )
-//old      containerType = "LCJES_R4";
-//old    else if( m_inContainerName.find("AntiKt6LCTopo") != std::string::npos )
-//old      containerType = "LCJES_R6";
+//old  while ( (key = (TKey*) next()) ){
+//old    thisKeyName = key->GetName();
+//old    if( thisKeyName.find(containerType) != std::string::npos ){
 //old
-//old    TFile *VjetFile = TFile::Open( gSystem->ExpandPathName("$ROOTCOREBIN/data/MultijetBalanceAlgo/Vjet/Vjet_Systematics.root") , "READ" );
-//old    TIter next(VjetFile->GetListOfKeys());
-//old    TKey* key;
-//old    std::string thisKeyName;
+//old      /////Save histogram to memory in m_VjetHists
+//old      TH1F *h = (TH1F*) VjetFile->Get(thisKeyName.c_str());
+//old      h->SetDirectory(0); //Detach histogram from file to memory
+//old      m_VjetHists.push_back(h);
 //old
-//old    while ( (key = (TKey*) next()) ){
-//old      thisKeyName = key->GetName();
-//old      if( thisKeyName.find(containerType) != std::string::npos ){
+//old      ///// Integer mapping of systematics file with m_sysVar variation
+//old      //Map this latest histogram index to it's algorithim index
+//old      thisKeyName = thisKeyName.substr( thisKeyName.find("SystError_")+10 , thisKeyName.size() );
+//old      for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+//old        if( m_sysVar.at(iVar).find(thisKeyName) != std::string::npos){
+//old          m_VjetMap[iVar] = m_VjetHists.size()-1;
+//old        }
+//old      }//iVar
 //old
-//old        /////Save histogram to memory in m_VjetHists
-//old        TH1F *h = (TH1F*) VjetFile->Get(thisKeyName.c_str());
-//old  //      TH1F *h = (TH1F*) key->Clone(); //This didn't work!
-//old        h->SetDirectory(0); //Detach histogram from file to memory
-//old        m_VjetHists.push_back(h);
-//old
-//old        ///// Integer mapping of systematics file with m_sysVar variation
-//old        //Map this latest histogram index to it's algorithim index
-//old        thisKeyName = thisKeyName.substr( thisKeyName.find("SystError_")+10 , thisKeyName.size() );
-//old        for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-//old          if( m_sysVar.at(iVar).find(thisKeyName) != std::string::npos){
-//old            m_VjetMap[iVar] = m_VjetHists.size()-1;
-//old          }
-//old        }//iVar
-//old
-//old      }
-//old    }//while key
-//old
-//old    VjetFile->Close();
-//old
-//old    return EL::StatusCode::SUCCESS;
-//old  }
+//old    }
+//old  }//while key
+
+  VjetFile->Close();
+
+  return EL::StatusCode::SUCCESS;
+}
 
 //old  //Setup Previous MJB calibration and systematics files
 //old  EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
@@ -1758,36 +1781,38 @@ EL::StatusCode MultijetAlgorithim :: applyJetUncertaintyTool( xAOD::Jet* jet , i
 
 EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int iVar ){
   if(m_debug) Info("execute()", "applyVjetCalibration ");
+  Info("execute()", "applyVjetCalibration ");
 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
   if( (m_sysTool.at(iVar) == 1) || jet->pt() < 17.*GeV ) //If NoCorr or not in V+jet correction range
     return EL::StatusCode::SUCCESS;
-  if( !m_noLimitJESPt && jet->pt() > m_subLeadingPtThreshold.at(0) )
-    return EL::StatusCode::SUCCESS;
-
+//!!  if( !m_noLimitJESPt && jet->pt() > m_subLeadingPtThreshold.at(0) )
+//!!    return EL::StatusCode::SUCCESS;
 
   float thisCalibration = 1.;
   //Get nominal V+jet correction
   thisCalibration = m_VjetHists.at(0)->GetBinContent( m_VjetHists.at(0)->FindBin(jet->pt()/GeV) );
+  cout << "calibration is " << thisCalibration << endl;
 
-  //If this systematic variation is for V+jet
-  if( m_VjetMap.find(iVar) != m_VjetMap.end() ){
-    //cout << "Content is " <<  m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) ) << " for bin " << m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) << " for pt " << jet->pt()/GeV << endl;
-    //cout << "nominal correction is " << thisCalibration << endl;
-    if( m_sysSign.at(iVar) == 1){
-      thisCalibration += m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) );
-    }else{
-      thisCalibration -= m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) );
-    }
-    //cout << "final correction for " << m_sysVar.at(iVar) << " is " << thisCalibration << endl;
-  }
+//old  //If this systematic variation is for V+jet
+//old  if( m_VjetMap.find(iVar) != m_VjetMap.end() ){
+//old    //cout << "Content is " <<  m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) ) << " for bin " << m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) << " for pt " << jet->pt()/GeV << endl;
+//old    //cout << "nominal correction is " << thisCalibration << endl;
+//old    if( m_sysSign.at(iVar) == 1){
+//old      thisCalibration += m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) );
+//old    }else{
+//old      thisCalibration -= m_VjetHists.at(m_VjetMap[iVar])->GetBinContent( m_VjetHists.at(m_VjetMap[iVar])->FindBin(jet->pt()/GeV) );
+//old    }
+//old    //cout << "final correction for " << m_sysVar.at(iVar) << " is " << thisCalibration << endl;
+//old  }
 
   TLorentzVector thisJet;
   thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
+  cout << "initial pt is " << thisJet.Pt() << endl;
   thisJet *= (1./thisCalibration); //modify TLV
-  //(**jet) *= (1./thisCalibration); //following Gagik...
+  cout << "final pt is " << thisJet.Pt() << endl;
   jet->auxdata< float >("pt") = thisJet.Pt();
   jet->auxdata< float >("eta") = thisJet.Eta();
   jet->auxdata< float >("phi") = thisJet.Phi();
@@ -1809,9 +1834,10 @@ EL::StatusCode MultijetAlgorithim :: applyMJBCalibration( xAOD::Jet* jet , int i
   if( isLead && !m_closureTest)
     return EL::StatusCode::SUCCESS;
 
-  // if it's a subleading jet but below the 800 GeV limit
-  if( !isLead && jet->pt() <= m_subLeadingPtThreshold.at(0))
-    return EL::StatusCode::SUCCESS;
+  //!! Temporary for EIC issue
+//!!  // if it's a subleading jet but below the 800 GeV limit
+//!!  if( !isLead && jet->pt() <= m_subLeadingPtThreshold.at(0))
+//!!    return EL::StatusCode::SUCCESS;
 
   // If it's for a subcalibration of JCS, don't apply this calibration
   if(m_sysTool.at(iVar) == 1)

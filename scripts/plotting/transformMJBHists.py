@@ -171,19 +171,19 @@ if(f_calculateMJB):
         calculateMJBHists.calculateMJBHists(file, binnings, f_extraPlots)
         #os.system('mv '+file+' '+args.workDir+'/initialFiles/')
 
- #! if( doFit ):
- #!   files = glob.glob(args.workDir+'/hist.*.*.scaled.root')
+  if( doFit ):
+    files = glob.glob(args.workDir+'/hist.*.*.scaled.root')
 
- #!   for file in files:
- #!     command = 'runFit --file '+file
- #!     command += ' --upperEdge '+str(endPt)
- #!     if (doNominalOnly):
- #!       command += ' --sysType Nominal'
- #!     if (doBootstrap):
- #!       command += ' --rebinFileName '+rebinFile
- #!     print command
- #!     if (not f_printOnly):
- #!       os.system(command)
+    for file in files:
+      command = 'runFit --fit  --file '+file
+      command += ' --upperEdge '+str(endPt)
+      if (doNominalOnly):
+        command += ' --sysType Nominal'
+      if (doBootstrap):
+        command += ' --rebinFileName '+rebinFile
+      print command
+      if (not f_printOnly):
+        os.system(command)
 
 
 

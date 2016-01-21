@@ -50,6 +50,8 @@ def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
     else:
       command = "runFit --file "+inFile+" --sysType "+sys
       command += " --upperEdge 2000"
+      if( f_fit ):
+        command += ' --fit'
 
     print command
     res = submit_local_job( command, logFile )

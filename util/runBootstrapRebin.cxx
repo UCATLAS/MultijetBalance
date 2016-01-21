@@ -191,8 +191,12 @@ int main(int argc, char *argv[])
   /// Get output name ///
   std::string outFileName = inFileName;
   outFileName.replace(pos, 6, "significant");
-  if (sysType.size() > 0)
-    outFileName += ("."+sysType);
+
+  if (sysType.size() == 0){
+    cout << "Error, runBootstrapRebin requires a systematic name!  Exiting..." << endl;
+    exit(1)
+  }
+  outFileName += ("."+sysType);
   cout << "Creating Output File " << outFileName << endl;
 
   std::string fitPlotsOutDir = outFileName;
@@ -210,22 +214,39 @@ int main(int argc, char *argv[])
   TKey *key;
 
   std::vector<TH2F*> h_2D_sys, h_2D_nominal;
+  TH2F *h_full_recoilPt_PtBal, *h_full_recoilPt_PtBal_nominal;
   while ((key = (TKey*)next() )){
     std::string sysName = key->GetName();
     if( sysName.find(sysType) == std::string::npos)
       continue;
 
     //sysName formats are like: Iteration1_Zjet_Stat1_neg_97
+    //nominal format is like: Iteration1_Zjet_Stat1_neg
     std::string iteration = sysName.substr(0, sysName.find_first_of('_'));
     std::string toyNum = sysName.substr(sysName.find_last_of('_')+1, sysName.size());
-    std::string nominalName = iteration+"_Nominal_"+toyNum;
+    //if last field is an integer, then it's a toy.  Otherwise it's the full (non-bootstrap) result
+    if( isInteger(toyNum) ){
+      std::string nominalName = iteration+"_Nominal_"+toyNum;
 
-    TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
-    h_2D_sys.push_back( h_recoilPt_PtBal );
-    TH2F* h_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
-    h_2D_nominal.push_back( h_recoilPt_PtBal_nominal );
+      TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
+      h_2D_sys.push_back( h_recoilPt_PtBal );
+      TH2F* h_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
+      h_2D_nominal.push_back( h_recoilPt_PtBal_nominal );
+
+    }else{
+      std::string nominalName = iteration+"_Nominal";
+      h_full_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
+      h_full_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
+    }
+
   }
   cout << "numToys is " << h_2D_sys.size() << " and " << h_2D_nominal.size() << endl;
+
+  if(  h_2D_sys.size() < 1 || !(h_full_recoilPt_PtBal) || !(h_full_recoilPt_PtBal_nominal) ||
+      h_full_recoilPt_PtBal.isZombie() || h_full_recoilPt_PtBal_nominal.isZombie() ){
+    cout << "Error getting toys or nominal histogram.  Exiting..." << endl;
+    exit(1);
+  }
 
   // Get Fitting Object
   double NsigmaForFit = 1.6;
@@ -247,8 +268,23 @@ int main(int argc, char *argv[])
   for( int iBin=reverseBinEdges.at(reverseBinEdges.size()-1); iBin > 0; --iBin){
 
     cout << "Combining bins " << iBin << " to " << reverseBinEdges.at(reverseBinEdges.size()-1) << endl;
-    vector<float> meanValues;
 
+    //Get fits of this iBin projection for full (non-bootstrap)
+    TH1D* h_full_proj_sys = h_full_recoilPt_PtBal->ProjectionY("h_full_proj_sys", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
+    TH1D* h_full_proj_nominal = h_full_recoilPt_PtBal_nominal->ProjectionY("h_full_proj_nominal", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
+    float full_sysVal = -1., full_nominalVal = -1.;
+
+    if(f_fit){
+      m_BalFit->Fit(h_full_proj_nominal, 0); // Rebin histogram and fit
+      full_nominalVal = m_BalFit->GetMean();
+      m_BalFit->Fit(h_full_proj_sys, 0); // Rebin histogram and fit
+      full_sysVal = m_BalFit->GetMean();
+    }else{
+      full_nominalVal = h_full_proj_nominal->GetMean();
+      full_sysVal = h_full_proj_sys->GetMean();
+    }
+
+    vector<float> meanValues;
     // Loop over all toys //
     for(unsigned int iH = 0; iH < h_2D_sys.size(); ++iH){
       TH1D* h_proj_sys = h_2D_sys.at(iH)->ProjectionY("h_proj_sys", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
@@ -265,8 +301,8 @@ int main(int argc, char *argv[])
         sysVal = h_proj_sys->GetMean();
       }
       //!! Need to check here if fit failed, and otherwise give the projection?
-      meanValues.push_back((sysVal-nominalVal)/sysVal);
-      //cout << (sysVal-nominalVal)/sysVal << " sys: " << sysVal << " nominalVal: " << nominalVal << endl;
+      meanValues.push_back(   nominalVal == 0 ? 0 : ((sysVal/nominalVal)-1.)  );
+      //cout << (sysVal-nominalVal)/nominalVal << " sys: " << sysVal << " nominalVal: " << nominalVal << endl;
 
       // Draw this fit for the first toy //
       if( f_fit && iH == 0){
@@ -275,25 +311,15 @@ int main(int argc, char *argv[])
       }
     }
 
+    // Get mean value from full (non-bootstrap) results //
+    float mean = (full_nominalVal == 0 ? 0 : ((full_sysVal/full_nominalVal)-1.)  );
+
+    // Get RMS value from toys //
     float RMS =  TMath::RMS(meanValues.size(), &meanValues[0]);
-
-    // Get mean value //
-    // Should mean value be from actual result, not toys?
-    float mean = 0.;
-    for(unsigned int iV=0; iV < meanValues.size(); ++iV){
-      mean += meanValues.at(iV);
-    }
-    mean = mean / meanValues.size();
-
-//    // Get RMS //
-//    float RMS = 0.;
-//    for(unsigned int iV=0; iV < meanValues.size(); ++iV){
-//      RMS += pow( meanValues.at(iV) - mean, 2);
-//    }
-//    RMS = sqrt( RMS / meanValues.size() );
 
     float mu = mean / RMS / RMS;
     float sig = 1.0/ RMS / RMS;
+
     // If RMS is below threshold, then save this bin as an edge. //
     // If above RMS, then this bin will be added with the next bin //
     //if( RMS < thresholdRMS){
@@ -332,5 +358,14 @@ int main(int argc, char *argv[])
   std::cout << "Finished Fitting after " << (std::time(0) - initialTime) << " seconds" << std::endl;
 
   return 0;
+}
+
+inline bool isInteger(const std::string & s){
+  if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
+
+  char * p ;
+  strtol(s.c_str(), &p, 10) ;
+
+  return (*p == 0) ;
 }
 

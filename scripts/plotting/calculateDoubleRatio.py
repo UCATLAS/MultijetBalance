@@ -160,6 +160,7 @@ def calculateDoubleRatio(dataFileName, mcFileName):
         thisHist.SetDirectory( newDir )
         nomHist = nomDir.Get( histName )
         thisHist.Add(nomHist, -1.)
+        thisHist.Divide(nomHist)
 
   outFile.Write()
   outFile.Close()

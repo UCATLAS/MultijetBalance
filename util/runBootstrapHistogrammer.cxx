@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  TFile *output = TFile::Open((fileDir+"/hist.data.all.scaled.root").c_str(), "RECREATE");
+  TFile *output = TFile::Open((fileDir+"/hist.data.bootstrap.scaled.root").c_str(), "RECREATE");
   for (unsigned int iSys = 0; iSys < sysNames.size(); ++iSys) {
     std::cout << "Systematic " << sysNames.at(iSys) << ": " << iSys << "/" << sysNames.size() << std::endl;
 
