@@ -93,6 +93,15 @@ int SaveCanvas(int startBin, int endBin, string cName, JES_BalanceFitter* m_BalF
 return 0;
 }
 
+inline bool isInteger(const std::string & s){
+  if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
+
+  char * p ;
+  strtol(s.c_str(), &p, 10) ;
+
+  return (*p == 0) ;
+}
+
 int main(int argc, char *argv[])
 {
   std::time_t initialTime = std::time(0);
@@ -194,7 +203,7 @@ int main(int argc, char *argv[])
 
   if (sysType.size() == 0){
     cout << "Error, runBootstrapRebin requires a systematic name!  Exiting..." << endl;
-    exit(1)
+    exit(1);
   }
   outFileName += ("."+sysType);
   cout << "Creating Output File " << outFileName << endl;
@@ -214,7 +223,7 @@ int main(int argc, char *argv[])
   TKey *key;
 
   std::vector<TH2F*> h_2D_sys, h_2D_nominal;
-  TH2F *h_full_recoilPt_PtBal, *h_full_recoilPt_PtBal_nominal;
+  TH2F *h_full_recoilPt_PtBal = NULL, *h_full_recoilPt_PtBal_nominal = NULL;
   while ((key = (TKey*)next() )){
     std::string sysName = key->GetName();
     if( sysName.find(sysType) == std::string::npos)
@@ -243,7 +252,7 @@ int main(int argc, char *argv[])
   cout << "numToys is " << h_2D_sys.size() << " and " << h_2D_nominal.size() << endl;
 
   if(  h_2D_sys.size() < 1 || !(h_full_recoilPt_PtBal) || !(h_full_recoilPt_PtBal_nominal) ||
-      h_full_recoilPt_PtBal.isZombie() || h_full_recoilPt_PtBal_nominal.isZombie() ){
+      h_full_recoilPt_PtBal->IsZombie() || h_full_recoilPt_PtBal_nominal->IsZombie() ){
     cout << "Error getting toys or nominal histogram.  Exiting..." << endl;
     exit(1);
   }
@@ -360,12 +369,4 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-inline bool isInteger(const std::string & s){
-  if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
-
-  char * p ;
-  strtol(s.c_str(), &p, 10) ;
-
-  return (*p == 0) ;
-}
 
