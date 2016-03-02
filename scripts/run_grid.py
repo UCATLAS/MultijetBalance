@@ -21,17 +21,20 @@ outputTags = []
 
 validation = False
 jetTypes = ["EM"]
-#jetTypes = ["EM", "LC"]
+#jetTypes = ["EM","LC"]
 
-extraTag = "_200BS"
+extraTag = ""
 
+files.append("MultijetBalanceAlgo/scripts/sampleLists/Data207.txt")
+outputTags.append("207")
 
-#files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDPythia8_JETM1_gridSamples.txt")
+#files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDPythia8_EXOT2_gridSamples.txt")
 #outputTags.append("QCDPy")
-#files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDHerwig_JETM1_gridSamples.txt")
+#files.append("MultijetBalanceAlgo/scripts/sampleLists/QCDHerwig_EXOT2_gridSamples.txt")
 #outputTags.append("QCDH")
-files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Main_JETM1_gridSamples.txt")
-outputTags.append("Ex")
+#files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Main_EXOT2_gridSamples.txt")
+###files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Main_JETM1_gridSamples.txt")
+#outputTags.append("Ex")
 #files.append("MultijetBalanceAlgo/scripts/sampleLists/Data13TeV_Debug_gridSamples.txt")
 #outputTags.append("Db")
 

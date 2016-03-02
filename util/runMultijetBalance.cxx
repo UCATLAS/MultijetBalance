@@ -257,7 +257,8 @@ cout << outputName << endl;
   job.options()->setDouble(EL::Job::optRemoveSubmitDir, 1);
 
   // For Trigger
-  job.options()->setString( EL::Job::optXaodAccessMode, EL::Job::optXaodAccessMode_branch );
+//  job.options()->setString( EL::Job::optXaodAccessMode, EL::Job::optXaodAccessMode_branch );
+  job.options()->setString( EL::Job::optXaodAccessMode, EL::Job::optXaodAccessMode_class );
 
   //// basic event selection : GRL, event cleaning, NPV
   BasicEventSelection* baseEventSel = new BasicEventSelection();

@@ -21,7 +21,8 @@ from ROOT import *
 
 def calculateDoubleRatio(dataFileName, mcFileName):
 
-  if not "MJB_initial" in mcFileName or not "MJB_initial" in dataFileName:
+  if (not ("MJB_initial" in mcFileName and "MJB_initial" in dataFileName)) and \
+     (not ("MJB_nominal" in mcFileName and "MJB_nominal" in dataFileName)) :
     print "Error, trying to run calculateDoubleRatio.py on non \"MJB_initial\" input ", mcFileName, dataFileName
     print "Exiting"
     return
@@ -48,10 +49,17 @@ def calculateDoubleRatio(dataFileName, mcFileName):
     outName = 'bootstrap.combined.'+mcType
     mcDirList = []
 
-  if "fit_MJB" in dataFileName:
-    outName += '.Fit_DoubleMJB_initial.root'
+  if "fit_MJB_" in dataFileName:
+    outName += '.Fit_DoubleMJB'
   else:
-    outName += '.DoubleMJB_initial.root'
+    outName += '.DoubleMJB'
+
+  if "_nominal" in dataFileName:
+    outName += '_nominal.root'
+  else:
+    outName += '_initial.root'
+
+
   outFile = TFile.Open(dirName+outName, "RECREATE");
 
 
@@ -117,55 +125,6 @@ def calculateDoubleRatio(dataFileName, mcFileName):
   outFile.Close()
   mcFile.Close()
   dataFile.Close()
-
-  # If bootstrap, we're done
-  if os.path.basename(dataFileName).startswith('bootstrap'):
-    return;
-
-############ Calculate systematic differences for Double MJB Corrections #####################3
-
-
-  inFile = TFile.Open(dirName+outName, "READ");
-  keyList = [key.GetName() for key in inFile.GetListOfKeys()] #List of top level objects
-  dirList = [key for key in keyList if "Iteration" in key] #List of all directories
-  nomDirName = [dir for dir in dirList if "Nominal" in dir]
-  if( not len(nomDirName) == 1):
-    print "Error, nominal directories in new output file are ", nomDirName
-    return
-  else:
-    nomDir = inFile.Get( nomDirName[0] )
-
-  outName = outName.replace("DoubleMJB", "DoubleMJB_sys")
-  outFile = TFile.Open(dirName+outName, "RECREATE");
-
-  print "Creating Systematic Differences for Double MJB Correction Hists"
-  for dir in dirList:
-    #print "           ", dir
-    outFile.mkdir( dir )
-    newDir = outFile.Get( dir )
-    thisDir = inFile.Get( dir )
-
-    ##Get recoilPt histogram and save it ##
-    #thisPtHist = thisDir.Get( "recoilPt_center" )
-    #thisPtHist.SetDirectory( newDir )
-
-    histList = [key.GetName() for key in thisDir.GetListOfKeys() if "DoubleMJB" in key.GetName()]
-    for histName in histList:
-      if "Nominal" in dir:
-        thisHist = thisDir.Get( histName )
-        thisHist.SetDirectory( newDir )
-      else:
-        thisHist = thisDir.Get( histName )
-        thisHist.SetName( "diff_"+thisHist.GetName() )
-        thisHist.SetDirectory( newDir )
-        nomHist = nomDir.Get( histName )
-        thisHist.Add(nomHist, -1.)
-        thisHist.Divide(nomHist)
-
-  outFile.Write()
-  outFile.Close()
-  inFile.Close()
-
 
 
 if __name__ == "__main__":

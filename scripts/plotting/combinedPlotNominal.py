@@ -178,12 +178,12 @@ def combinedPlotNominal(files, normalize, ratio):
       #nomHist.SetMinimum(0.000101)
       if( "MJB" in histName) :
         nomHist.SetMinimum(0.0000101)
-        nomHist.GetXaxis().SetRangeUser( 500, 2800 ) #!!public
-        nomHist.SetMaximum(1.06) #!!public
-        nomHist.SetMinimum(0.9701) #!!public
-        #nomHist.GetXaxis().SetRangeUser( 300, 2800 )
-        #nomHist.SetMaximum(1.2)
-        #nomHist.SetMinimum(0.8999)
+        #nomHist.GetXaxis().SetRangeUser( 500, 2800 ) #!!public
+        #nomHist.SetMaximum(1.06) #!!public
+        #nomHist.SetMinimum(0.9701) #!!public
+        nomHist.GetXaxis().SetRangeUser( 300, 2800 )
+        nomHist.SetMaximum(1.2)
+        nomHist.SetMinimum(0.8999)
         nomHist.GetXaxis().SetMoreLogLabels(True)
         nomHist.GetYaxis().SetTitle("#LT p_{T}^{lead jet}/p_{T}^{recoil} #GT")
         nomHist.GetYaxis().SetTitleSize(0.09)
@@ -267,8 +267,8 @@ def combinedPlotNominal(files, normalize, ratio):
             else:
               ratioHists[iDir-1].GetXaxis().SetRangeUser( 0, 800 )
           if( "MJB" in histName) :
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 ) #!!public
-            #ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 2800 )
+            #ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 ) #!!public
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 2800 )
             ratioHists[iDir-1].SetMaximum(1.05)
             ratioHists[iDir-1].SetMinimum(0.95)
             ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");

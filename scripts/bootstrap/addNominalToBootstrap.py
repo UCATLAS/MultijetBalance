@@ -5,10 +5,10 @@ import argparse
 
 from ROOT import *
 
-def stripExtraHists(nomFileName, bsFileName):
+def addNominalToBootstrap(nomFileName, bsFileName):
 
 #  if not "initial" in inFileName:
-#    print "Error, trying to run stripExtraHists.py on non \"initial\" input ", inFileName
+#    print "Error, trying to run addNominalToBootstrap.py on non \"initial\" input ", inFileName
 #    print "Exiting"
 #    return
 
@@ -16,12 +16,17 @@ def stripExtraHists(nomFileName, bsFileName):
   bsFile = TFile.Open( bsFileName, "UPDATE")
 
   keyList = [key.GetName() for key in nomFile.GetListOfKeys()] #List of top level objects
-  dirList = [key for key in keyList if "Iteration" in key] #List of all directories
+  histList = [key for key in keyList if "recoilPt_PtBal_Fine" in key]
 
-##################### Get a new copy of original histograms and create new histograms  #################################
+  print histList
+
+#################### Get a new copy of original histograms and create new histograms  #################################
   print "Moving recoilPt_PtBal_Fine to bootstrap file"
-  for dirName in dirList:
-    thisHist = nomFile.Get(dirName+"/recoilPt_PtBal_Fine")
+  for histName in histList:
+    dirName = histName.replace('_recoilPt_PtBal_Fine','')
+    thisHist = nomFile.Get( histName )
+    thisHist.SetName('recoilPt_PtBal_Fine')
+    thisHist.SetTitle('recoilPt_PtBal_Fine')
     bsFile.mkdir( dirName )
     newDir = bsFile.Get( dirName )
     thisHist.SetDirectory(newDir)
@@ -39,5 +44,5 @@ if __name__ == "__main__":
   parser.add_argument("--bsFile", dest='bsFile', default="", help="Bootstrap input file of good histograms")
   args = parser.parse_args()
 
-  stripExtraHists(args.nomFile, args.bsFile)
+  addNominalToBootstrap(args.nomFile, args.bsFile)
 

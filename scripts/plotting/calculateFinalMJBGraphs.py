@@ -59,7 +59,12 @@ def calculateFinalMJBGraphs(file, binnings):
     else:
       nomDir = inFile.Get( nomDir[0] )
 
-    tmpMJBHist = nomDir.Get(histTag)
+#This gets the x-axis from the original histogram
+#!!    tmpMJBHist = nomDir.Get(histTag)
+
+    xBinsList = [300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1140, 1260, 1480, 2000]
+    xBins = array('d', xBinsList)
+    tmpMJBHist = TH1F("tmpHist", "tmpHist", len(xBinsList)-1, xBins)
 
     ptBinFile = os.path.dirname(file)+'/'
 #    if 'mc' in file:
@@ -100,13 +105,13 @@ def calculateFinalMJBGraphs(file, binnings):
         thisHist.SetDirectory(0)
         yValues = []
         yErrors = []
-        for iBin in range(1, thisHist.GetNbinsX()+1):
-          if thisHist.GetXaxis().GetBinLowEdge(iBin) > 499:
-            yValues.append( thisHist.GetBinContent(iBin) )
-            yErrors.append( thisHist.GetBinError(iBin) )
+        for iBin in range(1, tmpMJBHist.GetNbinsX()+1):
+          thisBin = thisHist.FindBin( tmpMJBHist.GetXaxis().GetBinLowEdge(iBin)+1 )
+          yValues.append( thisHist.GetBinContent( thisBin) )
+          yErrors.append( thisHist.GetBinError(thisBin) )
         yValues = array('d', yValues)
         yErrors = array('d', yErrors)
-        thisGraph = TGraphErrors(thisHist.GetNbinsX(), xValues, yValues, xErrors, yErrors)
+        thisGraph = TGraphErrors(tmpMJBHist.GetNbinsX(), xValues, yValues, xErrors, yErrors)
         thisGraph.SetMarkerStyle(28)
         thisGraph.SetMarkerSize(1)
         thisGraph.SetMarkerColor(kRed)

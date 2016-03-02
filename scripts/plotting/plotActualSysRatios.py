@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ###################################################################
-# plotSysRatios.py                                                #
+# plotActualSysRatios.py                                                #
 # A MJB second stage python script                                #
 # Author Jeff Dandoy, UChicago                                    #
 #                                                                 #
@@ -16,12 +16,12 @@ import os, argparse, math, time
 from ROOT import *
 import AtlasStyle
 
-def plotSysRatios(file):
+def plotActualSysRatios(file):
 
   outDir = file[:-5]+'/'
   if not os.path.exists(outDir):
     os.mkdir(outDir)
-  outDir += "plotSysRatios/"
+  outDir += "plotActualSysRatios/"
   if not os.path.exists(outDir):
     os.mkdir(outDir)
   AtlasStyle.SetAtlasStyle()
@@ -52,14 +52,18 @@ def plotSysRatios(file):
 
   ## This removes extra MJB systematics
   MJBsToUse = ["a40","a20","b15","b05","pta90","pta70","ptt30","ptt20"]
-#  MJBsToUse += ["a25","a35","b12","b08","pta85","pta75","ptt27","ptt23"]
   sysDirList = [sysDir for sysDir in sysDirList if (not "MJB" in sysDir.GetName() or any(MJBtouse in sysDir.GetName() for MJBtouse in MJBsToUse) )]
-
+  sysDirList = [sysDir for sysDir in sysDirList if not "Nominal" in sysDir.GetName()]
 
   ## Combine systematics in types ##
-  sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
-#  sysTypesToUse = ["MJB_ptt23", "MJB_ptt27", "MJB_ptt30", "MJB_ptt20"]
-  #sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "MCType"]
+
+  #sysTypesToUse = ["Zjet_dPhi","Zjet_MC","Zjet_MuScale","Zjet_MuSmearID","Zjet_MuSmearMS","Zjet_KTerm","Zjet_Veto","Zjet_Stat1","Zjet_Stat2","Zjet_Stat3","Zjet_Stat4","Zjet_Stat5","Zjet_Stat6","Zjet_Stat7","Zjet_Stat8","Zjet_Stat9","Zjet_Stat10","Zjet_Stat11","Zjet_Stat12","Zjet_Stat13"]
+  #sysTypesToUse = ["Gjet_dPhi","Gjet_Generator","Gjet_OOC","Gjet_Purity","Gjet_Veto","Gjet_Stat1","Gjet_Stat2","Gjet_Stat3","Gjet_Stat4","Gjet_Stat5","Gjet_Stat6","Gjet_Stat7","Gjet_Stat8","Gjet_Stat9","Gjet_Stat10","Gjet_Stat11","Gjet_Stat12","Gjet_Stat13","Gjet_Stat14","Gjet_Stat15"]
+
+
+  #sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
+  sysTypesToUse = ["Zjet_Jvt", "Zjet_ElecESZee", "Zjet_ElecEsmear", "Gjet_Jvt", "Gjet_GamESZee", "LAr_Esmear"]
+#  sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "MCType"]
 # SingleParticle, RelativeNonClosure, Pileup, BJES, PunchThrough
 
   sysTypes = []
@@ -76,7 +80,7 @@ def plotSysRatios(file):
   #print "Plotting systematic differences "
   #print sysTypes
 
-  histList = [key.GetName() for key in nomDir.GetListOfKeys()]
+  histList = [key.GetName() for key in sysDirList[0].GetListOfKeys()]
 
 
 
@@ -84,7 +88,7 @@ def plotSysRatios(file):
     if "prof_" in histName or "ptSlice" in histName:
       continue
 
-    nomHist = nomDir.Get( histName )
+    nomHist = sysDirList[0].Get( histName )
     nomHist.SetName(nomHist.GetName())
 
     if not type(nomHist) == TH1F and not type(nomHist) == TH1D:  #Can't draw bands if not 1D
@@ -186,9 +190,11 @@ def getCombinedSysHist(nomHist, sysHistList, sysName = "tempSysHist"):
   for subSysHist in sysHistList:
     tmpSubSysHist = subSysHist.Clone("tmpSubSys")
 
-    ## Get fractional difference of subsystematic ##
-    tmpSubSysHist.Add( nomHist, -1.)
-    tmpSubSysHist.Divide( nomHist )
+
+    ## This is already set!
+    ### Get fractional difference of subsystematic ##
+    #tmpSubSysHist.Add( nomHist, -1.)
+    #tmpSubSysHist.Divide( nomHist )
 
     ## Add squared fractional difference of each bin of subsystematic to top systematic ##
     for iBin in range(1, tmpSubSysHist.GetNbinsX()+1):
@@ -215,4 +221,4 @@ if __name__ == "__main__":
            help="Input file name")
   args = parser.parse_args()
 
-  plotSysRatios(args.file)
+  plotActualSysRatios(args.file)

@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  std::string sysType = "";
+  std::string sysType = "Iteration";
   std::string rebinFileName = "";
   bool f_fit = false;
 
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
   else
     outFileName.replace(pos, 6, "mean_MJB_initial");
 
-  if (sysType.size() > 0)
+  if (sysType.size() > 0 && sysType.compare("Iteration") != 0)
     outFileName += ("."+sysType);
 
   TFile* rebinFile = NULL;
@@ -148,8 +148,6 @@ int main(int argc, char *argv[])
   fitPlotsOutDir += "/fits/";
   mkdir(fitPlotsOutDir.c_str(), 0777);
 
-  std::string fitPlotsOutName = outFileName;
-  fitPlotsOutName.erase(0, fitPlotsOutName.find_last_of("/"));
 
   // Get binning and systematics from SystToolOutput file //
   TFile *inFile = TFile::Open(inFileName.c_str(), "READ");
@@ -174,6 +172,15 @@ int main(int argc, char *argv[])
     std::string sysName = key->GetName();
     if( sysName.find(sysType) == std::string::npos)
       continue;
+
+    if( sysName.find("MJB_") != std::string::npos)
+      continue;
+    if( sysName.find("MCType") != std::string::npos)
+      continue;
+
+    std::string fitPlotsOutName = outFileName;
+    fitPlotsOutName.erase(0, fitPlotsOutName.find_last_of("/"));
+    fitPlotsOutName += "_"+sysName;
 
     TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
 
@@ -212,13 +219,16 @@ int main(int argc, char *argv[])
 //    TH1D* h_mean_prof = (TH1D*) prof_MJBcorrection->ProjectionX("h_mean_prof");
 
     vector<int> binsToCombine;
-    if(rebinFile && (sysName.find("MCType") == std::string::npos) ){
-      std::string thisSysType = "significant_"+sysName.substr(11, sysName.size());
-      cout << thisSysType << endl;
+    if(rebinFile){
+    //if(rebinFile && (sysName.find("MCType") == std::string::npos) ){
+      std::string thisSysType;
+      if (sysName.find("MCType") != std::string::npos){
+        thisSysType = "significant_Nominal";
+      }else{
+        thisSysType = "significant_"+sysName.substr(11, sysName.size());
+      }
+      cout << "Rebin histogram is: " << thisSysType << endl;
       TH1D* rebinHist = (TH1D*) rebinFile->Get(thisSysType.c_str());
-      //TH1D* rebinHist = (TH1D*) rebinFile->Get("significant_MJB_b08_neg");
-//!!    Get binning of this systematic
-//!!    Get actual fit binning, and loop over that
 
       // Get Binning of rebin histogram
       TArrayD* xBinsRebin = (TArrayD*) rebinHist->GetXaxis()->GetXbins();
@@ -257,7 +267,7 @@ int main(int argc, char *argv[])
     }
     // Loop over all projections, and fit
     //for( int iBin=1; iBin < h_recoilPt_PtBal->GetNbinsX()+1; ++iBin){
-    for( int iRange=1; iRange < binsToCombine.size(); ++iRange){
+    for( unsigned int iRange=1; iRange < binsToCombine.size(); ++iRange){
       int iBin_start = binsToCombine.at(iRange-1)+1;
       int iBin_end = binsToCombine.at(iRange);
       cout << iRange << " : " << iBin_start << " : " << iBin_end << endl;

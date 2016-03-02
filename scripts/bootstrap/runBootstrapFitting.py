@@ -44,7 +44,7 @@ def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
 
     if (f_rebin):
       command = "runBootstrapRebin --file "+inFile+" --sysType "+sys
-      command += " --upperEdge 2000 --threshold 2.5"
+      command += " --upperEdge 2000 --threshold 3"
       if( f_fit ):
         command += ' --fit'
     else:
@@ -64,7 +64,7 @@ def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
   if (f_rebin):
     histType = "significant"
   else:
-    histType = "fit_MJB_initial"
+    histType = "mean_MJB_initial"
 
   fitDir = os.path.dirname(inFile)+'/'
   if not os.path.exists(fitDir+'initialFits/'):

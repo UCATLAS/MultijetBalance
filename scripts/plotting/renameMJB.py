@@ -21,105 +21,85 @@ from array import array
 import argparse
 import math
 
-from ROOT import *
+import ROOT
 
-iterationNumber="0"
-jetType='_AntiKt4EmTopo'
+iterationNumber="1"
+jetType='_AntiKt4EMTopo'
 
-def renameMJB(file, mcFiles, binning):
-
-  if not "MJB_sys_initial":
-    print "Error, trying to run calculateMJBHists.py on non \"MJB_sys_initial\" input ", file
-    print "Exiting"
-    return
+def renameMJB(sysFileName, binning):
 
 
   histName = "diff_DoubleMJB_"+binning
 
-  inFile = TFile.Open(file, "READ");
-  outFile = TFile.Open(file.replace('initial','renamed'), "RECREATE");
+  outFile = ROOT.TFile.Open(sysFileName.replace('Fit_DoubleMJB_sys_final','Renamed'), "RECREATE");
 
-  keyList = [key.GetName() for key in inFile.GetListOfKeys()] #List of top level objects
+  sysFile = ROOT.TFile.Open(sysFileName, "READ");
+  keyList = [key.GetName() for key in sysFile.GetListOfKeys()] #List of top level objects
   dirList = [key for key in keyList if "Iteration" in key] #List of all directories
 
 
-  outHistNames = []
-  inDirNames = []
-
+  histName = "/graph_diff_DoubleMJB_"+binning
 
   ## Get Systematics to Rename ##
   for dirName in dirList:
+    if "Nominal" in dirName:
+      continue
     if "_JCS_" in dirName:
       continue
+#    if "LAr_" in dirName:
+#      continue
+    if "MJB_a25_" in dirName or "MJB_a35_" in dirName or \
+       "MJB_b12_" in dirName or "MJB_b08_" in dirName or \
+       "MJB_pta75_" in dirName or "MJB_pta85_" in dirName or \
+       "MJB_ptt27_" in dirName or "MJB_ptt23_" in dirName:
+      continue
+
+
     outHistName = dirName
-    if('MJB' in outHistName):
-      outHistName = outHistName.replace('_pos', '').replace('_neg', '')
-    outHistName = outHistName.replace('Iteration'+iterationNumber+'_', '').replace('pos','up').replace('neg','down').replace('MCTYPE', 'MC12')
+
+    outHistName = outHistName.replace('Iteration'+iterationNumber+'_', '')
+    outHistName = outHistName.replace('pos','up').replace('neg','down')
+    outHistName = outHistName.replace('MCTYPE', 'MC12').replace('Nominal','MJB_Nominal')
+    outHistName = outHistName.replace('MJB_pta90_','MJB_Asym_').replace('MJB_b15_','MJB_Beta_')
+    outHistName = outHistName.replace('MJB_pta70_','MJB_Asym_').replace('MJB_b05_','MJB_Beta_')
+    outHistName = outHistName.replace('MJB_a40_','MJB_Alpha_').replace('MJB_ptt30_','MJB_Threshold_')
+    outHistName = outHistName.replace('MJB_a20_','MJB_Alpha_').replace('MJB_ptt20_','MJB_Threshold_')
+    outHistName = outHistName.replace('MCType','MJB_Fragmentation')
+    outHistName = outHistName.replace('Comupition','Composition')
+    outHistName = outHistName.replace('LAr_Esmear','Gjet_GamEsmear')
+#    outHistName = outHistName.replace('','').replace('','')
     outHistName += jetType
 
-    inDirNames.append( dirName )
-    outHistNames.append( outHistName )
+
+    if 'Nominal' in dirName:
+
+      statHist = sysFile.Get( dirName+"/graph_DoubleMJB_"+binning )
+      statHist.SetName("MJB_Stat"+jetType)
+      statHist.SetTitle("MJB_Stat"+jetType)
+      d1, d2 = ROOT.Double(0), ROOT.Double(0)
+      for iP in range(0, statHist.GetN()):
+        statHist.GetPoint( iP, d1, d2 )
+        print iP, d1, d2
+        print statHist.GetErrorY(iP)
+        statHist.SetPoint(iP, d1, statHist.GetErrorY(iP) )
+        statHist.SetPointError(iP, 0., 0.)
+      outFile.cd()
+      statHist.Write()
 
 
-  ## Rename existing systematics ##
-  for iHist, inDirName in enumerate( inDirNames ):
-    if 'Nominal' in inDirName:
-      inHist = inFile.Get( inDirName+'/'+histName.replace('diff_',''))
+      inHist = sysFile.Get( dirName+"/graph_DoubleMJB_"+binning )
     else:
-      inHist = inFile.Get( inDirName+'/'+histName)
-    inHist.SetName( outHistNames[iHist] )
-    inHist.SetTitle( outHistNames[iHist] )
+      inHist = sysFile.Get( dirName+histName )
+
+    inHist.SetName(outHistName)
+    inHist.SetTitle(outHistName)
+
     outFile.cd()
     inHist.Write()
 
 
-  nomDir = [dir for dir in dirList if "Nominal" in dir][0]
-  nominalHist = inFile.Get(nomDir+'/'+histName.replace('diff_','') )
-
-  ## Calculate Statistical Systematics ##
-  startBin = nominalHist.GetXaxis().FindBin(1000)
-  endBin = nominalHist.FindLastBinAbove(0)
-  print "Statistical variations for bins ", startBin, endBin
-  for iBin in range(startBin, endBin+1):
-    statHistName = 'MJB_Stat'+str(iBin)+jetType
-    newStatHist = nominalHist.Clone()
-    newStatHist.SetName( statHistName )
-    newStatHist.SetTitle( statHistName )
-    newStatHist.SetBinContent(iBin, newStatHist.GetBinContent(iBin)*(1+newStatHist.GetBinError(iBin)) )
-    newStatHist.Add(nominalHist, -1.)
-    outFile.cd()
-    newStatHist.Write()
-
-  ## Calculate MC Systematics ##
-  mcFiles = mcFiles.split(',')
-  mcHistUp = nominalHist.Clone()
-  mcHistDn = nominalHist.Clone()
-  mcHistUp.SetName('MJB_Fragmentation_up'+jetType)
-  mcHistUp.SetTitle('MJB_Fragmentation_up'+jetType)
-  mcHistDn.SetName('MJB_Fragmentation_down'+jetType)
-  mcHistDn.SetTitle('MJB_Fragmentation_down'+jetType)
-  for iBin in range(1, nominalHist.GetNbinsX()+1):
-    mcHistUp.SetBinContent(iBin, 0)
-    mcHistUp.SetBinError(iBin, 0)
-    mcHistDn.SetBinContent(iBin, 0)
-    mcHistDn.SetBinError(iBin, 0)
-
-  for mcFile in mcFiles:
-    inMCFile = TFile.Open(mcFile, "READ")
-    thisMCHist = inMCFile.Get(nomDir+'/'+histName.replace('diff_','') )
-
-    for iBin in range(1, nominalHist.GetNbinsX()+1):
-      thisBinDiff = thisMCHist.GetBinContent(iBin) - nominalHist.GetBinContent(iBin)
-      if thisBinDiff > mcHistUp.GetBinContent(iBin):
-        mcHistUp.SetBinContent(iBin, math.fabs(thisBinDiff) )
-        mcHistDn.SetBinContent(iBin, -math.fabs(thisBinDiff) )
-
-  outFile.cd()
-  mcHistUp.Write()
-  mcHistDn.Write()
-
   outFile.Close()
-  inFile.Close()
+  sysFile.Close()
 
 
 
@@ -133,4 +113,9 @@ if __name__ == "__main__":
   parser.add_argument("--binning", dest='binning', default="Fine",
            help="Single binning to use")
   args = parser.parse_args()
-  renameMJB(args.file, args.mcFiles, args.binning)
+
+  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Sys_Iter1_EM/workarea/"
+  #thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Iter1_EM_BS3/workarea/"
+  sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
+#  nominalFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_final.root"
+  renameMJB(sysFile, args.binning)

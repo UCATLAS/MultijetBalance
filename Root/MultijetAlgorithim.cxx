@@ -174,9 +174,9 @@ EL::StatusCode  MultijetAlgorithim :: configure ()
   }
 
 ////  if ( (m_inContainerName.find("LCTopo") == std::string::npos)
-//  if ( !m_isMC
-//      && m_jetCalibSequence.find("Insitu") == std::string::npos)
-//    m_jetCalibSequence += "_Insitu";
+  if ( !m_isMC
+      && m_jetCalibSequence.find("Insitu") == std::string::npos)
+    m_jetCalibSequence += "_Insitu";
 
 //  if( (m_isMC || (m_inContainerName.find("LCTopo") != std::string::npos) )
   if( m_isMC && m_jetCalibSequence.find("Insitu") != std::string::npos ){
@@ -283,6 +283,7 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
 
   // load all variations
   setupJetCalibrationStages();
+  loadJetUncertaintyTool();
   loadVariations();
 
   loadTriggerTool();
@@ -290,7 +291,6 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   //load Calibration and systematics files
   loadJetCalibrationTool();
   loadJetCleaningTool();
-  loadJetUncertaintyTool();
   loadVjetCalibration();
 
   if (loadMJBCalibration() == EL::StatusCode::FAILURE)
@@ -303,7 +303,7 @@ EL::StatusCode MultijetAlgorithim :: initialize ()
   //Crap for Syst Tool
   // Fix this to be elegent and take any binning
   if( m_bootstrap ){
-    systTool_nToys = 200;
+    systTool_nToys = 100;
     //double theseBins[] = {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1310.,1530.,1992.,2500., 3000., 3500., 4500.};
     //double theseBins[] = {125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1300, 1500, 2000, 5000.};
     double theseBins[] = {300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1080, 1140, 1200, 1260, 1320, 1380, 1480, 1700, 2000, 2700};
@@ -1221,7 +1221,7 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
     if(m_isMC){
       m_varString = "Nominal-MJB";
     }else{
-      m_varString = "Nominal-Special-MJB-AllZjet-AllGjet";
+      m_varString = "Nominal-Special-MJB-AllZjet-AllGjet-AllLAr";
     }
     //m_varString = "Nominal-JetCalibSequence-Special-MJB-AllZjet-AllGjet-AllLAr";
   }
@@ -1268,17 +1268,53 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
           iss >> subStr;
           std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
           int thisJESNumber = atoi( thisJESNumberStr.c_str() );
-          if( thisJESNumber >= 57 && thisJESNumber <= 68){
+          //if( thisJESNumber >= 57 && thisJESNumber <= 68){
+          //
+          //next get JES Name
+          iss >> subStr;
+          std::string thisJESName = subStr;
+          if( (thisJESName.find( "EtaIntercalibration" ) != std::string::npos) ||
+              (thisJESName.find( "Pileup" ) != std::string::npos) ||
+              (thisJESName.find( "Flavor" ) != std::string::npos) ||
+              (thisJESName.find( "PunchThrough" ) != std::string::npos) ){
             //next get JES name
             iss >> subStr;
 
             //Name - JES Tool - JES Number - sign
-            m_sysVar.push_back( subStr+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 1 );
-            m_sysVar.push_back( subStr+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 0 );
+            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 1 );
+            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 0 );
 
           } //if a Special JES
         }//if the relevant Name line
       }//for each line in JES config
+
+
+    /////////  A dedicated set, not for general running ////////////
+    } else if( varVector.at(iVar).find("Dedicated") != std::string::npos ){
+      vector< std::string > JESNames;
+      vector< int > JESNumbers;
+      JESNames.push_back("Zjet_Jvt");  JESNumbers.push_back(1);
+      JESNames.push_back("Zjet_ElecESZee");  JESNumbers.push_back(2);
+      JESNames.push_back("Zjet_ElecEsmear");  JESNumbers.push_back(3);
+      JESNames.push_back("Gjet_Jvt");  JESNumbers.push_back(53);
+      JESNames.push_back("Gjet_GamESZee");  JESNumbers.push_back(54);
+      JESNames.push_back("LAr_Esmear");  JESNumbers.push_back(55); // is Gjet_GamEsmear
+
+//      for(int iJES=0; iJES < 100; ++iJES){
+//        //cout << "!!!!!Checking JES " << thisJESName << endl;
+//        cout << "name for " << iJES << "  is " << m_JetUncertaintiesTool->getComponentName(iJES) << endl;
+//
+//      }
+//
+      for(int iJES=0; iJES < JESNames.size(); ++iJES){
+        int thisJESNumber = JESNumbers.at(iJES);
+        std::string thisJESName = JESNames.at(iJES);
+        cout << "!!!!!Checking JES " << thisJESName << endl;
+        cout << "name for this one is " << m_JetUncertaintiesTool->getComponentName(thisJESNumber-1) << endl;
+
+        m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 1 );
+        m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 0 );
+      }
 
 
     ////////////////////////////////// GJ, ZJ, or LAr /////////////////////////////////////////
@@ -1302,11 +1338,16 @@ EL::StatusCode MultijetAlgorithim :: loadVariations (){
           //next get JES Name
           iss >> subStr;
           std::string thisJESName = subStr;
+//          cout << "!!!!!Checking JES " << thisJESName << endl;
+//          cout << "name for this one is " << m_JetUncertaintiesTool->getComponentName(thisJESNumber-1) << endl;
+//          int thisJESIndex = m_JetUncertaintiesTool->getComponentIndex("JET_"+thisJESName);
+
+//          cout << "index vs number is " << thisJESIndex << " : " << thisJESNumber << endl;
           if( thisJESName.find( sysType ) != std::string::npos ){
 
             //Name - JES Tool - JES Number - sign
-            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 1 );
-            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber ); m_sysSign.push_back( 0 );
+            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 1 );
+            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 0 );
 
           } //if the current JES type
         }//if the relevant Name line
@@ -1661,11 +1702,13 @@ EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
     if (dirName.find( mjbIterPrefix ) != std::string::npos) { //If it's a Iteration Dir
       TH1D *MJBHist;
       MJBHist = (TH1D*) MJBFile->Get( (dirName+"/"+histPrefix+m_MJBCorrectionBinning).c_str() );
-      //Remove Iteration part of name
       std::string newHistName = dirName.substr(11);
+      if( newHistName.find("MCType") == std::string::npos && newHistName.find("MJB") == std::string::npos ){   //!!!
+      //Remove Iteration part of name
       MJBHist->SetName( newHistName.c_str() );
       MJBHist->SetDirectory(0);
       m_MJBHists.push_back(MJBHist);
+      }
     }
   }
   // Fix the systematics mappings to match the input MJB corrections
@@ -1679,6 +1722,7 @@ EL::StatusCode MultijetAlgorithim :: loadMJBCalibration(){
   for(unsigned int i=0; i < m_MJBHists.size(); ++i){
     bool foundMatch = false;
     std::string histName = m_MJBHists.at(i)->GetName();
+    cout << "!!!!!!!!!!!!!!" << histName << endl;
     if( histName.find("MCType") != std::string::npos ){
       new_sysVar.push_back( histName );
       new_sysTool.push_back( m_sysTool.at(m_NominalIndex) );
@@ -1761,6 +1805,7 @@ EL::StatusCode MultijetAlgorithim :: applyJetUncertaintyTool( xAOD::Jet* jet , i
 //  else if( (m_JESMap[iVar] == 56 || m_JESMap[iVar] == 57) && jet->pt() < 15.*GeV)  //EtaIntercalibration pt limit
 //    return EL::StatusCode::SUCCESS;
 
+//  cout << m_sysVar.at(iVar) << " of index " << m_sysToolIndex.at(iVar) << " has pt of " << jet->pt() << endl;
   float thisUncertainty = 1.;
   if( m_sysSign.at(iVar) == 1)
     thisUncertainty += m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
@@ -1781,20 +1826,19 @@ EL::StatusCode MultijetAlgorithim :: applyJetUncertaintyTool( xAOD::Jet* jet , i
 
 EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int iVar ){
   if(m_debug) Info("execute()", "applyVjetCalibration ");
-  Info("execute()", "applyVjetCalibration ");
 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
-  if( (m_sysTool.at(iVar) == 1) || jet->pt() < 17.*GeV ) //If NoCorr or not in V+jet correction range
+  if( (m_sysTool.at(iVar) == 1) || jet->pt() < 20.*GeV ){ //If NoCorr or not in V+jet correction range
     return EL::StatusCode::SUCCESS;
+  }
 //!!  if( !m_noLimitJESPt && jet->pt() > m_subLeadingPtThreshold.at(0) )
 //!!    return EL::StatusCode::SUCCESS;
 
   float thisCalibration = 1.;
   //Get nominal V+jet correction
   thisCalibration = m_VjetHists.at(0)->GetBinContent( m_VjetHists.at(0)->FindBin(jet->pt()/GeV) );
-  cout << "calibration is " << thisCalibration << endl;
 
 //old  //If this systematic variation is for V+jet
 //old  if( m_VjetMap.find(iVar) != m_VjetMap.end() ){
@@ -1810,9 +1854,7 @@ EL::StatusCode MultijetAlgorithim :: applyVjetCalibration( xAOD::Jet* jet , int 
 
   TLorentzVector thisJet;
   thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
-  cout << "initial pt is " << thisJet.Pt() << endl;
   thisJet *= (1./thisCalibration); //modify TLV
-  cout << "final pt is " << thisJet.Pt() << endl;
   jet->auxdata< float >("pt") = thisJet.Pt();
   jet->auxdata< float >("eta") = thisJet.Eta();
   jet->auxdata< float >("phi") = thisJet.Phi();

@@ -102,6 +102,34 @@ inline bool isInteger(const std::string & s){
   return (*p == 0) ;
 }
 
+TH2F* initialRebin( TH2F* inputHist ){
+
+
+  std::string histName = inputHist->GetName();
+  inputHist->SetName( ("tmp_"+histName).c_str() );
+  double binArray[] = {300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1140, 1260, 1480, 2000};
+  int nBins = 16;
+  Double_t ptBalBins[501];
+  int numPtBalBins = 500;
+  for(int i=0; i < numPtBalBins+1; ++i){
+    ptBalBins[i] = i/100.;
+  }
+
+//        m_recoilPt_ptBal.push_back( book(m_name, ("recoilPt_PtBal"+binningNames.at(iB)),
+//              "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
+//              "p_{T} Balance", numPtBalBins, ptBalBins) );
+//
+  TH2F* newHist = new TH2F( histName.c_str(), inputHist->GetTitle(), nBins, binArray, numPtBalBins, ptBalBins);
+  newHist->Sumw2();
+  for(int iBinX=1; iBinX < inputHist->GetNbinsX()+1; ++iBinX){
+    for(int iBinY=1; iBinY < inputHist->GetNbinsY()+1; ++iBinY){
+      newHist->Fill( inputHist->GetXaxis()->GetBinLowEdge(iBinX)+0.0001, inputHist->GetYaxis()->GetBinLowEdge(iBinY)+0.0001, inputHist->GetBinContent(iBinX, iBinY) );
+    }
+  }
+  return newHist;
+}
+
+
 int main(int argc, char *argv[])
 {
   std::time_t initialTime = std::time(0);
@@ -131,7 +159,7 @@ int main(int argc, char *argv[])
   }
 
   std::string sysType = "";
-  float threshold = 2.; //sigma
+  double threshold = 2.; //sigma
   bool f_fit = false;
 
   int iArg = 0;
@@ -238,14 +266,18 @@ int main(int argc, char *argv[])
       std::string nominalName = iteration+"_Nominal_"+toyNum;
 
       TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
-      h_2D_sys.push_back( h_recoilPt_PtBal );
+      TH2F* rebin_recoilPt_PtBal = initialRebin( h_recoilPt_PtBal );
+      h_2D_sys.push_back( rebin_recoilPt_PtBal );
       TH2F* h_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
-      h_2D_nominal.push_back( h_recoilPt_PtBal_nominal );
+      TH2F* rebin_recoilPt_PtBal_nominal = initialRebin( h_recoilPt_PtBal_nominal );
+      h_2D_nominal.push_back( rebin_recoilPt_PtBal_nominal );
 
     }else{
       std::string nominalName = iteration+"_Nominal";
-      h_full_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
-      h_full_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
+      TH2F* h_tmp_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
+      h_full_recoilPt_PtBal = initialRebin( h_tmp_recoilPt_PtBal );
+      TH2F* h_tmp_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
+      h_full_recoilPt_PtBal_nominal = initialRebin( h_tmp_recoilPt_PtBal_nominal );
     }
 
   }
@@ -326,8 +358,8 @@ int main(int argc, char *argv[])
     // Get RMS value from toys //
     float RMS =  TMath::RMS(meanValues.size(), &meanValues[0]);
 
-    float mu = mean / RMS / RMS;
-    float sig = 1.0/ RMS / RMS;
+    double mu = mean / RMS / RMS;
+    double sig = 1.0/ RMS / RMS;
 
     // If RMS is below threshold, then save this bin as an edge. //
     // If above RMS, then this bin will be added with the next bin //
@@ -335,12 +367,13 @@ int main(int argc, char *argv[])
     cout << "mean: " << mean << " and RMS: " << RMS << endl;
     cout << "sig: " << sig << " and mean/RMS " << fabs(mu)/sqrt(sig) << " and reverse " << sqrt(sig)/fabs(mu) << endl;
 //    if (RMS==0 || ( (fabs(mu)/sqrt(sig) > threshold)) ){ // 3 sigma sig + <30% error
-    if (RMS==0 || ( (fabs(mu)/sqrt(sig) > threshold) && ( sqrt(sig)/fabs(mu) < 1.0/sqrt(10.0) )) ){ // 3 sigma sig + <30% error
+    //if (RMS==0 || ( (fabs(mu)/sqrt(sig) > threshold) && ( sqrt(sig)/fabs(mu) < 1.0/sqrt(10.0) )) ){ // 3 sigma sig + <30% error
+    if (RMS==0 ||  (fabs(mu)/sqrt(sig) > threshold)  ){ // 3 sigma sig + <30% error
       reverseBinEdges.push_back(iBin-1);
       if (RMS == 0)
         values_significant.push_back( 0 );
       else
-        values_significant.push_back( sqrt(sig)/fabs(mu) );
+        values_significant.push_back( fabs(mu)/sqrt(sig) );
     }
 
 
