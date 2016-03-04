@@ -1,4 +1,4 @@
-#include <MultijetBalanceAlgo/MultijetAlgorithim.h>
+#include <MultijetBalance/MultijetBalanceAlgo.h>
 //#include <MultijetBalanceAlgo/TH1DBootstrap.h>
 //#include <MultijetBalanceAlgo/TH2DBootstrap.h>
 //#include <MultijetBalanceAlgo/BootstrapGenerator.h>
@@ -17,7 +17,7 @@
 #endif
 
 #ifdef __CINT__
-#pragma link C++ class MultijetAlgorithim+;
+#pragma link C++ class MultijetBalanceAlgo+;
 
 //#pragma link C++ class BootstrapGenerator+;
 //#pragma link C++ class TH1Bootstrap+;

@@ -96,8 +96,8 @@ int main(int argc, char *argv[])
       output->mkdir( dirName.c_str() );
       TDirectory* thisDir = (TDirectory*) output->Get( dirName.c_str() );
       TH2D* thisHist = (TH2D*) bootStrap->GetReplica(iT);
-      thisHist->SetName("recoilPt_PtBal_Fine");
-      thisHist->SetTitle("recoilPt_PtBal_Fine");
+      thisHist->SetName("recoilPt_PtBal");
+      thisHist->SetTitle("recoilPt_PtBal");
       thisHist->SetDirectory(thisDir);
       output->cd( dirName.c_str() );
       thisHist->Write();

@@ -16,17 +16,17 @@ def addNominalToBootstrap(nomFileName, bsFileName):
   bsFile = TFile.Open( bsFileName, "UPDATE")
 
   keyList = [key.GetName() for key in nomFile.GetListOfKeys()] #List of top level objects
-  histList = [key for key in keyList if "recoilPt_PtBal_Fine" in key]
+  histList = [key for key in keyList if "recoilPt_PtBal" in key]
 
   print histList
 
 #################### Get a new copy of original histograms and create new histograms  #################################
-  print "Moving recoilPt_PtBal_Fine to bootstrap file"
+  print "Moving recoilPt_PtBal to bootstrap file"
   for histName in histList:
-    dirName = histName.replace('_recoilPt_PtBal_Fine','')
+    dirName = histName.replace('_recoilPt_PtBal','')
     thisHist = nomFile.Get( histName )
-    thisHist.SetName('recoilPt_PtBal_Fine')
-    thisHist.SetTitle('recoilPt_PtBal_Fine')
+    thisHist.SetName('recoilPt_PtBal')
+    thisHist.SetTitle('recoilPt_PtBal')
     bsFile.mkdir( dirName )
     newDir = bsFile.Get( dirName )
     thisHist.SetDirectory(newDir)

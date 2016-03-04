@@ -1,0 +1,45 @@
+Index: SystTool/SystContainer.h
+===================================================================
+--- SystTool/SystContainer.h	(revision 498)
++++ SystTool/SystContainer.h	(working copy)
+@@ -6,6 +6,7 @@
+ #include <string>
+ #include <utility>
+ #include <algorithm>
++#include <TFile.h>
+ 
+ #include "BootstrapGenerator/BootstrapGenerator.h"
+ #include "BootstrapGenerator/TH2DBootstrap.h"
+@@ -60,6 +61,7 @@
+      * Write object as a table of numbers in outputFile
+      */
+     bool writeToFile(std::string outputFile);
++    bool writeToFile(TFile* output);
+     
+     /**
+      * Returns the arithmetic mean of the response distribution (not toy) for a given systematic and pt bin
+Index: Root/SystContainer.cxx
+===================================================================
+--- Root/SystContainer.cxx	(revision 498)
++++ Root/SystContainer.cxx	(working copy)
+@@ -165,6 +165,20 @@
+ }
+ 
+ // =============================================================================
++bool SystContainer::writeToFile(TFile* output)
++{
++
++    output->cd();
++    for (BootstrapMap::iterator it = m_data.begin(); it != m_data.end(); ++it) {
++        it->second->Write();
++    }
++
++    cout << "Wrote " << output->GetName() << endl;
++
++    return true;
++}
++
++// =============================================================================
+ double SystContainer::getMean(string systName, int ptBin)
+ {
+     if (!checkSystName(systName)) {

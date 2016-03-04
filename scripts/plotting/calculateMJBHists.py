@@ -24,14 +24,8 @@ import argparse
 
 from ROOT import *
 
-def calculateMJBHists(file, binnings, f_extraPlots):
+def calculateMJBHists(file, f_extraPlots):
 
-
-  binnings = binnings.split(',')
-  for iBinning in range(len(binnings)):
-    if not binnings[iBinning][0] == '_':
-      binnings[iBinning] = '_'+binnings[iBinning]
-  print "Binnings are ", binnings
 
   if not "scaled" in file:
     print "Error, trying to run calculateMJBHists.py on non \"scaled\" input ", file
@@ -64,7 +58,7 @@ def calculateMJBHists(file, binnings, f_extraPlots):
     #print "           ", dir
     if f_noDir:  # Get proper dir name
       oldDir = inFile
-      dirName = dir.replace("_recoilPt_PtBal_Fine", "")
+      dirName = dir.replace("_recoilPt_PtBal", "")
       histList = [dir]
     else:
       dirName = dir
@@ -180,9 +174,7 @@ if __name__ == "__main__":
   parser.add_argument("-extraPlots", dest='extraPlots', action='store_true', default=False, help="Plot profile of recoilPt vs PtBal for all eta's and pt slices, and create extra sampling layer plots")
   parser.add_argument("--file", dest='file', default="submitDir/hist-data12_8TeV.root",
            help="Input file name")
-  parser.add_argument("--binnings", dest='binnings', default="",
-           help="Comma Seperated List of binnings used")
   args = parser.parse_args()
 
-  calculateMJBHists(args.file, args.binnings, args.extraPlots)
+  calculateMJBHists(args.file, args.extraPlots)
 

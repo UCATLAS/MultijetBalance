@@ -1,0 +1,35 @@
+Index: Root/JES_BalanceFitter.cxx
+===================================================================
+--- Root/JES_BalanceFitter.cxx	(revision 319720)
++++ Root/JES_BalanceFitter.cxx	(working copy)
+@@ -127,7 +127,7 @@
+    h2->ComputeIntegral();
+ 
+    Double_t integral = h2->GetSumOfWeights();
+-   if( verbose ){ cout << endl << "Computing quantiles..." << endl << "integral = " << integral << "  entries = " << entries << "  underflow = " << h2->GetBinContent(0) << "  overflow =" << h2->GetBinContent(Nbins+1) << endl; }
++   if( verbose ){ std::cout << std::endl << "Computing quantiles..." << std::endl << "integral = " << integral << "  entries = " << entries << "  underflow = " << h2->GetBinContent(0) << "  overflow =" << h2->GetBinContent(Nbins+1) << std::endl; }
+ 
+    Int_t nq = 1;
+    Double_t xq[nq];  // position where to compute the quantiles in [0,1]
+@@ -139,7 +139,7 @@
+ 
+    h2->GetQuantiles(nq,yq,xq);
+ 
+-   if( verbose ){ cout << "Requested quantile: " << xq[0] << ";  Result: " << yq[0]  << endl; }
++   if( verbose ){ std::cout << "Requested quantile: " << xq[0] << ";  Result: " << yq[0]  << std::endl; }
+    delete h2;
+ 
+    return yq[0];
+Index: cmt/Makefile.RootCore
+===================================================================
+--- cmt/Makefile.RootCore	(revision 319720)
++++ cmt/Makefile.RootCore	(working copy)
+@@ -6,7 +6,7 @@
+ PACKAGE_PRELOAD  = 
+ PACKAGE_CXXFLAGS = 
+ PACKAGE_LDFLAGS  = $(shell root-config --libs)
+-PACKAGE_BINFLAGS = -lCintex -lReflex
++PACKAGE_BINFLAGS = 
+ PACKAGE_DEP      =
+ PACKAGE_NOOPT    = 0
+ 

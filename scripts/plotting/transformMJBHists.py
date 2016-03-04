@@ -31,7 +31,8 @@ f_printOnly = False
 
 ## Choose the MC types to run on
 ## The first MC type will be the nominal, while the second will be a systematic variation
-mcTypes = ["Pythia", "Herwig"]
+mcTypes = ["Herwig"]
+#mcTypes = ["Pythia", "Herwig"]
 #mcTypes = ["Herwig", "Pythia", "Sherpa"]
 
 
@@ -45,10 +46,10 @@ f_plotAll = False
 f_plotSL = False
 
 #f_getPtHist = True
-#f_scale = True #Scale MC files
+f_scale = True #Scale MC files
 #f_combine = True #Combine MC files
 #f_calculateMJB = True # Calculate new histograms to be added to root file
-f_plotRelevant = True # Most important Plots
+#f_plotRelevant = True # Most important Plots
 #f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 
@@ -59,10 +60,10 @@ endPt = 2000
 
 #doFinal will turn on the final step of finding the proper bin center from the jet pt spectrum
 #it requires input TTrees
-doFinal = True
+doFinal = False
 
 #doBootstrap will combine bins based on previously derived bootstrap binnings
-doBootstrap = True
+doBootstrap = False
 #rebinFile = "gridOutput/workarea/Bootstrap1_EM_2/workarea/hist.data.all.significant.root"
 rebinFile = "gridOutput/workarea/Sys_Bootstrap1_EM/workarea/hist.data.all.significant.root"
 
@@ -82,9 +83,6 @@ doSys = True
 
 #Individual slices of MC may be run on separately for plotting purposes
 doJZSlices = False
-
-#binnings = "Fine,8TeV,Coarse"
-binnings = "Fine"
 
 if not os.path.exists(args.workDir+'/workarea/initialFiles'):
   os.makedirs(args.workDir+'/workarea/initialFiles')
@@ -110,7 +108,7 @@ if(f_scale and doMC):
     ## input -> scaled ##
     files = glob.glob(args.workDir+'/../hist/*mc15*'+mcType+'*_hist.root')
     for file in files:
-      print 'python MultijetBalanceAlgo/scripts/plotting/scaleHist.py --file '+file
+      print 'python MultijetBalance/scripts/plotting/scaleHist.py --file '+file
       scaleHist.scaleHist(file)
     files = glob.glob(args.workDir+'/../hist/*scaled.root')
     for file in files:
@@ -130,7 +128,7 @@ if(f_combine):
     if len(mcTypes) > 1:
       nominalFile = args.workDir+'/hist.mc.'+mcTypes[0]+'.scaled.root'
       sysFile =     args.workDir+'/hist.mc.'+mcTypes[1]+'.scaled.root'
-      command = 'python MultijetBalanceAlgo/scripts/plotting/combinedMCUncert.py --nominal '+nominalFile+' --sys '+sysFile
+      command = 'python MultijetBalance/scripts/plotting/combinedMCUncert.py --nominal '+nominalFile+' --sys '+sysFile
       print command
       os.system(command)
 
@@ -155,7 +153,7 @@ if(f_combine):
       command = 'mv '+args.workDir+'/hist.mc.'+mcType+'.scaled.root '+args.workDir+'/hist.mc.'+mcType+'.scaled_noDataSyst.root'
       print command
       os.system(command)
-      command = 'python MultijetBalanceAlgo/scripts/plotting/addDataSystToMC.py --mcFile '+args.workDir+'/hist.mc.'+mcType+'.scaled_noDataSyst.root --dataFile '+args.workDir+'/hist.data.all.scaled.root'
+      command = 'python MultijetBalance/scripts/plotting/addDataSystToMC.py --mcFile '+args.workDir+'/hist.mc.'+mcType+'.scaled_noDataSyst.root --dataFile '+args.workDir+'/hist.data.all.scaled.root'
       print command
       os.system(command)
 
@@ -167,10 +165,10 @@ if(f_calculateMJB):
   if( doAverage ):
     files = glob.glob(args.workDir+'/hist.*.*.scaled.root')
     for file in files:
-      print 'python MultijetBalanceAlgo/scripts/plotting/calculateMJBHists.py --file '+file+' --binnings '+binnings
+      print 'python MultijetBalance/scripts/plotting/calculateMJBHists.py --file '+file
       if (not f_printOnly):
         f_extraPlots = False
-        calculateMJBHists.calculateMJBHists(file, binnings, f_extraPlots)
+        calculateMJBHists.calculateMJBHists(file, f_extraPlots)
         #os.system('mv '+file+' '+args.workDir+'/initialFiles/')
 
   if( doFit ):
@@ -214,7 +212,7 @@ if(f_calculateMJB):
           dataFile = glob.glob(args.workDir+'/hist.data.all.fit_MJB_nominal.root')[0]
           mcFile = glob.glob(args.workDir+'/hist.mc.'+mcType+'.fit_MJB_nominal.root')[0]
 
-        print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
+        print 'python MultijetBalance/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
         if (not f_printOnly):
           calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
 
@@ -228,7 +226,7 @@ if(f_calculateMJB):
         dataFile = glob.glob(args.workDir+'/hist.data.all.fit_MJB_initial.root')[0]
         mcFile = glob.glob(args.workDir+'/hist.mc.'+mcType+'.fit_MJB_initial.root')[0]
 
-      print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
+      print 'python MultijetBalance/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
       if (not f_printOnly):
         calculateDoubleRatio.calculateDoubleRatio(dataFile, mcFile)
 
@@ -244,7 +242,7 @@ if(f_calculateMJB):
       if (doBootstrap):
         bootstrapFile = inFile.replace('DoubleMJB_initial','DoubleMJB_nominal')
 
-      print 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatioSys.py --inFile '+inFile
+      print 'python MultijetBalance/scripts/plotting/calculateDoubleRatioSys.py --inFile '+inFile
       if not f_printOnly:
         calculateDoubleRatioSys.calculateDoubleRatioSys(inFile, bootstrapFile)
 
@@ -254,9 +252,9 @@ if(f_calculateMJB):
   if(doFinal):
     initialFiles = glob.glob(args.workDir+'/*_initial.root')
     for file in initialFiles:
-      print 'python MultijetBalanceAlgo/scripts/plotting/calculateFinalMJBGraphs.py --file '+file+ ' --binnings '+binnings
+      print 'python MultijetBalance/scripts/plotting/calculateFinalMJBGraphs.py --file '+file
       if (not f_printOnly):
-        calculateFinalMJBGraphs.calculateFinalMJBGraphs(file, binnings)
+        calculateFinalMJBGraphs.calculateFinalMJBGraphs(file)
 
 
 if(f_plotRelevant):
@@ -267,9 +265,9 @@ if(f_plotRelevant):
     files += glob.glob(args.workDir+'/*MJB_final.root')
     #files += glob.glob(args.workDir+'/*all.MJB_final.root')+glob.glob(args.workDir+'/*.DoubleMJB_final.root')
   for file in files:
-    print 'python MultijetBalanceAlgo/scripts/plotting/plotNominal.py -b --file '+file
+    print 'python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file
     if (not f_printOnly):
-      os.system('python MultijetBalanceAlgo/scripts/plotting/plotNominal.py -b --file '+file)
+      os.system('python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file)
     #f_plotSys = False;
     #f_addGagik = False
     #plotNominal.plotNominal(file, f_plotSys, f_addGagik);
@@ -277,18 +275,18 @@ if(f_plotRelevant):
   if(doMC and doJZSlices):
     files = sorted(glob.glob(args.workDir+'/*JZ*.appended.root'))
     files = ','.join(files)
-    print 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --files '+files
+    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files
     if (not f_printOnly):
-      os.system('python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --files '+files)
-    print 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files
+      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files)
+    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files
     if (not f_printOnly):
-      os.system('python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files)
+      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files)
 
   if(doMC and doData):
     files = sorted(glob.glob(args.workDir+'/*.appended.root'))
     if len(files) > 0:
       files = ','.join(files)
-      command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --normalize --files '+files
+      command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --normalize --files '+files
       print command
       if (not f_printOnly):
         os.system(command)
@@ -297,7 +295,7 @@ if(f_plotRelevant):
       files = sorted(glob.glob(args.workDir+'/*.MJB_initial.root'))
       if len(files) > 0:
         files = ','.join(files)
-        command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+        command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
         print command
         if (not f_printOnly):
           os.system(command)
@@ -306,7 +304,7 @@ if(f_plotRelevant):
       files = sorted(glob.glob(args.workDir+'/*.fit_MJB_initial.root'))
       if len(files) > 0:
         files = ','.join(files)
-        command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+        command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
         print command
         if (not f_printOnly):
           os.system(command)
@@ -315,7 +313,7 @@ if(f_plotRelevant):
       files = sorted(glob.glob(args.workDir+'/*.MJB_final.root'))
       if len(files) > 0:
         files = ','.join(files)
-        command = 'python MultijetBalanceAlgo/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+        command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
         print command
         if (not f_printOnly):
           os.system(command)
@@ -325,7 +323,7 @@ if(f_plotRelevant):
 ###  if(doFinal):
 ###    files += glob.glob(args.workDir+'/*.MJB_final.root')+glob.glob(args.workDir+'/*.DoubleMJB_final.root')
 ###  for file in files:
-###    command = 'python MultijetBalanceAlgo/scripts/plotting/plotMJBvEta.py -b --file '+file+' --binnings '+binnings
+###    command = 'python MultijetBalance/scripts/plotting/plotMJBvEta.py -b --file '+file+' --binnings '+binnings
 ###    print command
 ###    os.system(command)
 ###    #plotMJBvEta.plotMJBvEta(file, binnings)
@@ -334,7 +332,7 @@ if(f_plotRelevant):
     ## plotSysRatios.py ##
     files = glob.glob(args.workDir+'/*.appended.root')+glob.glob(args.workDir+'/*.fit_MJB_initial.root')+glob.glob(args.workDir+'/*.Fit_DoubleMJB_initial.root')
     for file in files:
-      command = 'python MultijetBalanceAlgo/scripts/plotting/plotSysRatios.py -b --file '+file
+      command = 'python MultijetBalance/scripts/plotting/plotSysRatios.py -b --file '+file
       print command
       if (not f_printOnly):
         os.system(command)
@@ -343,7 +341,7 @@ if(f_plotRelevant):
     ## plotActualSysRatios.py ##
     files = glob.glob(args.workDir+'/*.Fit_DoubleMJB_sys_initial.root')
     for file in files:
-      command = 'python MultijetBalanceAlgo/scripts/plotting/plotActualSysRatios.py -b --file '+file
+      command = 'python MultijetBalance/scripts/plotting/plotActualSysRatios.py -b --file '+file
       print command
       if (not f_printOnly):
         os.system(command)
@@ -353,7 +351,7 @@ if(f_plotAll):
   ## plotAll.py ##
   files = glob.glob(args.workDir+'/*.appended.root') #+glob.glob(args.workDir+'/*MJB*.root')
   for file in files:
-    command = 'python MultijetBalanceAlgo/scripts/plotting/plotAll.py -b --file '+file
+    command = 'python MultijetBalance/scripts/plotting/plotAll.py -b --file '+file
     print command
     if (not f_printOnly):
       os.system(command)
@@ -363,13 +361,13 @@ if(f_plotAll):
 #  ## plotSL.py ##
 #  files = glob.glob(args.workDir+'/*.appended.root')
 #  for file in files:
-#    print 'python MultijetBalanceAlgo/scripts/plotting/plotSL.py -b --file '+file+' --binning '+binning
+#    print 'python MultijetBalance/scripts/plotting/plotSL.py -b --file '+file+' --binning '+binning
 #    plotSL.plotSL(file, binning)
 #
 #  ## plotSLDataMCRatio.py ##
 #  if(doData and doMC):
 #    dataFile = glob.glob(args.workDir+'/*data.all.appended.root')[0]
 #    mcFile = glob.glob(args.workDir+'/*mc.all.appended.root')[0]
-#    print 'python MultijetBalanceAlgo/scripts/plotting/plotSLDataMCRatio.py --mcFile '+mcFile+' --dataFile '+dataFile+' --binning '+binning
+#    print 'python MultijetBalance/scripts/plotting/plotSLDataMCRatio.py --mcFile '+mcFile+' --dataFile '+dataFile+' --binning '+binning
 #    plotSLDataMCRatio.plotSLDataMCRatio(dataFile, mcFile, binning)
 #

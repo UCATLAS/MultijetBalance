@@ -26,10 +26,10 @@ import ROOT
 iterationNumber="1"
 jetType='_AntiKt4EMTopo'
 
-def renameMJB(sysFileName, binning):
+def renameMJB(sysFileName):
 
 
-  histName = "diff_DoubleMJB_"+binning
+  histName = "diff_DoubleMJB"
 
   outFile = ROOT.TFile.Open(sysFileName.replace('Fit_DoubleMJB_sys_final','Renamed'), "RECREATE");
 
@@ -38,7 +38,7 @@ def renameMJB(sysFileName, binning):
   dirList = [key for key in keyList if "Iteration" in key] #List of all directories
 
 
-  histName = "/graph_diff_DoubleMJB_"+binning
+  histName = "/graph_diff_DoubleMJB"
 
   ## Get Systematics to Rename ##
   for dirName in dirList:
@@ -73,7 +73,7 @@ def renameMJB(sysFileName, binning):
 
     if 'Nominal' in dirName:
 
-      statHist = sysFile.Get( dirName+"/graph_DoubleMJB_"+binning )
+      statHist = sysFile.Get( dirName+"/graph_DoubleMJB" )
       statHist.SetName("MJB_Stat"+jetType)
       statHist.SetTitle("MJB_Stat"+jetType)
       d1, d2 = ROOT.Double(0), ROOT.Double(0)
@@ -87,7 +87,7 @@ def renameMJB(sysFileName, binning):
       statHist.Write()
 
 
-      inHist = sysFile.Get( dirName+"/graph_DoubleMJB_"+binning )
+      inHist = sysFile.Get( dirName+"/graph_DoubleMJB" )
     else:
       inHist = sysFile.Get( dirName+histName )
 
@@ -110,12 +110,10 @@ if __name__ == "__main__":
            help="Input file")
   parser.add_argument("--mcFile", dest='mcFiles', default="",
            help="MC files")
-  parser.add_argument("--binning", dest='binning', default="Fine",
-           help="Single binning to use")
   args = parser.parse_args()
 
   thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Sys_Iter1_EM/workarea/"
   #thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Iter1_EM_BS3/workarea/"
   sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
 #  nominalFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_final.root"
-  renameMJB(sysFile, args.binning)
+  renameMJB(sysFile)

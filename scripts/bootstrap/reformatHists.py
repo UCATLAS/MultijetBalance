@@ -36,13 +36,13 @@ def reformatHists(inFileName):
 
   for key in inFile.GetListOfKeys():
     thisKeyName = key.GetName()
-    if thisKeyName.endswith('_recoilPt_PtBal_Fine'):
-      dirName = thisKeyName.replace('_recoilPt_PtBal_Fine','')
+    if thisKeyName.endswith('_recoilPt_PtBal'):
+      dirName = thisKeyName.replace('_recoilPt_PtBal','')
       outFile.mkdir(dirName)
       outDir = outFile.Get(dirName)
       thisHist = inFile.Get( thisKeyName )
       thisHist.SetDirectory( outDir )
-      thisHist.SetName('recoilPt_PtBal_Fine')
+      thisHist.SetName('recoilPt_PtBal')
 
   print "Writing to file..."
   outFile.Write()

@@ -115,10 +115,6 @@ TH2F* initialRebin( TH2F* inputHist ){
     ptBalBins[i] = i/100.;
   }
 
-//        m_recoilPt_ptBal.push_back( book(m_name, ("recoilPt_PtBal"+binningNames.at(iB)),
-//              "Recoil System p_{T} [GeV]", binningSizes.at(iB), binArray[iB],
-//              "p_{T} Balance", numPtBalBins, ptBalBins) );
-//
   TH2F* newHist = new TH2F( histName.c_str(), inputHist->GetTitle(), nBins, binArray, numPtBalBins, ptBalBins);
   newHist->Sumw2();
   for(int iBinX=1; iBinX < inputHist->GetNbinsX()+1; ++iBinX){
@@ -265,18 +261,18 @@ int main(int argc, char *argv[])
     if( isInteger(toyNum) ){
       std::string nominalName = iteration+"_Nominal_"+toyNum;
 
-      TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
+      TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal").c_str());
       TH2F* rebin_recoilPt_PtBal = initialRebin( h_recoilPt_PtBal );
       h_2D_sys.push_back( rebin_recoilPt_PtBal );
-      TH2F* h_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
+      TH2F* h_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal").c_str());
       TH2F* rebin_recoilPt_PtBal_nominal = initialRebin( h_recoilPt_PtBal_nominal );
       h_2D_nominal.push_back( rebin_recoilPt_PtBal_nominal );
 
     }else{
       std::string nominalName = iteration+"_Nominal";
-      TH2F* h_tmp_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
+      TH2F* h_tmp_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal").c_str());
       h_full_recoilPt_PtBal = initialRebin( h_tmp_recoilPt_PtBal );
-      TH2F* h_tmp_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal_Fine").c_str());
+      TH2F* h_tmp_recoilPt_PtBal_nominal = (TH2F*) inFile->Get((nominalName+"/recoilPt_PtBal").c_str());
       h_full_recoilPt_PtBal_nominal = initialRebin( h_tmp_recoilPt_PtBal_nominal );
     }
 

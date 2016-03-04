@@ -17,7 +17,7 @@ def mirrorMCtoData(mcFileName):
   for dirName in mcKeyList:
     print dirName
     for i in range(0, 100):
-      thisHist = mcFile.Get(dirName+'/MJB_Fine')
+      thisHist = mcFile.Get(dirName+'/MJB')
       newDirName = dirName+'_'+str(i)
       mcFile.mkdir( newDirName )
       newDir = mcFile.Get( newDirName )
