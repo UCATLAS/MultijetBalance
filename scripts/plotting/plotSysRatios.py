@@ -52,7 +52,6 @@ def plotSysRatios(file):
 
   ## This removes extra MJB systematics
   MJBsToUse = ["a40","a20","b15","b05","pta90","pta70","ptt30","ptt20"]
-#  MJBsToUse += ["a25","a35","b12","b08","pta85","pta75","ptt27","ptt23"]
   sysDirList = [sysDir for sysDir in sysDirList if (not "MJB" in sysDir.GetName() or any(MJBtouse in sysDir.GetName() for MJBtouse in MJBsToUse) )]
 
 
@@ -60,12 +59,15 @@ def plotSysRatios(file):
   sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
 #  sysTypesToUse = ["MJB_ptt23", "MJB_ptt27", "MJB_ptt30", "MJB_ptt20"]
   #sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "MCType"]
-# SingleParticle, RelativeNonClosure, Pileup, BJES, PunchThrough
 
   sysTypes = []
   for sysType in sysTypesToUse:
     if any(sysType in sysDir for sysDir in sysDirNameList):
       sysTypes.append( sysType )
+
+  if len(sysTypes) == 0:
+    print "Error, found no systematics!!"
+    exit(1)
   if len(sysTypes) > 1:
     sysTypes.append("All")
   if "All" in sysTypes:

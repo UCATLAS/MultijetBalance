@@ -6,7 +6,7 @@ c = xAH_config()
 c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
                                      "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/MJB_data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good.xml",
                                      "m_derivationName"              : "EXOT2",
-                                     "m_useMetaData"                 : True,
+                                     "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
                                      "m_applyTriggerCut"             : True,
                                      "m_triggerSelection"            : "HLT_j360|HLT_j260|HLT_j200",
@@ -59,9 +59,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 #------ Validation Mode ------#
   ## Apply the jet calibrations to the leading jet:
-  "m_leadingInsitu" : True,
+  #"m_leadingInsitu" : True,
   ## Allow calibrations of subleading jets beyond JetCalibTool limit:
-  "m_noLimitJESPt" : True,
+  #"m_noLimitJESPt" : True,
 
 #------ B-tag Mode : Not yet implemented ------#
 #  "m_bTagLeadJetWP" : True,

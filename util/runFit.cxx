@@ -173,10 +173,10 @@ int main(int argc, char *argv[])
     if( sysName.find(sysType) == std::string::npos)
       continue;
 
-    if( sysName.find("MJB_") != std::string::npos)
-      continue;
-    if( sysName.find("MCType") != std::string::npos)
-      continue;
+//    if( sysName.find("MJB_") != std::string::npos)
+//      continue;
+//    if( sysName.find("MCType") != std::string::npos)
+//      continue;
 
     std::string fitPlotsOutName = outFileName;
     fitPlotsOutName.erase(0, fitPlotsOutName.find_last_of("/"));

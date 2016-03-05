@@ -31,7 +31,7 @@ def addDataSystToMC(mcFile, dataFile):
 ##################### Get a new copy of original histograms and create new histograms  #################################
   print "Creating new hists "
   for dirName in dirList:
-    thisHist = inFile.Get(dirName+"/recoilPt_PtBal_Fine")
+    thisHist = inFile.Get(dirName+"/recoilPt_PtBal")
     outFile.mkdir( dirName )
     newDir = outFile.Get( dirName )
     thisHist.SetDirectory(newDir)
@@ -42,7 +42,7 @@ def addDataSystToMC(mcFile, dataFile):
     if dataDirName in dirList:
       continue
 
-    thisHist = inFile.Get( nominalDirName+'/recoilPt_PtBal_Fine')
+    thisHist = inFile.Get( nominalDirName+'/recoilPt_PtBal')
     outFile.mkdir( dataDirName )
     newDir = outFile.Get( dataDirName )
     thisHist.SetDirectory( newDir )

@@ -46,10 +46,10 @@ f_plotAll = False
 f_plotSL = False
 
 #f_getPtHist = True
-f_scale = True #Scale MC files
+#f_scale = True #Scale MC files
 #f_combine = True #Combine MC files
-#f_calculateMJB = True # Calculate new histograms to be added to root file
-#f_plotRelevant = True # Most important Plots
+f_calculateMJB = True # Calculate new histograms to be added to root file
+f_plotRelevant = True # Most important Plots
 #f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 

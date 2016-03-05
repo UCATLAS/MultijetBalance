@@ -45,8 +45,8 @@ files.append("MultijetBalance/scripts/sampleLists/QCDPythia8_EXOT2_gridSamples.t
 outputTags.append("QCDPy")
 files.append("MultijetBalance/scripts/sampleLists/QCDHerwig_EXOT2_gridSamples.txt")
 outputTags.append("QCDH")
-files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_EXOT2_gridSamples.txt")
-outputTags.append("Ex")
+#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_EXOT2_gridSamples.txt")
+#outputTags.append("Ex")
 #files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Debug_gridSamples.txt")
 #outputTags.append("Db")
 

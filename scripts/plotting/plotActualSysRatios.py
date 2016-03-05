@@ -70,6 +70,10 @@ def plotActualSysRatios(file):
   for sysType in sysTypesToUse:
     if any(sysType in sysDir for sysDir in sysDirNameList):
       sysTypes.append( sysType )
+
+  if len(sysTypes) == 0:
+    print "Error, found no systematics!!"
+    exit(1)
   if len(sysTypes) > 1:
     sysTypes.append("All")
   if "All" in sysTypes:
