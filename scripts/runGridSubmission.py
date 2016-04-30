@@ -25,7 +25,6 @@ if not test:
 
 
 #### Driver options ####
-
 runType = 'grid'   #CERN grid
 #runType = 'local'
 #runType = 'condor' #Uchicago Condor

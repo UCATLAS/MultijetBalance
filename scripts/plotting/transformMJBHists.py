@@ -31,8 +31,8 @@ f_printOnly = False
 
 ## Choose the MC types to run on
 ## The first MC type will be the nominal, while the second will be a systematic variation
-mcTypes = ["Herwig"]
-#mcTypes = ["Pythia", "Herwig"]
+#mcTypes = ["Herwig"]
+mcTypes = ["Pythia", "Herwig"]
 #mcTypes = ["Herwig", "Pythia", "Sherpa"]
 
 
@@ -48,7 +48,7 @@ f_plotSL = False
 #f_getPtHist = True
 #f_scale = True #Scale MC files
 #f_combine = True #Combine MC files
-f_calculateMJB = True # Calculate new histograms to be added to root file
+#f_calculateMJB = True # Calculate new histograms to be added to root file
 f_plotRelevant = True # Most important Plots
 #f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
@@ -79,7 +79,7 @@ doData = True
 doMC = True
 
 #Systematics may be turned off to speed things up
-doSys = True
+doSys = False
 
 #Individual slices of MC may be run on separately for plotting purposes
 doJZSlices = False
@@ -259,46 +259,46 @@ if(f_calculateMJB):
 
 if(f_plotRelevant):
 
-  ## plotNominal.py ##
-  files = glob.glob(args.workDir+'/*.appended.root')+glob.glob(args.workDir+'/*MJB_initial.root')+glob.glob(args.workDir+'/*DoubleMJB_initial.root')
-  if(doFinal):
-    files += glob.glob(args.workDir+'/*MJB_final.root')
-    #files += glob.glob(args.workDir+'/*all.MJB_final.root')+glob.glob(args.workDir+'/*.DoubleMJB_final.root')
-  for file in files:
-    print 'python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file
-    if (not f_printOnly):
-      os.system('python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file)
-    #f_plotSys = False;
-    #f_addGagik = False
-    #plotNominal.plotNominal(file, f_plotSys, f_addGagik);
-
-  if(doMC and doJZSlices):
-    files = sorted(glob.glob(args.workDir+'/*JZ*.appended.root'))
-    files = ','.join(files)
-    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files
-    if (not f_printOnly):
-      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files)
-    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files
-    if (not f_printOnly):
-      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files)
+#tmp  ## plotNominal.py ##
+#tmp  files = glob.glob(args.workDir+'/*.appended.root')+glob.glob(args.workDir+'/*MJB_initial.root')+glob.glob(args.workDir+'/*DoubleMJB_initial.root')
+#tmp  if(doFinal):
+#tmp    files += glob.glob(args.workDir+'/*MJB_final.root')
+#tmp    #files += glob.glob(args.workDir+'/*all.MJB_final.root')+glob.glob(args.workDir+'/*.DoubleMJB_final.root')
+#tmp  for file in files:
+#tmp    print 'python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file
+#tmp    if (not f_printOnly):
+#tmp      os.system('python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file)
+#tmp    #f_plotSys = False;
+#tmp    #f_addGagik = False
+#tmp    #plotNominal.plotNominal(file, f_plotSys, f_addGagik);
+#tmp
+#tmp  if(doMC and doJZSlices):
+#tmp    files = sorted(glob.glob(args.workDir+'/*JZ*.appended.root'))
+#tmp    files = ','.join(files)
+#tmp    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files
+#tmp    if (not f_printOnly):
+#tmp      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files)
+#tmp    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files
+#tmp    if (not f_printOnly):
+#tmp      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files)
 
   if(doMC and doData):
-    files = sorted(glob.glob(args.workDir+'/*.appended.root'))
-    if len(files) > 0:
-      files = ','.join(files)
-      command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --normalize --files '+files
-      print command
-      if (not f_printOnly):
-        os.system(command)
+#tmp    files = sorted(glob.glob(args.workDir+'/*.appended.root'))
+#tmp    if len(files) > 0:
+#tmp      files = ','.join(files)
+#tmp      command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --normalize --files '+files
+#tmp      print command
+#tmp      if (not f_printOnly):
+#tmp        os.system(command)
 
-    if( not doFit ):
-      files = sorted(glob.glob(args.workDir+'/*.MJB_initial.root'))
-      if len(files) > 0:
-        files = ','.join(files)
-        command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
-        print command
-        if (not f_printOnly):
-          os.system(command)
+#tmp    if( not doFit ):
+#tmp      files = sorted(glob.glob(args.workDir+'/*.MJB_initial.root'))
+#tmp      if len(files) > 0:
+#tmp        files = ','.join(files)
+#tmp        command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+#tmp        print command
+#tmp        if (not f_printOnly):
+#tmp          os.system(command)
 
     if(doFit):
       files = sorted(glob.glob(args.workDir+'/*.fit_MJB_initial.root'))
@@ -309,14 +309,14 @@ if(f_plotRelevant):
         if (not f_printOnly):
           os.system(command)
 
-    if(doFinal):
-      files = sorted(glob.glob(args.workDir+'/*.MJB_final.root'))
-      if len(files) > 0:
-        files = ','.join(files)
-        command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
-        print command
-        if (not f_printOnly):
-          os.system(command)
+#tmp    if(doFinal):
+#tmp      files = sorted(glob.glob(args.workDir+'/*.MJB_final.root'))
+#tmp      if len(files) > 0:
+#tmp        files = ','.join(files)
+#tmp        command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
+#tmp        print command
+#tmp        if (not f_printOnly):
+#tmp          os.system(command)
 
 ###  ## plotMJBvEta.py ##
 ###  files = glob.glob(args.workDir+'/*.MJB_initial.root')+glob.glob(args.workDir+'/*.DoubleMJB_initial.root')

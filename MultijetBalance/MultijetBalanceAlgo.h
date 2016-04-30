@@ -21,11 +21,8 @@
 
 #include "JetMomentTools/JetVertexTaggerTool.h"
 
-// For bootstrap
-//#include "MultijetBalanceAlgo/BootstrapGenerator.h"
-//#include "MultijetBalanceAlgo/TH1DBootstrap.h"
-//#include "MultijetBalanceAlgo/TH2DBootstrap.h"
-//#include "MultijetBalanceAlgo/SystContainer.h"
+#include "xAODBTaggingEfficiency/BTaggingSelectionTool.h"
+#include "xAODBTaggingEfficiency/BTaggingEfficiencyTool.h"
 
 
 static float GeV = 1000.;
@@ -99,6 +96,15 @@ class MultijetBalanceAlgo : public EL::Algorithm
     std::string m_binning;
     std::string m_VjetCalibFile;
 
+    bool m_bTag;
+    std::string m_bTagWPsString;
+    std::vector<std::string> m_bTagWPs;
+    std::string m_bTagFileName;
+    std::string m_bTagVar;
+//    std::string m_bTagOP;
+    bool m_useDevelopmentFile;
+    bool m_useConeFlavourLabel;
+
     // configuration variables set automatically
     bool m_isMC;                      // Is MC
     std::vector<float> m_subLeadingPtThreshold;
@@ -131,6 +137,9 @@ class MultijetBalanceAlgo : public EL::Algorithm
     JetCleaningTool      * m_JetCleaningTool;       //!
     JetUncertaintiesTool * m_JetUncertaintiesTool;  //!
     #endif // not __CINT__
+
+    std::vector< BTaggingSelectionTool* >  m_BJetSelectTools; //!
+    std::vector< BTaggingEfficiencyTool* > m_BJetEffSFTools; //!
 
     std::vector< TrigConf::xAODConfigTool* > m_trigConfTools; //!
     std::vector< Trig::TrigDecisionTool* > m_trigDecTools;    //!
@@ -188,6 +197,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
   EL::StatusCode loadJetUncertaintyTool();
   EL::StatusCode loadVjetCalibration();
   EL::StatusCode loadMJBCalibration();
+  EL::StatusCode loadBTagTools();
 
     #ifndef __MAKECINT__
      EL::StatusCode applyJetCalibrationTool( xAOD::Jet* jet);

@@ -10,7 +10,7 @@ c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
                                      "m_storePassHLT"                : True,
                                      "m_applyTriggerCut"             : True,
                                      "m_triggerSelection"            : "HLT_j360|HLT_j260|HLT_j200",
-                                     "m_checkDuplicatesData"         : True,
+                                     "m_checkDuplicatesData"         : False,
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True
 #                                     "m_MCPileupCheckRecoContainer"  : "AntiKt4EMTopoJets",
@@ -37,9 +37,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 # "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Vjet/Vjet_Systematics.root",
 
   ## Systematic Variations to use:
-#  "m_sysVariations" : "Nominal",
+  "m_sysVariations" : "Nominal",
 #  "m_sysVariations" : "AllSystematics",
-  "m_sysVariations" : "Nominal-MJB",
+#  "m_sysVariations" : "Nominal-MJB",
 
   ## (Deprecated Option) Add statistical systematic for MJB:
 #  "m_MJBStatsOn" : True,
@@ -59,12 +59,15 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 #------ Validation Mode ------#
   ## Apply the jet calibrations to the leading jet:
-  #"m_leadingInsitu" : True,
-  ## Allow calibrations of subleading jets beyond JetCalibTool limit:
-  #"m_noLimitJESPt" : True,
+  "m_leadingInsitu" : True,
+  # Allow calibrations of subleading jets beyond JetCalibTool limit:
+  "m_noLimitJESPt" : True,
 
 #------ B-tag Mode : Not yet implemented ------#
-#  "m_bTagLeadJetWP" : True,
+  "m_bTagWPsString" : "77,85",
+#  "m_bTagFileName" : "$ROOTCOREBIN/data/xAODAnaHelpers/2016-Winter-13TeV-MC15-CDI-February5_prov.root",
+#  "m_bTagVar"  : "MV2c20",
+#  "m_bTagLeadJetWP" : "",
 #  "m_leadingInsitu" : True,
 #  "m_noLimitJESPt" :  True,
 
@@ -82,15 +85,16 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 ### Plotting Options ###
 #  "m_writeTree" : True,
   "m_writeNominalTree" : True,
+#  "m_MJBDetailStr" : "bTag85 bTag77",
 #  "m_MJBDetailStr" : "extraMJB",
   "m_eventDetailStr" : "pileup",
-  "m_jetDetailStr" : "kinematic",
+  "m_jetDetailStr" : "kinematic flavorTag",# truth",#truth_details",
 #  "m_jetDetailStr" : "kinematic truth truth_details sfFTagVL sfFTagL sfFTagM sfFTagT",
   "m_trigDetailStr" : "basic passTriggers",
 
 ### Extra Options ###
 #  "m_debug"      :  True,
-#  "m_maxEvent" : 1,
+#  "m_maxEvent" : 2000,
   ## Remove problematic Pileup events from low pt MC slices:
   "m_MCPileupCheckContainer" : "AntiKt4TruthJets",
 

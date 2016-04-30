@@ -43,6 +43,11 @@ class MiniTree : public HelpTreeBase
     std::vector<float> m_jet_TileFrac;
     std::vector< std::vector<float> > m_jet_EnergyPerSampling;
 
+    std::vector< std::vector<int> > m_jet_BTagBranches;
+    std::vector< std::vector<float> > m_jet_BTagSFBranches;
+    std::vector< std::string > m_jet_BTagNames;
+
+
   public:
 
     MiniTree(xAOD::TEvent * event, TTree* tree, TFile* file);

@@ -47,6 +47,26 @@ void MiniTree::AddEventUser(std::string detailStringMJB)
 
 void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetName)
 {
+
+  std::cout << "AddJetsUser gives " << detailStr << std::endl;
+  if (detailStr.find("MJBbTag_") != std::string::npos){
+    std::string tmp = detailStr.substr(detailStr.find("MJBbTag_")+8, detailStr.size());
+    tmp = tmp.substr(0, detailStr.find_last_of(' '));
+
+    std::stringstream ssbtag(tmp);
+    std::string thisSubStr;
+    while (std::getline(ssbtag, thisSubStr, ',')) {
+      m_jet_BTagNames.push_back( thisSubStr );
+      std::vector<int> thisBTagBranch;
+      m_jet_BTagBranches.push_back( thisBTagBranch );
+      m_tree->Branch( ("jet_BTag_"+thisSubStr).c_str(), &m_jet_BTagBranches.at(m_jet_BTagBranches.size()-1) );
+      std::vector<float> thisBTagSFBranch;
+      m_jet_BTagSFBranches.push_back( thisBTagSFBranch );
+      m_tree->Branch( ("jet_BTagSF_"+thisSubStr).c_str(), &m_jet_BTagSFBranches.at(m_jet_BTagSFBranches.size()-1) );
+
+    }
+  }
+
   // jet things
   m_tree->Branch("jet_detEta", &m_jet_detEta);
   m_tree->Branch("jet_beta", &m_jet_beta);
@@ -55,6 +75,7 @@ void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetNam
 //  m_tree->Branch("jet_EMFrac", &m_jet_EMFrac);
 //  m_tree->Branch("jet_HECFrac", &m_jet_HECFrac);
   m_tree->Branch("jet_TileFrac", &m_jet_TileFrac);
+
 
 //  m_tree->Branch("jet_EnergyPerSampling", &m_jet_EnergyPerSampling);
     //just do this for first jet?
@@ -127,6 +148,25 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
   }
 
 
+
+  for(int iB=0; iB < m_jet_BTagNames.size(); ++iB){
+    std::string thisBTagName = m_jet_BTagNames.at(iB);
+
+  
+    if( jet->isAvailable< int >( ("BTag_"+thisBTagName+"Fixed").c_str() ) ){
+      m_jet_BTagBranches.at(iB).push_back( jet->auxdata< int >( ("BTag_"+thisBTagName+"Fixed").c_str()) );
+    }else{
+      m_jet_BTagBranches.at(iB).push_back( -999 );
+    }
+  
+    if( jet->isAvailable< float >( ("BTagSF_"+thisBTagName+"Fixed").c_str() ) ){
+      m_jet_BTagSFBranches.at(iB).push_back( jet->auxdata< float >( ("BTagSF_"+thisBTagName+"Fixed").c_str()) );
+    }else{
+      m_jet_BTagSFBranches.at(iB).push_back( -999 );
+    }
+  }//for iB branches
+
+
 //  std::vector<float> tempVector;
 //  if( jet->isAvailable< std::vector<float> >("EnergyPerSampling") ){
 //    tempVector = jet->auxdata< std::vector<float> >("EnergyPerSampling");
@@ -147,6 +187,10 @@ void MiniTree::ClearJetsUser(const std::string jetName ) {
 //  m_jet_HECFrac.clear();
   m_jet_TileFrac.clear();
 //  m_jet_EnergyPerSampling.clear();
+  for(int iB=0; iB < m_jet_BTagNames.size(); ++iB){
+    m_jet_BTagBranches.at(iB).clear();
+    m_jet_BTagSFBranches.at(iB).clear();
+  }
 }
 
 

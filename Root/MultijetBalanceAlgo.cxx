@@ -94,6 +94,14 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_binning = "";
   m_VjetCalibFile = "";
 
+  m_bTagFileName = "$ROOTCOREBIN/data/xAODAnaHelpers/2015-PreRecomm-13TeV-MC12-CDI-October23_v1.root";
+  m_bTagVar    = "MV2c20";
+//  m_bTagOP = "FixedCutBEff_70";
+  m_useDevelopmentFile = true;
+  m_useConeFlavourLabel = true;
+  m_bTagWPsString = "77,85";
+
+  m_bTag = true;
 
   //config for Jet Tools
   m_jetDef = "";
@@ -120,16 +128,22 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
 
   // Save binning to use
   std::stringstream ssb(m_binning);
-  std::string thisBinStr;
+  std::string thisSubStr;
   std::string::size_type sz;
-  while (std::getline(ssb, thisBinStr, ',')) {
-    m_bins.push_back( std::stof(thisBinStr, &sz) );
+  while (std::getline(ssb, thisSubStr, ',')) {
+    m_bins.push_back( std::stof(thisSubStr, &sz) );
   }
   Info("configure()", "Setting binning to %s", m_binning.c_str());
 
+  // Save b-tag WPs to use
+  std::stringstream ssbtag(m_bTagWPsString);
+  while (std::getline(ssbtag, thisSubStr, ',')) {
+    m_bTagWPs.push_back( thisSubStr );
+  }
+  Info("configure()", "Setting b-tag WPs to %s", m_bTagWPsString.c_str());
+
   // Save triggers to use
   std::stringstream ss(m_triggerAndPt);
-  std::string thisSubStr;
   while (std::getline(ss, thisSubStr, ',')) {
     m_triggers.push_back( thisSubStr.substr(0, thisSubStr.find_first_of(':')) );
     m_triggerThresholds.push_back( std::stof(thisSubStr.substr(thisSubStr.find_first_of(':')+1, thisSubStr.size()) , &sz) *GeV );
@@ -268,7 +282,9 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
     return EL::StatusCode::FAILURE;
   }
 
-  getLumiWeights(eventInfo);
+  if( getLumiWeights(eventInfo) == EL::StatusCode::FAILURE) {
+    return EL::StatusCode::FAILURE;
+  }
 
   // load all variations
   setupJetCalibrationStages();
@@ -280,6 +296,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
   //load Calibration and systematics files
   loadJetCalibrationTool();
   loadJetCleaningTool();
+  loadBTagTools();
   if (m_VjetCalib)
     loadVjetCalibration();
 
@@ -376,6 +393,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       return EL::StatusCode::FAILURE;
     }
     for(int unsigned iVar=0; iVar < m_sysVar.size(); ++iVar){
+      cout << "iVar/Nominal " << iVar << " " << m_NominalIndex << endl;
       if (m_writeNominalTree && (int) iVar != m_NominalIndex)
         continue;
 
@@ -391,7 +409,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
     for( unsigned int iTree=0; iTree < m_treeList.size(); ++iTree){
       m_treeList.at(iTree)->AddEvent(m_eventDetailStr);
-      m_treeList.at(iTree)->AddJets(m_jetDetailStr);
+      m_treeList.at(iTree)->AddJets( (m_jetDetailStr+" MJBbTag_"+m_bTagWPsString).c_str());
       m_treeList.at(iTree)->AddTrigger( m_trigDetailStr );
 //      m_treeList.at(iTree)->AddMJB(m_MJBDetailStr);
     }//for iTree
@@ -761,16 +779,40 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     passCut(iVar); //beta
 
 
-
-
-  //from his definitions beta_corr < 1 && (M_PI-alpha_corr) < 0.02
-
-  ////plots:
-  //            //for 3 jet events only
-  //            sin23_to_Sin2 = sin( dphi2+dphi3)/sing(dphi2)
-  //            similar for sing23_to_sin3
-  //            pt2R = jets[1].Perp()*sing23_to_sin3;
-  //            pt3R = jets[2].Perp()*sin23_to_sin2;
+    //////////// B-tagging ///////////////
+    for(unsigned int iB=0; iB < m_bTagWPs.size(); ++iB){ 
+      for(unsigned int iJet=0; iJet < signalJets->size(); ++iJet){
+        //m_MJBDetailStr  is bTag85
+        SG::AuxElement::Decorator< int > isBTag( ("BTag_"+m_bTagWPs.at(iB)+"Fixed").c_str() );
+        if( m_BJetSelectTools.at(iB)->accept( signalJets->at(iJet) ) ) {
+          isBTag( *signalJets->at(iJet) ) = 1;
+        }else{
+          isBTag( *signalJets->at(iJet) ) = 0;
+        }
+  
+  
+        float thisSF(1.0);
+        SG::AuxElement::Decorator< float > bTagSF( ("BTagSF_"+m_bTagWPs.at(iB)+"Fixed").c_str() );
+        if( m_isMC && fabs(signalJets->at(iJet)->eta()) < 2.5 ){
+          CP::CorrectionCode BJetEffCode;
+          if( isBTag( *signalJets->at(iJet) ) == 1 ){
+            BJetEffCode = m_BJetEffSFTools.at(iB)->getScaleFactor( *signalJets->at(iJet), thisSF );
+          }else{
+            BJetEffCode = m_BJetEffSFTools.at(iB)->getInefficiencyScaleFactor( *signalJets->at(iJet), thisSF );
+          }
+          if (BJetEffCode == CP::CorrectionCode::Error){
+            Warning( "execute()", "Error in m_BJetEFFSFTool's getEfficiencyScaleFactor, setting Scale Factor to -2");
+            thisSF = -2;
+            //return EL::StatusCode::FAILURE;
+          }
+  
+        } // if m_isMC, get SF
+  
+        bTagSF( *signalJets->at(iJet) ) = thisSF;
+        //cout << iJet << " " << " WP:" << m_bTagWPs.at(iB) << " gives " << isBTag(*signalJets->at(iJet)) << " of " << thisSF << endl;
+  
+      }//signalJets
+    }//bTagWPs
 
     //%%%%%%%%%%%%%%%%%%%%%%%%%%% End Selections %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 
@@ -811,10 +853,11 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 
     /////////////// Output Plots ////////////////////////////////
-    if(m_debug) Info("execute()", "Begin output for %s", m_sysVar.at(iVar).c_str() );
+    if(m_debug) Info("execute()", "Begin Hist output for %s", m_sysVar.at(iVar).c_str() );
     m_jetHists.at(iVar)->execute( signalJets, eventInfo);
 
 
+    if(m_debug) Info("execute()", "Begin TTree output for %s", m_sysVar.at(iVar).c_str() );
   ///////////////// Optional MiniTree Output for Nominal Only //////////////////////////
     if( m_writeTree ) {
       if(!m_writeNominalTree ||  m_NominalIndex == (int) iVar) {
@@ -918,25 +961,23 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
     m_jetHists.at(iVar)->finalize();
   }
 
-//  if( m_writeTree){
-//    TFile * file = wk()->getOutputFile ("tree");
-//    for(unsigned int iTree=0; iTree < m_treeList.size(); ++iTree){
-//      if(!m_treeList.at(iTree)->writeTo( file )) {
-//        Error("finalize()", "Failed to write tree to ouput file!");
-//        return EL::StatusCode::FAILURE;
-//      }
-//    }
-//  }//if m_writeTree
-
 
   if( m_bootstrap ){
     systTool->writeToFile(wk()->getOutputFile("SystToolOutput"));
-    delete systTool;
+    delete systTool;  systTool = nullptr;
   }
 
-  delete m_JetCalibrationTool;
-  delete m_JetCleaningTool;
-  delete m_JetUncertaintiesTool;
+  if(m_bTag){
+    for(unsigned int iB=0; iB < m_bTagWPs.size(); ++iB){ 
+    delete m_BJetSelectTools.at(iB); m_BJetSelectTools.at(iB) = nullptr;
+    if(m_isMC)
+      delete m_BJetEffSFTools.at(iB); m_BJetEffSFTools.at(iB) = nullptr;
+    }
+  }
+
+  delete m_JetCalibrationTool; m_JetCalibrationTool = nullptr;
+  delete m_JetCleaningTool; m_JetCleaningTool = nullptr;
+  delete m_JetUncertaintiesTool; m_JetUncertaintiesTool = nullptr;
 
   //Need to retroactively fill original bins of these histograms
   if(m_useCutFlow) {
@@ -1056,7 +1097,7 @@ EL::StatusCode MultijetBalanceAlgo::getLumiWeights(const xAOD::EventInfo* eventI
     m_acceptance = 1;
   }else{
     m_mcChannelNumber = eventInfo->mcChannelNumber();
-    ifstream fileIn(  gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalanceAlgo/XsAcc_"+m_comEnergy+".txt").c_str() ) );
+    ifstream fileIn(  gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/XsAcc_"+m_comEnergy+".txt").c_str() ) );
     std::string runNumStr = std::to_string( m_mcChannelNumber );
 
     std::string line;
@@ -1156,8 +1197,6 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
           iss >> subStr;
           std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
           int thisJESNumber = atoi( thisJESNumberStr.c_str() );
-          //if( thisJESNumber >= 57 && thisJESNumber <= 68){
-          //
           //next get JES Name
           iss >> subStr;
           std::string thisJESName = subStr;
@@ -1326,6 +1365,51 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetCalibrationTool(){
   return EL::StatusCode::SUCCESS;
 }
 
+// initialize and configure B-tagging efficiency tools
+EL::StatusCode MultijetBalanceAlgo :: loadBTagTools(){
+
+  if (! m_bTag){
+    return EL::StatusCode::SUCCESS;
+  }
+
+  for(unsigned int iB=0; iB < m_bTagWPs.size(); ++iB){ 
+    // Initialize & Configure the BJetSelectionTool
+    BTaggingSelectionTool* m_BJetSelectTool = new BTaggingSelectionTool( "BJetSelectionTool" );
+    m_BJetSelectTool->msg().setLevel( MSG::INFO ); // DEBUG, VERBOSE, INFO, ERROR
+
+    std::string thisBTagOP = "FixedCutBEff_"+m_bTagWPs.at(iB);
+  
+    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("MaxEta",2.5),"Failed to set property:MaxEta");
+    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("MinPt",20000.),"Failed to set property:MinPt");
+    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("FlvTagCutDefinitionsFileName",m_bTagFileName.c_str()),"Failed to set property:FlvTagCutDefinitionsFileName");
+    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("TaggerName",          m_bTagVar),"Failed to set property: TaggerName");
+    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("OperatingPoint",      thisBTagOP),"Failed to set property: OperatingPoint");
+    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()),"Failed to set property: JetAuthor");
+    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->initialize(), "Failed to properly initialize the BJetSelectionTool");
+    Info("loadBTagTools()", "BTaggingSelectionTool initialized : %s ", m_BJetSelectTool->name().c_str() );
+    m_BJetSelectTools.push_back(m_BJetSelectTool);
+  
+    // Initialize & Configure the BJetEfficiencyCorrectionTool
+    BTaggingEfficiencyTool* m_BJetEffSFTool = nullptr;
+    if( m_isMC ) {
+      m_BJetEffSFTool = new BTaggingEfficiencyTool( "BJetEfficiencyCorrectionTool" );
+      m_BJetEffSFTool->msg().setLevel( MSG::INFO ); // DEBUG, VERBOSE, INFO, ERROR
+  
+      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("TaggerName",          m_bTagVar),"Failed to set property");
+      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("OperatingPoint",      thisBTagOP),"Failed to set property");
+      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()),"Failed to set property");
+      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("ScaleFactorFileName", m_bTagFileName.c_str()),"Failed to set property");
+      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("UseDevelopmentFile",  m_useDevelopmentFile), "Failed to set property");
+      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("ConeFlavourLabel",    m_useConeFlavourLabel), "Failed to set property");
+      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->initialize(), "Failed to properly initialize the BJetEfficiencyCorrectionTool");
+      Info("loadBTagTools()", "BTaggingEfficiencyTool initialized : %s ", m_BJetEffSFTool->name().c_str() );
+    }
+    m_BJetEffSFTools.push_back(m_BJetEffSFTool);
+  }
+
+  return EL::StatusCode::SUCCESS;
+}
+
 EL::StatusCode MultijetBalanceAlgo :: setupJetCalibrationStages() {
 
   if(m_debug) Info("setupJetCalibrationStages", "setupJetCalibrationStages");
@@ -1469,7 +1553,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
     return EL::StatusCode::SUCCESS;
 
 
-  TFile* MJBFile = TFile::Open( gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalanceAlgo/"+m_MJBCorrectionFile).c_str() ), "READ" );
+  TFile* MJBFile = TFile::Open( gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/"+m_MJBCorrectionFile).c_str() ), "READ" );
   if (m_closureTest)
     m_ss << m_MJBIteration;
   else
