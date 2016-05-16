@@ -29,7 +29,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   ## For higher iterations:
   "m_MJBCorrectionFile" : "Bootstrap_Iteration0_EM_hist.combined.Pythia.DoubleMJB_initial.root",
 
-  "m_binning"  : "300,360,420,480,540,600,660,720,780,840,900,960,1020,1140,1260,1480,2000",
+  "m_binning"  : "300,360,420,480,540,600,660,720,780,840,900,960,1020,1140,1260,1480,2000,3000",
 #!!  "m_MJBCorrectionBinning" : "Fine",
 
 
@@ -62,9 +62,11 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_leadingInsitu" : True,
   # Allow calibrations of subleading jets beyond JetCalibTool limit:
   "m_noLimitJESPt" : True,
+#  "m_numJets"  : 2,
+#  "m_ptAsym" : 1.0,
 
 #------ B-tag Mode : Not yet implemented ------#
-  "m_bTagWPsString" : "77,85",
+#  "m_bTagWPsString" : "77,85",
 #  "m_bTagFileName" : "$ROOTCOREBIN/data/xAODAnaHelpers/2016-Winter-13TeV-MC15-CDI-February5_prov.root",
 #  "m_bTagVar"  : "MV2c20",
 #  "m_bTagLeadJetWP" : "",
@@ -116,10 +118,12 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_jetCleanUgly"      : True,
 
   #-- JVT --#
-  "m_JVTCut" : 0.64, #!! update
+#  "m_JVTCut" : 0.64, # 2015, need to change to 50 GeV
+  "m_JVTCut" : 0.59, # 2016
 
   #-- JetUncertaintiesTool --#
-  "m_jetUncertaintyConfig" : "JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
+  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
+  ### 2015 MJB Systematics
   #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Prerec/JESNuisanceParametersForMJB.config"
 
 

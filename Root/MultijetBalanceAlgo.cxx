@@ -562,18 +562,18 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     originalJetKinematics.push_back(thisJet);
   }
 
-  //This is a temporary method for determining whether the subleading jet pt passes.
-  //It is necessary as the subleading pt cut must be applied at the eta intercalibration level,
-  //But only for the first iteration!
-  if( m_MJBIteration == 0 ){
-    for( unsigned int iJet = 1; iJet < originalJetKinematics.size(); ++iJet){
-      if( (!m_reverseSubleading && (originalJetKinematics.at(iJet).Pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) )
-          || (m_reverseSubleading && (originalJetKinematics.at(iJet).Pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ) ){
+  //!! Add the following for the EIC issue
+  //Because the V+jet calibrations can be less than 1, there exists a disjoint jet pt spectrum.
+  //I.e. if V+jet calibration ends at 950 GeV, but a 950 GeV jets goes to 945 GeV, then jets at 946 GeV should be ignored
+  //Therefore we need the subleading jet pt cut to be applied at the eta-intercalibration level!
+  //This is only required for the first iteration
+  if( m_VjetCalib  && m_MJBIteration == 0){
+   if( (!m_reverseSubleading && (originalJetKinematics.at(1).Pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) )
+       || (m_reverseSubleading && (originalJetKinematics.at(1).Pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ) ){
 
-        delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
-        wk()->skipEvent();  return EL::StatusCode::SUCCESS;
-      }
-    }
+     delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
+     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+   }
   }
 
   int m_cutflowFirst_SystLoop = m_iCutflow; //Get cutflow position for systematic looping
@@ -614,6 +614,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
         signalJets->at(iJet)->auxdata< float >("e") = jetCalibStageCopy.E();
       } else {
 
+        // Must reset jet kinematics for this iVar of m_sysVar
         if( iJet !=0 || m_leadingInsitu ){ //Use Insitu Correction
           signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
           signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
@@ -640,7 +641,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
       if(iJet > 0){  //Apply standard systematic to subleading jets
         //!! Changed it to manually select based on subleading pt, due to EIC issue
-        if( signalJets->at(iJet)->pt() <= m_subLeadingPtThreshold.at(0) ){
+        //!! Might need to change this so jetuncertaintytool is applied beyond subLeadingPtThreshold
+        if( m_noLimitJESPt || signalJets->at(iJet)->pt() <= m_subLeadingPtThreshold.at(0) ){
           if (m_VjetCalib)
             applyVjetCalibration( signalJets->at(iJet) , iVar );
           applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
@@ -653,7 +655,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     reorderJets( signalJets );
 
     if(m_debug) Info("execute()", "Subleading pt selection ");
-    if( m_MJBIteration > 0 ){ //Temporary due to 1 TeV cutoff at EIC level !!
+    //If not using Vjet calibration or on high MJB iteration, now check subleading jet pt threshold!
+    if( m_MJBIteration > 0 || !m_VjetCalib){
 
       if( !m_reverseSubleading && (signalJets->at(1)->pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //require subleading less than limit
           continue;
@@ -676,19 +679,11 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       continue;
     passCut(iVar); //ptThreshold
 
-//    if(m_debug) Info("execute()", "Apply JVF ");
-//    for(unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
-//      if( signalJets->at(iJet)->pt() < 50.*GeV && fabs(signalJets->at(iJet)->auxdecor< float >("detEta")) < 2.4 ){
-//        if( signalJets->at(iJet)->getAttribute< std::vector<float> >( "JVF" ).at( m_pvLocation ) < 0.25 ) {
-//          signalJets->erase(signalJets->begin()+iJet);  --iJet;
-//        }
-//      }
-//    }
     if(m_debug) Info("execute()", "Apply JVT ");
     for(unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
       signalJets->at(iJet)->auxdata< float >("Jvt") = m_JVTToolHandle->updateJvt( *(signalJets->at(iJet)) );
-      if( signalJets->at(iJet)->pt() < 50.*GeV && fabs(signalJets->at(iJet)->auxdecor< float >("detEta")) < 2.4 ){
-        if( signalJets->at(iJet)->getAttribute<float>( "Jvt" ) < m_JVTCut ) { //loose 0.14, medium 0.64, tight 0.92
+      if( signalJets->at(iJet)->pt() < 60.*GeV && fabs(signalJets->at(iJet)->auxdecor< float >("detEta")) < 2.4 ){
+        if( signalJets->at(iJet)->getAttribute<float>( "Jvt" ) < m_JVTCut ) { 
 //          cout << "Removing jet with pt/eta/jvt " << signalJets->at(iJet)->pt() << "/" << signalJets->at(iJet)->auxdecor< float >("detEta") << "/" << signalJets->at(iJet)->getAttribute<float>( "Jvt" ) << endl;
           signalJets->erase(signalJets->begin()+iJet);  --iJet;
         }
@@ -1669,12 +1664,6 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , 
     return EL::StatusCode::SUCCESS;
   }
 
-  // These should be taken care of by the tool? !!
-//  if( (m_JESMap[iVar] == 64 || m_JESMap[iVar] == 65) && jet->pt() < 20.*GeV)  //Flavor pt limit
-//    return EL::StatusCode::SUCCESS;
-//  else if( (m_JESMap[iVar] == 56 || m_JESMap[iVar] == 57) && jet->pt() < 15.*GeV)  //EtaIntercalibration pt limit
-//    return EL::StatusCode::SUCCESS;
-
   float thisUncertainty = 1.;
   if( m_sysSign.at(iVar) == 1)
     thisUncertainty += m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
@@ -1734,10 +1723,10 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int 
   if( isLead && !m_closureTest)
     return EL::StatusCode::SUCCESS;
 
-  //!! Temporary for EIC issue
-//!!  // if it's a subleading jet but below the 800 GeV limit
-//!!  if( !isLead && jet->pt() <= m_subLeadingPtThreshold.at(0))
-//!!    return EL::StatusCode::SUCCESS;
+//  //!! Temporary for EIC issue: remove the following 3 lines
+//  // if it's a subleading jet but below the 800 GeV limit
+//  if( !isLead && jet->pt() <= m_subLeadingPtThreshold.at(0))
+//    return EL::StatusCode::SUCCESS;
 
   // If it's for a subcalibration of JCS, don't apply this calibration
   if(m_sysTool.at(iVar) == 1)

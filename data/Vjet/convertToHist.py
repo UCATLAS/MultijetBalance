@@ -6,7 +6,7 @@
 import ROOT
 from array import array
 
-containerNames = ["EMJES_R4","LCJES_R4"]
+containerNames = ["EMJES_R4"]
 #containerNames = ["EMJES_R4", "EMJES_R6", "LCJES_R4", "LCJES_R6"]
 
 

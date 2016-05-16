@@ -269,8 +269,10 @@ def combinedPlotNominal(files, normalize, ratio):
           if( "MJB" in histName) :
             #ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 ) #!!public
             ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 2800 )
-            ratioHists[iDir-1].SetMaximum(1.05)
-            ratioHists[iDir-1].SetMinimum(0.95)
+            #ratioHists[iDir-1].SetMaximum(1.05)
+            #ratioHists[iDir-1].SetMinimum(0.95)
+            ratioHists[iDir-1].SetMaximum(1.02)
+            ratioHists[iDir-1].SetMinimum(0.98)
             ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
           if( "recoilPt" in histName):
             ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 3000 )

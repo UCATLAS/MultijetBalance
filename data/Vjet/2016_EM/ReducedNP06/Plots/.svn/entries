@@ -1,15 +1,15 @@
 10
 
 dir
-318077
-svn+ssh://svn.cern.ch/reps/atlasperf/CombPerf/JetETMiss/JESinsituCombination/ToolsJEScombination/data/ComplexMergerResults_JES/Results_2015/Results_EMJES_R4_MPF_ZJ_DB_GJ_TSpline2_100toys_WithSplineExt_NuisanceParam_Bins/SmoothCorrectionFiles/Smooth1/ReducedNP06/Plots
+322051
+svn+ssh://svn.cern.ch/reps/atlasperf/CombPerf/JetETMiss/JESinsituCombination/ToolsJEScombination/data/ComplexMergerResults_JES/Results_2015/Results_EMJES_R4_MPF_ZJ_DB_GJ_20p7_TSpline2_100toys_WithSplineExt_NuisanceParam_Bins/SmoothCorrectionFiles/Smooth1/ReducedNP06/Plots
 svn+ssh://svn.cern.ch/reps/atlasperf
 
 
 
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 
 
 
@@ -32,11 +32,11 @@ file
 
 
 
-2016-01-23T10:53:38.809233Z
-f5ebfc7df5eb0de696aa009ed5463bdc
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+e1ebcb79ffd101a1c128850f17b37076
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 
 
 
@@ -58,7 +58,7 @@ bmalaesc
 
 
 
-25945
+25693
 
 NuisanceParameters_TSpline2_EMJES_R4_2_smooth.eps
 file
@@ -66,11 +66,11 @@ file
 
 
 
-2016-01-23T10:53:38.810233Z
-f34af9252d7c7bd178d5b8961221dce6
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+8b0b0bbc8da627b207e4d81fc2bd6c59
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 
 
 
@@ -92,7 +92,41 @@ bmalaesc
 
 
 
-25513
+25066
+
+responseRatioSmooth_TSpline2_EMJES_R4.root
+file
+
+
+
+
+2016-05-16T16:13:17.279187Z
+b7eec7eec765764b8e464085c1273b07
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+99852
 
 NuisanceParameters_corrMatTot_TSpline2_EMJES_R4.png
 file
@@ -100,11 +134,11 @@ file
 
 
 
-2016-01-23T10:53:38.810233Z
-fbec26a5586cc8dcf0bcab436c57bf36
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+522b5a4a6113d38368aac5c0dc447ff7
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 has-props
 
 
@@ -126,7 +160,7 @@ has-props
 
 
 
-15878
+16092
 
 responseRatioSmooth_TSpline2_EMJES_R4.png
 file
@@ -134,11 +168,11 @@ file
 
 
 
-2016-01-23T10:53:38.811233Z
-cc81d4215653828b37af607f3f679a41
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+3c4bdf9ae128b1ee2be7f202fcafb35b
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 has-props
 
 
@@ -160,7 +194,7 @@ has-props
 
 
 
-20138
+20360
 
 responseRatioSmooth_TSpline2_EMJES_R4.eps
 file
@@ -168,11 +202,11 @@ file
 
 
 
-2016-01-23T10:53:38.811233Z
-249452fdf4075359ea73db7351cd6ed1
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+086089002a538339fb8104fa12210465
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 
 
 
@@ -194,7 +228,7 @@ bmalaesc
 
 
 
-22896
+24023
 
 NuisanceParameters_corrMatStat_TSpline2_EMJES_R4.png
 file
@@ -202,11 +236,11 @@ file
 
 
 
-2016-01-23T10:53:38.812233Z
-e0a9fe320fc7969ac9de3950e3188bd8
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+dc702ac09b7e22c6156bd0837e90bafa
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 has-props
 
 
@@ -228,7 +262,7 @@ has-props
 
 
 
-17083
+17592
 
 NuisanceParameters_TSpline2_EMJES_R4_1_smooth.png
 file
@@ -236,11 +270,11 @@ file
 
 
 
-2016-01-23T10:53:38.812233Z
-ba2db71397f7d5d6092e4b60df8dcd0c
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+1390f9d124d73a6d21dd194da4438f61
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 has-props
 
 
@@ -262,7 +296,7 @@ has-props
 
 
 
-27464
+27515
 
 NuisanceParameters_TSpline2_EMJES_R4_2_smooth.png
 file
@@ -270,11 +304,11 @@ file
 
 
 
-2016-01-23T10:53:38.813233Z
-778a1b33c4650c2525c851c98b40c3c5
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.279187Z
+2ef89a852fc83d295ded7aacd4dfe26f
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 has-props
 
 
@@ -296,7 +330,7 @@ has-props
 
 
 
-24011
+23717
 
 NuisanceParameters_corrMatSyst_TSpline2_EMJES_R4.png
 file
@@ -304,11 +338,11 @@ file
 
 
 
-2016-01-23T10:53:38.813233Z
-92cb514b90f559de1d83f3f7ab85da28
-2016-01-22T20:34:08.839029Z
-318064
-bmalaesc
+2016-05-16T16:13:17.280187Z
+8c0c6314b739a1cb8f5f2fbcee38c83c
+2016-05-06T17:21:10.733248Z
+321649
+mfrate
 has-props
 
 
@@ -330,5 +364,5 @@ has-props
 
 
 
-14690
+15021
 
