@@ -40,15 +40,15 @@ outputTags = []
 
 ## File lists and specific output Tags
 
-#files.append("MultijetBalance/scripts/sampleLists/QCDPythia8_EXOT2_gridSamples.txt")
-#outputTags.append("QCDPy")
-#files.append("MultijetBalance/scripts/sampleLists/QCDHerwig_EXOT2_gridSamples.txt")
-#outputTags.append("QCDH")
-#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_EXOT2_gridSamples.txt")
-#outputTags.append("Ex")
-files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_gridSamples.txt")
-outputTags.append("Mn")
-#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Debug_gridSamples.txt")
+files.append("MultijetBalance/scripts/sampleLists/QCDPythia8_EXOT2_207_gridSamples.txt")
+outputTags.append("QCDPy_R4")
+#files.append("MultijetBalance/scripts/sampleLists/QCDHerwig_EXOT2_207_gridSamples.txt")
+#outputTags.append("QCDH_BS3")
+#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_EXOT2_207_gridSamples.txt")
+#outputTags.append("Ex_R3")
+#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_207_gridSamples.txt")
+#outputTags.append("Mn")
+#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Debug_207_gridSamples.txt")
 #outputTags.append("Db")
 
 for iFile, file_in in enumerate(files):

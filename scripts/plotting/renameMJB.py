@@ -42,12 +42,8 @@ def renameMJB(sysFileName):
 
   ## Get Systematics to Rename ##
   for dirName in dirList:
-    if "Nominal" in dirName:
-      continue
     if "_JCS_" in dirName:
       continue
-#    if "LAr_" in dirName:
-#      continue
     if "MJB_a25_" in dirName or "MJB_a35_" in dirName or \
        "MJB_b12_" in dirName or "MJB_b08_" in dirName or \
        "MJB_pta75_" in dirName or "MJB_pta85_" in dirName or \
@@ -59,14 +55,14 @@ def renameMJB(sysFileName):
 
     outHistName = outHistName.replace('Iteration'+iterationNumber+'_', '')
     outHistName = outHistName.replace('pos','up').replace('neg','down')
-    outHistName = outHistName.replace('MCTYPE', 'MC12').replace('Nominal','MJB_Nominal')
+    outHistName = outHistName.replace('MCTYPE', 'MC15').replace('Nominal','MJB_Nominal')
     outHistName = outHistName.replace('MJB_pta90_','MJB_Asym_').replace('MJB_b15_','MJB_Beta_')
-    outHistName = outHistName.replace('MJB_pta70_','MJB_Asym_').replace('MJB_b05_','MJB_Beta_')
+    outHistName = outHistName.replace('MJB_pta70_','MJB_Asym_').replace('MJB_b5_','MJB_Beta_')
     outHistName = outHistName.replace('MJB_a40_','MJB_Alpha_').replace('MJB_ptt30_','MJB_Threshold_')
     outHistName = outHistName.replace('MJB_a20_','MJB_Alpha_').replace('MJB_ptt20_','MJB_Threshold_')
     outHistName = outHistName.replace('MCType','MJB_Fragmentation')
-    outHistName = outHistName.replace('Comupition','Composition')
-    outHistName = outHistName.replace('LAr_Esmear','Gjet_GamEsmear')
+#    outHistName = outHistName.replace('Comupition','Composition')
+#    outHistName = outHistName.replace('LAr_Esmear','Gjet_GamEsmear')
 #    outHistName = outHistName.replace('','').replace('','')
     outHistName += jetType
 
@@ -112,8 +108,11 @@ if __name__ == "__main__":
            help="MC files")
   args = parser.parse_args()
 
-  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Sys_Iter1_EM/workarea/"
-  #thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Iter1_EM_BS3/workarea/"
+#  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Sys_Iter1_EM/workarea/"
+#  #thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea/Iter1_EM_BS3/workarea/"
+#  sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
+##  nominalFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_final.root"
+
+  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea_207_May17/EMFinal/workarea/"
   sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
-#  nominalFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_final.root"
   renameMJB(sysFile)

@@ -24,17 +24,17 @@ if not args.firstIter and not args.lastIter:
   exit(1)
 
 
-f_printOnly = True
-#First Iteration
+f_printOnly = False
+##First Iteration
 #f_combine = False
-#f_fit = False
+#f_calculate = False
 #f_doubleRatio = True
 #f_Data = True
 #f_MC = True
 
 ##Last Iteration
-f_combine = True
-f_reformat = True
+f_combine = False
+f_reformat = False
 f_calculateRebin = True
 
 
@@ -78,7 +78,7 @@ if (args.firstIter):
       if not f_printOnly:
         os.system(command)
 
-      command = 'python MultijetBalanceAlgo/scripts/bootstrap/addNominalToBootstrap.py'
+      command = 'python MultijetBalance/scripts/bootstrap/addNominalToBootstrap.py'
       command += ' --nomFile '+args.workDir+'/hist.data.nominal.initial.root'
       command += ' --bsFile '+args.workDir+'/hist.data.all.scaled.root'
       print command
@@ -90,25 +90,31 @@ if (args.firstIter):
       ## input -> scaled ##
       files = glob.glob(args.workDir+'/../hist/*mc15*Pythia*_hist.root')
       for file in files:
-        command = 'python MultijetBalanceAlgo/scripts/plotting/scaleHist.py --file '+file
+        command = 'python MultijetBalance/scripts/plotting/scaleHist.py --file '+file
         print command
         if not f_printOnly:
           os.system(command)
       files = glob.glob(args.workDir+'/../hist/*scaled.root')
       for file in files:
-        os.system('mv '+file+' '+args.workDir+'/initialFiles/')
+        command = 'mv '+file+' '+args.workDir+'/initialFiles/'
+        print command
+        if not f_printOnly:
+          os.system(command)
 
 
       ## Hadd MC slices together into scaled ##
       command = 'hadd '+args.workDir+'/hist.mc.Pythia.scaled.root '+args.workDir+'/initialFiles/*.mc*Pythia*_hist.scaled.root'
       print command
-      os.system(command)
+      if not f_printOnly:
+        os.system(command)
 
 
-  if( f_fit ):
+  if( f_calculate ):
 
     if( f_Data ):
-      command = 'python MultijetBalanceAlgo/scripts/bootstrap/runBootstrapFitting.py --file '+args.workDir+'/hist.data.all.scaled.root'
+      command = 'python MultijetBalance/scripts/bootstrap/runBootstrapFitting.py --file '+args.workDir+'/hist.data.all.scaled.root'
+      if args.fit:
+        command += ' --fit'
       print command
       if not f_printOnly:
         os.system(command)
@@ -118,13 +124,15 @@ if (args.firstIter):
       file = args.workDir+"/hist.mc.Pythia.scaled.root"
       command = 'runFit --file '+file
       command += ' --upperEdge '+str(endPt)
+      if args.fit:
+        command += ' --fit'
       print command
       if (not f_printOnly):
         os.system(command)
 
 
       mcFile = args.workDir+'/hist.mc.Pythia.mean_MJB_initial.root'
-      command = 'python MultijetBalanceAlgo/scripts/bootstrap/mirrorMCtoData.py'
+      command = 'python MultijetBalance/scripts/bootstrap/mirrorMCtoData.py'
       command += ' --mcFile '+mcFile
       print command
       if (not f_printOnly):
@@ -133,7 +141,7 @@ if (args.firstIter):
   if (f_doubleRatio):
     dataFile = args.workDir+'/hist.data.all.mean_MJB_initial.root'
     mcFile = args.workDir+'/hist.mc.Pythia.mean_MJB_initial.root'
-    command = 'python MultijetBalanceAlgo/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
+    command = 'python MultijetBalance/scripts/plotting/calculateDoubleRatio.py --dataFile '+dataFile+' --mcFile '+mcFile
     print command
     if (not f_printOnly):
       os.system(command)
@@ -147,13 +155,13 @@ elif (args.lastIter):
         print "Finished hadding"
 
   if(f_reformat):
-      command = 'python MultijetBalanceAlgo/scripts/bootstrap/reformatHists.py --file '+args.workDir+'/hist.data.all.histOnlyFormat.root'
+      command = 'python MultijetBalance/scripts/bootstrap/reformatHists.py --file '+args.workDir+'/hist.data.all.histOnlyFormat.root'
       print command
       if not f_printOnly:
         os.system(command)
 
   if( f_calculateRebin ):
-      command = 'python MultijetBalanceAlgo/scripts/bootstrap/runBootstrapFitting.py --file '+args.workDir+'/hist.data.all.scaled.root'
+      command = 'python MultijetBalance/scripts/bootstrap/runBootstrapFitting.py --file '+args.workDir+'/hist.data.all.scaled.root'
       if (args.fit):
         command += ' -fit'
       if (args.rebin):

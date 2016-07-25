@@ -61,8 +61,8 @@ def plotActualSysRatios(file):
   #sysTypesToUse = ["Gjet_dPhi","Gjet_Generator","Gjet_OOC","Gjet_Purity","Gjet_Veto","Gjet_Stat1","Gjet_Stat2","Gjet_Stat3","Gjet_Stat4","Gjet_Stat5","Gjet_Stat6","Gjet_Stat7","Gjet_Stat8","Gjet_Stat9","Gjet_Stat10","Gjet_Stat11","Gjet_Stat12","Gjet_Stat13","Gjet_Stat14","Gjet_Stat15"]
 
 
-  #sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
-  sysTypesToUse = ["Zjet_Jvt", "Zjet_ElecESZee", "Zjet_ElecEsmear", "Gjet_Jvt", "Gjet_GamESZee", "LAr_Esmear"]
+  sysTypesToUse = ["Zjet", "Gjet", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
+  #sysTypesToUse = ["Zjet_Jvt", "Zjet_ElecESZee", "Zjet_ElecEsmear", "Gjet_Jvt", "Gjet_GamESZee", "LAr_Esmear"]
 #  sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "MCType"]
 # SingleParticle, RelativeNonClosure, Pileup, BJES, PunchThrough
 

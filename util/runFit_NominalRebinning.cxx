@@ -177,8 +177,8 @@ int main(int argc, char *argv[])
     if( sysName.find(sysType) == std::string::npos)
       continue;
 
-    if( sysName.find("MJB_") != std::string::npos)
-      continue;
+//!!    if( sysName.find("MJB_") != std::string::npos)
+//!!      continue;
     if( sysName.find("MCType") != std::string::npos)
       continue;
 
@@ -186,8 +186,8 @@ int main(int argc, char *argv[])
     fitPlotsOutName.erase(0, fitPlotsOutName.find_last_of("/"));
     fitPlotsOutName += "_"+sysName;
 
-    //@@TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal_Fine").c_str());
-    TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((nomDirName+"/recoilPt_PtBal_Fine").c_str());
+    //@@TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal").c_str());
+    TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((nomDirName+"/recoilPt_PtBal").c_str());
 
 
     keyCount++;
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 
     TH1D* h_template = new TH1D("Template", "Template", numBins, final_xBins);
 
-    TH1D* h_mean = (TH1D*) h_template->Clone("MJB_Fine");  h_mean->SetTitle("MJB_Fine");
+    TH1D* h_mean = (TH1D*) h_template->Clone("MJB");  h_mean->SetTitle("MJB");
     TH1D* h_error = (TH1D*) h_template->Clone("Error");  h_mean->SetTitle("Error");
     TH1D* h_redchi = (TH1D*) h_template->Clone("ReducedChi");  h_mean->SetTitle("ReducedChi");
     TH1D* h_median = (TH1D*) h_template->Clone("Median");  h_mean->SetTitle("Median");

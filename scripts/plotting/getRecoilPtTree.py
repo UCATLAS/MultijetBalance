@@ -41,11 +41,35 @@ def getRecoilPtTree(pathToTrees, treeName):
     newTree.Branch("weight", weight, "weight/F")
     newTree.Branch("recoilPt", recoilPt, "recoilPt/F")
     newTree.Branch("leadJetPt", leadJetPt, "leadJetPt/F")
-    for entry in tree:
-      weight[0] = entry.weight * scaleFactor
-      recoilPt[0] = entry.recoilPt
-      leadJetPt[0] = entry.jet_pt[0]
+
+    b_weight = array.array('f', [0])
+    b_recoilPt = array.array('f', [0])
+    b_jet_pt = std.vector('float')()
+
+    tree.SetBranchStatus('*',0)
+    tree.SetBranchStatus( "weight", 1)
+    tree.SetBranchStatus( "recoilPt", 1)
+    tree.SetBranchStatus( "jet_pt", 1)
+
+    tree.SetBranchAddress("weight", b_weight)
+    tree.SetBranchAddress("recoilPt", b_recoilPt)
+    tree.SetBranchAddress("jet_pt", b_jet_pt)
+
+    numEv = tree.GetEntries()
+    iE = 0;
+    while( iE < numEv):
+      tree.GetEntry(iE)
+      weight[0] = b_weight[0]
+      recoilPt[0] = b_recoilPt[0]
+      leadJetPt[0] = b_jet_pt[0]
       newTree.Fill()
+      iE += 1
+#    for entry in tree:
+#      print "yes"
+#      weight[0] = entry.weight * scaleFactor
+#      recoilPt[0] = entry.recoilPt
+#      leadJetPt[0] = entry.jet_pt[0]
+#      newTree.Fill()
 
     newTree.Write("", TObject.kOverwrite)
     outFile.Close()

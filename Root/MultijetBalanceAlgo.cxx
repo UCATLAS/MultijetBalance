@@ -485,11 +485,6 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   //Standard values that may be varied
   float alphaCut, betaCut, ptAsymCut, ptThresholdCut;
 
-  /////////////////Selections from note ///////////////////
-  //triger: prescaled for 300 < pt_Recoil < 600 GeV, and unprescaled for pt_recoil > 600
-
-  //at least 2 tracks with vertex - Done in baseEventSelection
-  //!!data quality to remove fake jets from noise bursts in caloriters, non-collision background, and from cosmic rays
 
   if(m_debug) Info("execute()", "Get Raw Kinematics ");
   vector<TLorentzVector> rawJetKinematics;
@@ -1571,7 +1566,8 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
       TH1D *MJBHist;
       MJBHist = (TH1D*) MJBFile->Get( (dirName+"/"+histPrefix).c_str() );
       std::string newHistName = dirName.substr(11);
-      if( newHistName.find("MCType") == std::string::npos && newHistName.find("MJB") == std::string::npos ){   //!!!
+      if( newHistName.find("MCType") == std::string::npos ){   
+      //if( newHistName.find("MCType") == std::string::npos && newHistName.find("MJB") == std::string::npos ){   //!!!
       //Remove Iteration part of name
       MJBHist->SetName( newHistName.c_str() );
       MJBHist->SetDirectory(0);
@@ -1630,6 +1626,8 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
   m_sysTool =      new_sysTool;
   m_sysToolIndex = new_sysToolIndex;
   m_sysSign =      new_sysSign;
+
+  Info("loadMJBCalibration()", "Succesfully loaded MJB calibration file");
 
 //    for(unsigned int i=0; i < m_MJBHists.size(); ++i){
 //      cout << m_MJBHists.at(i)->GetName() << endl;

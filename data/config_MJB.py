@@ -4,7 +4,8 @@ from xAH_config import xAH_config
 c = xAH_config()
 
 c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
-                                     "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/MJB_data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good.xml",
+                                     "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/MJB_207_data15_13TeV.periodAllYear_DetStatus-v75-repro20-01_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml",
+                                     #"m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/MJB_data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good.xml",
                                      "m_derivationName"              : "EXOT2",
                                      "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
@@ -23,22 +24,25 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_inContainerName"     : "AntiKt4EMTopoJets",
   "m_triggerAndPt" : "HLT_j360:480,HLT_j260:360,HLT_j200:300",
 #  "m_triggerAndPt" : "HLT_j360:420,HLT_j260:325,HLT_j200:250,HLT_j175:225,HLT_j150:200,HLT_j110:175,HLT_j85:125",
-  "m_MJBIteration" : 0,
+  "m_MJBIteration" : 1,
   ## The pt thresholds on the subleading jets for event inclusion:
-  "m_MJBIterationThreshold" : "944,1380",
+  "m_MJBIterationThreshold" : "949,1480",
+  #"m_MJBIterationThreshold" : "944,1380",  #2015 20.1
   ## For higher iterations:
-  "m_MJBCorrectionFile" : "Bootstrap_Iteration0_EM_hist.combined.Pythia.DoubleMJB_initial.root",
+  "m_MJBCorrectionFile" : "Iteration0_EM_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
+#  "m_MJBCorrectionFile" : "Bootstrap0_EM_hist.combined.Pythia.DoubleMJB_initial.root",
+  #old"m_MJBCorrectionFile" : "Bootstrap_Iteration0_EM_hist.combined.Pythia.DoubleMJB_initial.root",
 
-  "m_binning"  : "300,360,420,480,540,600,660,720,780,840,900,960,1020,1140,1260,1480,2000,3000",
+  "m_binning"  : "300,360,420,480,540,600,660,720,780,840,900,960,1020,1140,1260,1480,2000",
 #!!  "m_MJBCorrectionBinning" : "Fine",
 
 
  ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibratino! ##
-# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Vjet/Vjet_Systematics.root",
+ "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Vjet/Vjet_Systematics.root",
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal",
-#  "m_sysVariations" : "AllSystematics",
+#  "m_sysVariations" : "Nominal",
+  "m_sysVariations" : "AllSystematics",
 #  "m_sysVariations" : "Nominal-MJB",
 
   ## (Deprecated Option) Add statistical systematic for MJB:
@@ -59,9 +63,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 #------ Validation Mode ------#
   ## Apply the jet calibrations to the leading jet:
-  "m_leadingInsitu" : True,
+#  "m_leadingInsitu" : True,
   # Allow calibrations of subleading jets beyond JetCalibTool limit:
-  "m_noLimitJESPt" : True,
+#  "m_noLimitJESPt" : True,
 #  "m_numJets"  : 2,
 #  "m_ptAsym" : 1.0,
 
@@ -110,8 +114,12 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #-- JetCalibTool --#
   "m_jetDef"            : "AntiKt4EMTopo",
   "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
-  "m_jetCalibConfig"    : "JES_2015dataset_recommendation_Feb2016.config",
+## Final 20.1 calibration for validation
+  #"m_jetCalibConfig"    : "JES_2015dataset_recommendation_Feb2016.config",
+## Initial 20.1 eta-intercalibration for results
   #"m_jetCalibConfig"    : "JES_MC15Prerecommendation_December2015_EtaIntercalOnly.config",
+## Initial 20.7 eta-intercalibration for results
+  "m_jetCalibConfig"    : "JES_20_7_Recommendation_May2016_EtaIntercalOnly.config",
 
   #-- JetCleaning --#
   "m_jetCleanCutLevel"  : "LooseBad",
@@ -122,9 +130,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_JVTCut" : 0.59, # 2016
 
   #-- JetUncertaintiesTool --#
-  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
+  #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
   ### 2015 MJB Systematics
-  #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Prerec/JESNuisanceParametersForMJB.config"
+  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JESNuisanceParametersForMJB.config"
 
 
   } )
