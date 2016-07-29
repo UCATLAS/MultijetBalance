@@ -1,11 +1,19 @@
 #ifndef MJB_MultijetHists_H
 #define MJB_MultijetHists_H
+/** @file MultijetHists.h
+ *  @brief Manage the MJB histograms
+ *  @author Jeff Dandoy
+ *  @bug No known bugs
+ */
 
 #include "xAODAnaHelpers/JetHists.h"
 #include "xAODAnaHelpers/HelperClasses.h"
 #include <xAODJet/JetContainer.h>
 #include <xAODJet/Jet.h>
 
+/**
+  @brief Define and fill the histograms
+*/
 class MultijetHists : public JetHists
 {
   public:
