@@ -79,26 +79,51 @@ class MultijetBalanceAlgo : public EL::Algorithm
 ////// configuration variables set by user //////
     /** @brief Input container name for jet collection*/
     std::string m_inContainerName;
-    /** @brief String consisting of triggers and their recoil $p_{T}$ thresholds
+    /** @brief String consisting of triggers and their recoil \f$p_{T}\f$ thresholds
      *  @note Each trigger / recoil \f$p_{T}\f$ combination is separated by a colon ":",
      *  and each combination is separated by a comma ",".
      * */
     std::string m_triggerAndPt;
-    /** @brief */
+    /** @brief The iteration of the current MJB
+     * @note MJB is an iterative procedure, with each iteration using outputs from the previous.
+     * The procedure starts at a m_MJBIteration value of 0, and is increased by 1 for each interation.
+     * This value corresponds directly to the entries in MultijetBalanceAlgo#m_MJBIterationThreshold.
+     * */
     int m_MJBIteration;               // Number of previous MJB iterations
-    /** @brief */
+    /** @brief A comma separated list of subleading jet \f$p_{T}\f$ thresholds
+     * @note The comma separated list is translated into a vector of values.
+     * Each vector entry corresponds to a potential MJB iteration, and the value used is chosen
+     * by MultijetBalanceAlgo#m_MJBIteration.
+     * */
     std::string m_MJBIterationThreshold;
-    /** @brief */
+    /** @brief The location of the file containing previous MJB calibrations
+     * @note The file corresponds to previous MJB calibrations and will not be used for a MultijetBalanceAlgo#m_MJBIteration of zero.
+     * The naming convention of the calibration histograms should agree with the iteration.
+     * */
     std::string m_MJBCorrectionFile;
-    /** @brief */
-    std::string m_MJBBinningName;
-    /** @brief */
-    std::string m_sysVariations;                  // Systematic Variations to use
-    /** @brief */
+
+// TODO Removed    std::string m_MJBBinningName;
+//
+    /** @brief Dash "-" separated list of systematic variations to use
+     * Systematic variations are chosen according to their name in the MJB or their respective calibration tools.
+     * For example including "EtaIntercalibration" will grab the JetUncertainties \f$\eta\f$-intercalibration systematics.
+     * Short-cut strings are also accepted, including:
+     *   - Nominal : Include the nominal result
+     *   - AllSystematic : Include every defined systematic
+     *   - MJB : Include all MJB systematics (defined in MultijetBalanceAlgo#loadVariations)
+     *   - AllZjet : Include all Z+jet \a in-situ calibration systematics
+     *   - AllGjet : Include all \f$\gamma\f$+jet \a in-situ calibration systematics
+     *   - AllXXX  : Include all JetUncertainties systematics include the substring "XXX"
+     *   - Special : Include all JetUncertainties systematics including EtaIntercalibration, Pileup, Flavor, or PunchThrough
+     *   - JetCalibSequence : Include each stage of the jet calibration procedure (origin, etaJES, GSC, etc.)
+     * */
+    std::string m_sysVariations;
+    /** @brief Use MJB statistical uncertainties
+     * @Note This is untested, do not use!*/
     bool m_MJBStatsOn;
-    /** @brief */
+    /** @brief Selection for the minimum number of jets in the event (Default of 3)*/
     unsigned int m_numJets;
-    /** @brief */
+    /** @brief Selection for the \f$p_{T}\f$ asymmetry of the event (Default 0.8)*/
     float m_ptAsym;
     /** @brief */
     float m_alpha;
