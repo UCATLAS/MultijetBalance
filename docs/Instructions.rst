@@ -14,7 +14,7 @@ xAH_run.py allows for many run options, and requires a driver option at the end 
 
 For example::
 
-    ./xAODAnaHelpers/scripts/xAH_run.py --files path/to/input/file.root --config MultijetBalance/data/config_MJB.py direct
+    ./xAODAnaHelpers/scripts/xAH_run.py -f --files path/to/input/file.root --config MultijetBalance/data/config_MJB.py direct
 
 Configuration File
 ------------------
