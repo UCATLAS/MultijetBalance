@@ -12,30 +12,50 @@
 #include <xAODJet/Jet.h>
 
 /**
-  @brief Define and fill the histograms
+  @brief Define and fill the MJB histograms.  Inherits from xAODAnaHelpers::JetHists
 */
 class MultijetHists : public JetHists
 {
   public:
-
+    /** @brief Plot extra histograms, currently not used*/
     bool f_extraMJBHists;
+    /** @brief Save only the MultijetHists#m_recoilPt_ptBal histogram necessary for the MJB result
+     * @note This histogram is used for determining the population within each recoil system \f$p_{T}\f$ bin, 
+     * and getting the correct bin center*/
     bool f_minimalMJBHists;
+    /** @brief Verbose mode*/
     bool m_debug;
 
+    /** @brief Number of jets, in \f$p_{T}\f$ order, for which to save individual histograms*/
     int m_numSavedJets;
+    /** @brief List of sampling layers for which to save individual histograms
+     * @note Currently not used, and commented out in the code */
     std::vector<int> m_samplingLayers;
-    int m_numPtBinnings;
+//TODO not used    int m_numPtBinnings;
 
+    /** @brief Standrad constructor
+     * @param name        The name of the MultijetHists isntance
+     * @param detailStr   A string consists of substring details which determine which sets of histograms to include*/
     MultijetHists(std::string name, std::string detailStr);
+    /** @brief Standard destructor*/
     ~MultijetHists() {};
 
+    /** @brief Initialize all histograms
+     * @param binning     The binning of the recoil system \f$p_{T}\f$*/
     StatusCode initialize(std::string binning);
+    /** @brief Execute function for only the MJB-defined histograms 
+     * @param jets        A vector of xAOD::Jet pointers
+     * @param eventInfo   The xAOD::EventInfo of the event*/
     StatusCode execute( std::vector< xAOD::Jet* >* jets, const xAOD::EventInfo* eventInfo);
+    /** @brief Execute function inherited from JetHists, filling non-MJB jet histograms
+     * @param jets        An xAODLLJetContainer of the jets
+     * @param eventWeight The weight to be applied to each event*/
     StatusCode execute( const xAOD::JetContainer* jets, float eventWeight) { return JetHists::execute( jets, eventWeight); };
 
 
   private:
 
+    /** @brief Number of bins in the recoil system \f$p_{T}\f$ histogram */
     int m_numBins;
 
     //NLeadingJets
