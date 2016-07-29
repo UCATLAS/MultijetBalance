@@ -68,16 +68,21 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Global name to give to the algorithm*/
     std::string m_name;
 
-//No longer used:    std::string m_configName;
-    /** @brief */
+    //!! TODO why is this here?
+    /** @brief Event weight from the MC generation*/
     float m_mcEventWeight; //!
-    /** @brief */
+    
+    //!! TODO replace this with name from config
+    /** @brief Center of mass energy used to define which file the cross-sections come from*/
     std::string m_comEnergy; //!
 
-    // configuration variables set by user
-    /** @brief */
-    std::string m_inContainerName;        // input container name
-    /** @brief */
+////// configuration variables set by user //////
+    /** @brief Input container name for jet collection*/
+    std::string m_inContainerName;
+    /** @brief String connsisting of triggers and their recoil $p_{T}$ thresholds
+     *  @note Each trigger / recoil $p_{T}$ combination is separated by a colon ":".
+     *  Each combination is separated by a comma ",".
+     * */
     std::string m_triggerAndPt;
     /** @brief */
     int m_MJBIteration;               // Number of previous MJB iterations
