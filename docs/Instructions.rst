@@ -81,28 +81,28 @@ The only option for transformMJBHists.py is
 
 The steps are to be run in order, and it is recommended that each first be run independently to ensure they are working properly.
 The steps include:
-* f_getPtHist : (Optional) Derive a histogram of average leadingJetPt for each recoilPt bin, which is used to set the x-axis of the "final" histograms
-* f_scale : Scale the MC JZ* slices to their proper cross sectino
-* f_combine : combine all scaled MC into one file, and combine all data into one file
-* f_calculateMJB : Calculate the MJB balance plot, as well as extra observables
-* f_plotRelevant : Plot the most relevant observables
-* f_plotAll : Plot all observables
-* f_plotSL : Plot extra information on the energy deposited in each sampling layer
+#. f_getPtHist : (Optional) Derive a histogram of average leadingJetPt for each recoilPt bin, which is used to set the x-axis of the "final" histograms
+#. f_scale : Scale the MC JZ* slices to their proper cross sectino
+#. f_combine : combine all scaled MC into one file, and combine all data into one file
+#. f_calculateMJB : Calculate the MJB balance plot, as well as extra observables
+#. f_plotRelevant : Plot the most relevant observables
+#. f_plotAll : Plot all observables
+#. f_plotSL : Plot extra information on the energy deposited in each sampling layer
 
-Several options may also be set::
+Several options may also be set:
 
-  * doData : Run on data
-  * doMC : Run on MC
-  * mcTypes : A list of different MC generators to run over, and which all will be plotted. For final balance results the first MC is used as default, the second MC is used as a systematic variation, and all subsequent MC's are ignored.
-  * doSys : Also calculate the systematic histograms (set False for just nominal)
-  * doJZSlices : Plot distributions of individual JZ slices compared against each other
-  * doAverage : Calculate the average balance in each recoilPt bin based on a mean. This is faster but less accurate than fitting
-  * doFit : Calculate the avearge balance based on fits. This can be slower, but is required for final results
-  * doNominalOnly : Fit only the nominal distribution
-  * endPt : Require the last bin to end at this pt
-  * doFinal : Create the final TGraphErrors based on x-axis from f_getPtHist
-  * doBootstrap : Combine bins into statistically relevant binning based on previous results from the bootstrap mode
-  * rebinFile : The file with the bootstrap determined rebinning to use.
+ * doData : Run on data
+ * doMC : Run on MC
+ * mcTypes : A list of different MC generators to run over, and which all will be plotted. For final balance results the first MC is used as default, the second MC is used as a systematic variation, and all subsequent MC's are ignored.
+ * doSys : Also calculate the systematic histograms (set False for just nominal)
+ * doJZSlices : Plot distributions of individual JZ slices compared against each other
+ * doAverage : Calculate the average balance in each recoilPt bin based on a mean. This is faster but less accurate than fitting
+ * doFit : Calculate the avearge balance based on fits. This can be slower, but is required for final results
+ * doNominalOnly : Fit only the nominal distribution
+ * endPt : Require the last bin to end at this pt
+ * doFinal : Create the final TGraphErrors based on x-axis from f_getPtHist
+ * doBootstrap : Combine bins into statistically relevant binning based on previous results from the bootstrap mode
+ * rebinFile : The file with the bootstrap determined rebinning to use.
 
 
 
