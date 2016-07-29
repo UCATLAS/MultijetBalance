@@ -1,2 +1,3 @@
+.. _Intro:
 Introduction
 ============

@@ -15,12 +15,7 @@ Current Version
 ---------------
 Current AnalysisBase release for |MJB| is Base,\ |analysis_base_release|\ .
 
-Previous versions may be found at
-
-.. toctree::
-   :maxdepth: 2
-
-  PreviousVersions
+Previous versions may be found at :ref:`PreviousVersions`
 
 .. note::
     If you need to bump up the version of the AnalysisBase being used, please make sure you update the `.travis.yml <https://github.com/UCATLAS/xAODAnaHelpers/blob/master/.travis.yml>`_ file first.

@@ -1,88 +1,70 @@
+.. _Installing:
 Installing
 ==========
 
-::
+The MJB package may be retrieved with::
 
-    setupATLAS
-    rcSetup Base,X.Y.Z
-    git clone https://github.com/UCATLAS/xAODAnaHelpers
+    git clone https://github.com/UCATLAS/MultijetBalance
 
-or for a specific tag
 
-::
+Specifc tags or commit can be retrieved through::
 
-    rc checkout_pkg atlasinst/Institutes/UChicago/xAODAnaHelpers/tags/xAODAnaHelpers-XX-YY-ZZ xAODAnaHelpers
-
-::
-
-    git clone https://github.com/UCATLAS/xAODAnaHelpers
-    cd xAODAnaHelpers
+    cd MultijetBalance/
     git checkout tags/XX-YY-ZZ
+    ( or git checkout ####### )
+    cd ../
+
+A full list of tags be found through ``git tag``.
 
 .. note::
 
-    `If you have ssh-keys set up <https://help.github.com/articles/generating-ssh-keys/>`_, then you can clone over SSH instead of HTTPS::
+    The https version of MultijetBalance is only used to run the code, and may not be used for developement.
+    To retrieve the development version requires a github account `with generated ssh-key pairs <https://help.github.com/articles/generating-ssh-keys/>`.
+    You can then clone over ssh instead of https::
 
-        git clone git@github.com:UCATLAS/xAODAnaHelpers
+      git clone git@github.com:UCATLAS/MultijetBalance
 
-At this point, you have the FULL state of the code. You can run
-``git log`` to view the recent changes (no more ChangeLog!). You can run
-``git tag`` to view all current tags.
+Dependencies
+------------
 
+The MJB package requires the following dependencies::
 
-Getting tag XX-YY-ZZ
---------------------
+    git clone https://github.com/UCATLAS/xAODAnaHelpers
+    svn co svn+ssh://svn.cern.ch/reps/atlasphys-sm/Physics/StandardModel/Common/BootstrapGenerator/tags/BootstrapGenerator-01-10-00 BootstrapGenerator
+    svn co svn+ssh://svn.cern.ch/reps/atlas-gulefebv/SystTool/tags/SystTool-00-01-06 SystTool
+    svn co svn+ssh://svn.cern.ch/reps/atlasperf/CombPerf/JetETMiss/JetCalibrationTools/JES_ResponseFitter/tags/JES_ResponseFitter-00-02-00
 
-So now you want to check out a specific tag. We will provide tags on the
-svn as well as on github. If you are using git, then you can switch
-between tags in the same folder in seconds. If you are using svn, you
-need to redownload the full tag.
+Specific versions of the JetCalibTools and JetUncertainties packages may also be required, depending upon the version of the ASG's Analysis Base.
 
-With git
-~~~~~~~~
+Patches to SystTool and JES_ResponseFitter are also required, and may be applied with the checkoutASGtags tool::
+    python MultijetBalance/scripts/checkoutASGtags.py $ABV
 
-::
+where $ABV is the current Analysis Base version.
 
-    git checkout -b XX-YY-ZZ tags/XX-YY-ZZ
+Environment
+-----------
 
-This switches you from master to a branch of the given version.
+To set up the environment requires::
+    setupATLAS
+    rcSetup Base,X.Y.Z
+    rc find_packages
 
-With svn
-~~~~~~~~
+If the environment was previously set, it may be retrived instead with::
+    setupATLAS
+    rcSetup
+    rc find_packages
 
-::
+After making any changes, recompile from the top directory with::
+    rc compile
 
-    svn co svn+ssh://svn.cern.ch/reps/atlasinst/Institutes/UChicago/xAODAnaHelpers/tags/xAODAnaHelpers-XX-YY-ZZ xAODAnaHelpers
-
-This will download the full tag from svn for you.
-
-With RootCore
-~~~~~~~~~~~~~
-
-::
-    rc checkout_pkg atlasinst/Institutes/UChicago/xAODAnaHelpers/tags/xAODAnaHelpers-XX-YY-ZZ
-
-This uses the svn call, but it is a little less verbose :smile:
+The framework may then be run by calling::
+    ./xAODAnaHelpers/scripts/xAH_run.py
+with the appropriate options
 
 Updating changes
 ----------------
 
-If you're on branch ``myBranch`` and you have commits that you want to
-push to the remote ``origin`` - the first thing you should do is always
-update so you're current::
+To update new changes that exist on the ``remote`` location, pull changes with::
 
     git pull --rebase
 
-will do it all. If you want more control, use::
-
-    git fetch
-    git rebase origin/master
-
-or::
-
-    git fetch origin
-    git rebase origin/master myBranch
-
-.. note::
-    - ``git fetch`` will fetch from ``origin`` (see ``git remote -v`` for what that's defined as) by default, but you can explicitly provide a different remote repository.
-    - ``git rebase origin/master`` will rebase the current branch you are on.  You can specify another branch if you want.
