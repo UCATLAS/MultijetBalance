@@ -1,5 +1,4 @@
 # MultijetBalance
-Multijet Balance
 
 Jenkins Test 1
 
