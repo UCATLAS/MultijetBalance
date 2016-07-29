@@ -35,6 +35,8 @@ The MJB package requires the following dependencies::
     svn co svn+ssh://svn.cern.ch/reps/atlasperf/CombPerf/JetETMiss/JetCalibrationTools/JES_ResponseFitter/tags/JES_ResponseFitter-00-02-00
 
 Specific versions of the JetCalibTools and JetUncertainties packages may also be required, depending upon the version of the ASG's Analysis Base.
+If you do not have svn access but are at Chicago, the extra packages may be found in ``/share/t3data2/jdandoy/MJBExtraPackages.tar``.
+
 
 Patches to SystTool and JES_ResponseFitter are also required, and may be applied with the checkoutASGtags tool::
 

@@ -89,19 +89,20 @@ The steps include:
 * f_plotAll : Plot all observables
 * f_plotSL : Plot extra information on the energy deposited in each sampling layer
 
-Several options may also be set:
-* doData : Run on data
-* doMC : Run on MC
-* mcTypes : A list of different MC generators to run over, and which all will be plotted. For final balance results the first MC is used as default, the second MC is used as a systematic variation, and all subsequent MC's are ignored.
-* doSys : Also calculate the systematic histograms (set False for just nominal)
-* doJZSlices : Plot distributions of individual JZ slices compared against each other
-* doAverage : Calculate the average balance in each recoilPt bin based on a mean. This is faster but less accurate than fitting
-* doFit : Calculate the avearge balance based on fits. This can be slower, but is required for final results
-* doNominalOnly : Fit only the nominal distribution
-* endPt : Require the last bin to end at this pt
-* doFinal : Create the final TGraphErrors based on x-axis from f_getPtHist
-* doBootstrap : Combine bins into statistically relevant binning based on previous results from the bootstrap mode
-* rebinFile : The file with the bootstrap determined rebinning to use.
+Several options may also be set::
+
+  * doData : Run on data
+  * doMC : Run on MC
+  * mcTypes : A list of different MC generators to run over, and which all will be plotted. For final balance results the first MC is used as default, the second MC is used as a systematic variation, and all subsequent MC's are ignored.
+  * doSys : Also calculate the systematic histograms (set False for just nominal)
+  * doJZSlices : Plot distributions of individual JZ slices compared against each other
+  * doAverage : Calculate the average balance in each recoilPt bin based on a mean. This is faster but less accurate than fitting
+  * doFit : Calculate the avearge balance based on fits. This can be slower, but is required for final results
+  * doNominalOnly : Fit only the nominal distribution
+  * endPt : Require the last bin to end at this pt
+  * doFinal : Create the final TGraphErrors based on x-axis from f_getPtHist
+  * doBootstrap : Combine bins into statistically relevant binning based on previous results from the bootstrap mode
+  * rebinFile : The file with the bootstrap determined rebinning to use.
 
 
 
