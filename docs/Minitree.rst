@@ -1,5 +1,8 @@
 Minitree
 ========
+
+To test
+
 .. doxygenclass:: Minitree
    :members:
    :undoc-members:

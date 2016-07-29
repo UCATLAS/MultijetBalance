@@ -1,12 +1,9 @@
 API Reference
 =============
 
-.. toctree::
-   :maxdepth: 4
 
 MultijetBalanceAlgo
 ^^^^^^^^^^^^^^^^^^^
-MultijetBalanceAlgo
 .. doxygenclass:: MultijetBalanceAlgo
    :members:
    :undoc-members:
@@ -15,9 +12,12 @@ MultijetBalanceAlgo
 
 MultijetHists
 ^^^^^^^^^^^^^
-MultijetHists
+.. toctree::
+   :maxdepth: 4
+
+  MultijetHists
 
 MiniTree
 ^^^^^^^^
-MiniTree
+  MiniTree
 
