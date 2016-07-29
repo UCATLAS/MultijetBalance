@@ -86,7 +86,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
     std::string m_triggerAndPt;
     /** @brief The iteration of the current MJB
      * @note MJB is an iterative procedure, with each iteration using outputs from the previous.
-     * The procedure starts at a m_MJBIteration value of 0, and is increased by 1 for each interation.
+     * The procedure starts at a m_MJBIteration value of 0, and is increased by 1 for each iteration.
      * This value corresponds directly to the entries in MultijetBalanceAlgo#m_MJBIterationThreshold.
      * */
     int m_MJBIteration;               // Number of previous MJB iterations
@@ -105,7 +105,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
 // TODO Removed    std::string m_MJBBinningName;
 //
     /** @brief Dash "-" separated list of systematic variations to use
-     * Systematic variations are chosen according to their name in the MJB or their respective calibration tools.
+     * @note Systematic variations are chosen according to their name in the MJB or their respective calibration tools.
      * For example including "EtaIntercalibration" will grab the JetUncertainties \f$\eta\f$-intercalibration systematics.
      * Short-cut strings are also accepted, including:
      *   - Nominal : Include the nominal result
@@ -119,21 +119,22 @@ class MultijetBalanceAlgo : public EL::Algorithm
      * */
     std::string m_sysVariations;
     /** @brief Use MJB statistical uncertainties
-     * @Note This is untested, do not use!*/
+     * @note This is untested, do not use!*/
     bool m_MJBStatsOn;
     /** @brief Selection for the minimum number of jets in the event (Default of 3)*/
     unsigned int m_numJets;
     /** @brief Selection for the \f$p_{T}\f$ asymmetry of the event (Default 0.8)*/
     float m_ptAsym;
-    /** @brief */
+    /** @brief Selection for the \f$\alpha\f$ of the event (Default 0.3)*/
     float m_alpha;
-    /** @brief */
+    /** @brief Selection for the \f$\beta\f$ of any jet in the event (Default 1.0)*/
     float m_beta;
-    /** @brief */
+    /** @brief \f$p_{T}\f$ threshold for each jet to be included (default 25 GeV)*/
     float m_ptThresh;
-    /** @brief */
+    /** @brief Boolean requiring each jet to pass the MultijetBalanceAlgo#m_beta selection, otherwise it is only applied
+     * to jets with \f$p_{T}\f$ > 25% of the leading jet \f$p_{T}\f$ */
     bool m_allJetBeta;
-    /** @brief */
+    /** @brief Run in boostrap mode (See :ref:`Instructions`)*/
     bool m_bootstrap;
     /** @brief */
     bool m_leadingInsitu;
