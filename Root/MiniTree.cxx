@@ -5,6 +5,7 @@
 
 #include "MultijetBalance/MiniTree.h"
 
+
 MiniTree :: MiniTree(xAOD::TEvent * event, TTree* tree, TFile* file) :
   HelpTreeBase(event, tree, file, 1e3)
 {
