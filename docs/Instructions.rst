@@ -5,11 +5,12 @@ Instructions
 
 Once the environment is set up (:ref:`Installing`), the code is run through the ``xAODAnaHelpers/scripts/xAH_run.py`` command.
 xAH_run.py allows for many run options, and requires a driver option at the end of the command. Those of primary interest for the MJB are:
-* --files : A list of files to run over
-* --config : A configuration file for all algorithms
-* --submitDir : Output and submission directory
-* --force : Replace an existing output directory
-* direct : The driver which allows for local running
+
+ * --files : A list of files to run over
+ * --config : A configuration file for all algorithms
+ * --submitDir : Output and submission directory
+ * --force : Replace an existing output directory
+ * direct : The driver which allows for local running
 
 For example::
 
@@ -21,29 +22,32 @@ An example configuration file can be found at MultijetBalance/data/config_MJB.py
 It firsts sets the options for BasicEventSelection, and then for MultijetBalanceAlgo.
 Some MJB configurations are also used for setting the jet calibration, cleaning, uncertainty, and JVT options.
 Relevant MJB Configurations are:
-* m_binning : The binning of the recoil pt
-* m_MJBIteration : Choose which iteration of MJB you want to run
-* m_MJBIterationThreshold : Choose a list of subleading jet pt cutoffs for each iteration
-* m_MJBCorrectionFile : Choose the file which has the results from the previous MJB iteration (Nothing needed for Iteration 0)
-* m_triggerAndPt : A list of triggers and their recoil system pt cutoffs
-* m_sysVariation : The systematic variations to run (Nominal for none, AllSystematics for all)
-* m_writeNominalTree : Output the TTree for the nominal result only
+
+ * m_binning : The binning of the recoil pt
+ * m_MJBIteration : Choose which iteration of MJB you want to run
+ * m_MJBIterationThreshold : Choose a list of subleading jet pt cutoffs for each iteration
+ * m_MJBCorrectionFile : Choose the file which has the results from the previous MJB iteration (Nothing needed for Iteration 0)
+ * m_triggerAndPt : A list of triggers and their recoil system pt cutoffs
+ * m_sysVariation : The systematic variations to run (Nominal for none, AllSystematics for all)
+ * m_writeNominalTree : Output the TTree for the nominal result only
 
 There are also several modes.
 The ``Validation mode`` allows you to apply the insitu calibrations to the leading jet, which is normally calibrated only up to etaJES.
 ``Validation mode`` allows you to check the performance of the jet calibration for high-pt jets.
 This should only be done for a single iteration (0).
 This mode requires the following options:
-* m_leadingInsitu : Apply the insitu calibration to the leading jet
-* m_noLimtJESPt : Apply calibrations to jets of any pt
-* m_MJBIterationThreshold : Set to a very large number (i.e. "9999" GeV)
+
+ * m_leadingInsitu : Apply the insitu calibration to the leading jet
+ * m_noLimtJESPt : Apply calibrations to jets of any pt
+ * m_MJBIterationThreshold : Set to a very large number (i.e. "9999" GeV)
 
 The ``Bootstrap mode`` allows you to save toys to calculate the statistical correlations between systematic uncertainties, and is complemented by the scripts in MultijetBalance/scripts/bootstrap/ .
 Toys are saved in a unique output file called SystToolOutput.
 For further iterations of MJB in ``bootstrap mode``, histograms will be created without the normal TDirectory structure to allow for proper hadding of the many output histograms.
 This mode requires the following options:
-* m_bootstrap : Turn on Bootstrap Mode
-* m_sysTool_nToys : Set the number of toys saved for each systematic
+
+ * m_bootstrap : Turn on Bootstrap Mode
+ * m_sysTool_nToys : Set the number of toys saved for each systematic
 
 Output
 ------
@@ -77,17 +81,19 @@ Plotting Scripts
 The output of MultijetBalanceAlgo may be manipulated to create final histograms through the scripts in MultijetBalance/scripts/plotting/.
 All scripts are called in order through transformMJBHists.py.
 The only option for transformMJBHists.py is
-* --dir : Directory where relevant files from downloadAndMerge.py can be found, and where output will be placed.
+
+ * --dir : Directory where relevant files from downloadAndMerge.py can be found, and where output will be placed.
 
 The steps are to be run in order, and it is recommended that each first be run independently to ensure they are working properly.
 The steps include:
-#. f_getPtHist : (Optional) Derive a histogram of average leadingJetPt for each recoilPt bin, which is used to set the x-axis of the "final" histograms
-#. f_scale : Scale the MC JZ* slices to their proper cross sectino
-#. f_combine : combine all scaled MC into one file, and combine all data into one file
-#. f_calculateMJB : Calculate the MJB balance plot, as well as extra observables
-#. f_plotRelevant : Plot the most relevant observables
-#. f_plotAll : Plot all observables
-#. f_plotSL : Plot extra information on the energy deposited in each sampling layer
+
+ * f_getPtHist : (Optional) Derive a histogram of average leadingJetPt for each recoilPt bin, which is used to set the x-axis of the "final" histograms
+ * f_scale : Scale the MC JZ* slices to their proper cross sectino
+ * f_combine : combine all scaled MC into one file, and combine all data into one file
+ * f_calculateMJB : Calculate the MJB balance plot, as well as extra observables
+ * f_plotRelevant : Plot the most relevant observables
+ * f_plotAll : Plot all observables
+ * f_plotSL : Plot extra information on the energy deposited in each sampling layer
 
 Several options may also be set:
 
