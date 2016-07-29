@@ -6,6 +6,10 @@
 Welcome to MultijetBalance's documentation!
 ===========================================
 
+This is the automated documentation for the ATLAS Multijet Balance calibration software.
+The official twiki can be found at https://twiki.cern.ch/twiki/bin/view/AtlasProtected/MultijetBalanceRunIIFramework
+
+
 Contents:
 
 .. toctree::
