@@ -13,6 +13,7 @@ install:
   - git clone https://github.com/UCATLAS/xAODAnaHelpers
   - cd xAODAnaHelpers && git checkout 2d502e1ecc4 && cd ../
   - python xAODAnaHelpers/scripts/checkoutASGtags.py ${ABV}
+  - python MultijetBalance/scripts/checkoutASGtags.py ${ABV}
   - rc clean
   - rc find_packages
 
