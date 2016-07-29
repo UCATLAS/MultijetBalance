@@ -33,7 +33,7 @@ Contents:
    :maxdepth: 2
 
   Installing
-  Running
+  Instructions
   API
 
 

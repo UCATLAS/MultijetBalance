@@ -65,7 +65,7 @@ The framework may then be run by calling::
 
     ./xAODAnaHelpers/scripts/xAH_run.py
 
-with the appropriate options
+with the appropriate options (detailed in :ref:`Running`).
 
 Updating changes
 ----------------

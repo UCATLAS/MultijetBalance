@@ -1,8 +1,6 @@
 .. _MultijetHists:
 MultijetHists
-========
-
-To check
+-------------
 
 .. doxygenclass:: MultijetHists
    :members:
