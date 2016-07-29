@@ -1,23 +1,12 @@
 API Reference
 =============
 
-
-MultijetBalanceAlgo
-^^^^^^^^^^^^^^^^^^^
-.. doxygenclass:: MultijetBalanceAlgo
-   :members:
-   :undoc-members:
-   :protected-members:
-   :private-members:
-
-MultijetHists
-^^^^^^^^^^^^^
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
+
+  MultijetBalance
 
   MultijetHists
 
-MiniTree
-^^^^^^^^
   MiniTree
 

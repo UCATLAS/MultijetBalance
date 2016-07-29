@@ -1,8 +1,5 @@
 MultijetBalanceAlgo
 ^^^^^^^^^^^^^^^^^^^
-
-A Check
-
 .. doxygenclass:: MultijetBalanceAlgo
    :members:
    :undoc-members:
