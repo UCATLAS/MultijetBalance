@@ -1,5 +1,5 @@
 MultijetBalanceAlgo
-========
+^^^^^^^^^^^^^^^^^^^
 .. doxygenclass:: MultijetBalanceAlgo
    :members:
    :undoc-members:

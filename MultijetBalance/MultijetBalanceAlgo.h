@@ -1,6 +1,12 @@
 #ifndef MultijetBalance_MultijetBalanceAlgo_H
 #define MultijetBalance_MultijetBalanceAlgo_H
 
+/** @file MultijetBalanceAlgo.h
+ *  @brief Run the Multijet Balance Selection
+ *  @author Jeff Dandoy
+ *  @bug No known bugs
+ */
+
 #include <EventLoop/StatusCode.h>
 #include <EventLoop/Algorithm.h>
 
@@ -40,22 +46,21 @@ class TrigDecisionTool;
 
 class SystContainer;
 
+/**
+    @brief Event selection of the Multijet Balance
+ */
 class MultijetBalanceAlgo : public EL::Algorithm
 {
   // put your configuration variables here as public variables.
   // that way they can be set directly from CINT and python.
   public:
-    // float cutValue;
+
     xAOD::TEvent *m_event;  //!
     xAOD::TStore *m_store;  //!
     int m_eventCounter;     //!
 
     std::string m_name;
     std::string m_configName;
-    std::vector<TH1D*> m_cutflowHist;    //!
-    std::vector<TH1D*> m_cutflowHistW;   //!
-    unsigned int m_cutflowFirst;     //!
-    unsigned int m_iCutflow;     //!
     float m_mcEventWeight; //!
     std::string m_comEnergy; //!
 
@@ -80,18 +85,31 @@ class MultijetBalanceAlgo : public EL::Algorithm
     bool m_closureTest;
     bool m_leadJetMJBCorrection;
     bool m_reverseSubleading;
-    bool m_writeTree;                 // true will write out a TTree
-    bool m_writeNominalTree;          // true will write out only the Nominal TTree
-    std::string m_MJBDetailStr;              // Will print out extra histograms
-    std::string m_eventDetailStr;            // Will print out extra histograms
-    std::string m_jetDetailStr;              // Will print out extra histograms
-    std::string m_trigDetailStr;              // Will print out extra histograms
-    bool m_debug;                     // set verbose mode
-    int m_maxEvent;                   // Maximum number of events to run on
-    std::string m_MCPileupCheckContainer; // Name of truth container for MC Pileup Check
-    bool m_isAFII;                      // Is AFII
-    bool m_isDAOD;                    // Is DAOD, not original AOD
-    bool m_useCutFlow;                // true will write out cutflow histograms
+    /** @brief True value will allow TTree output */
+    bool m_writeTree;
+    /** @brief True value will write out only the Nominal TTree */
+    bool m_writeNominalTree;
+    /** @brief Control substrings for creating MJB histograms */
+    std::string m_MJBDetailStr;
+    /** @brief Control substrings for creating event-level histograms */
+    std::string m_eventDetailStr;
+    /** @brief Control substrings for creating jet-level histograms */
+    std::string m_jetDetailStr;
+    /** @brief Control substrings for creating trigger-level histograms */
+    std::string m_trigDetailStr;
+    /** @brief Set verbose mode */
+    bool m_debug;
+    /** @brief Maximum number of events to run over */
+    int m_maxEvent;
+    /** @brief Name of the truth xAOD container for MC Pileup Check */
+    std::string m_MCPileupCheckContainer;
+    /** @brief Setting for ATLAS Fastsim production samples */
+    bool m_isAFII;
+    /** @brief Setting for Derived xAODs, rather than original xAODs */
+    bool m_isDAOD;
+    /** @brief Option to output the cutflow histograms */
+    bool m_useCutFlow;
+
     int m_systTool_nToys;
     std::string m_binning;
     std::string m_VjetCalibFile;
@@ -170,9 +188,30 @@ class MultijetBalanceAlgo : public EL::Algorithm
     std::vector<std::string> m_JCSTokens; //!
     std::vector<std::string> m_JCSStrings; //!
 
+    /** @brief Update every cutflow for this selection
+        @note The current selection is determined by the variable m_iCutflow, which automatically updates with each use
+    */
     EL::StatusCode passCutAll();
+    /** @brief Update cutflow iVar for this selection
+        @note The current selection is determined by the variable m_iCutflow, which automatically updates with each use
+        @param iVar  The index of the current systematic variation whose cutflow is to be filled
+    */
     EL::StatusCode passCut(int iVar);
 
+  public:
+    /** @brief Vector of cutflows, for each systematic variation, showing the integer number of events passing each selection */
+    std::vector<TH1D*> m_cutflowHist;    //!
+    /** @brief Vector of weighted cutflows, for each systematic variation, showing the weighted number of events passing each selection */
+    std::vector<TH1D*> m_cutflowHistW;   //!
+    /** @brief  Bin index corresponding to the first new selection
+     * @note  The cutflow histograms are grabbed from previous xAH algorithms and already include entries.
+     * The first location of the new MJB entr is stored here.
+     * */
+    unsigned int m_cutflowFirst;     //!
+    /** @brief Automatically updating index of the current selection, used by passCutAll() and passCut() */
+    unsigned int m_iCutflow;     //!
+
+  private:
     double DeltaPhi(double phi1, double phi2);
     double DeltaR(double eta1, double phi1,double eta2, double phi2);
 
