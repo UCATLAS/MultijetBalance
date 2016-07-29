@@ -38,7 +38,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 
  ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibratino! ##
- "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Vjet/Vjet_Systematics.root",
+ "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Vjet_2015_207/Vjet_Systematics.root",
 
   ## Systematic Variations to use:
 #  "m_sysVariations" : "Nominal",
