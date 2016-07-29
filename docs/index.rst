@@ -13,7 +13,7 @@ The official twiki can be found at https://twiki.cern.ch/twiki/bin/view/AtlasPro
 
 Current Version
 ---------------
-Current AnalysisBase release for |xAH| is Base,\ |analysis_base_release|\ .
+Current AnalysisBase release for |MJB| is Base,\ |analysis_base_release|\ .
 
 .. note::
     If you need to bump up the version of the AnalysisBase being used, please make sure you update the `.travis.yml <https://github.com/UCATLAS/xAODAnaHelpers/blob/master/.travis.yml>`_ file first.
@@ -26,8 +26,7 @@ Contents:
   Intro
   Installing
   Running
-  Files
-  API
+
 
 
 Indices and tables
