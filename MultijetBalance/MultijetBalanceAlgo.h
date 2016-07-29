@@ -68,10 +68,6 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Global name to give to the algorithm*/
     std::string m_name;
 
-    //TODO why is this here?
-    /** @brief Event weight from the MC generation*/
-    float m_mcEventWeight; //!
-    
     //TODO replace this with name from config
     /** @brief Center of mass energy used to define which file the cross-sections come from*/
     std::string m_comEnergy; //!
@@ -134,17 +130,18 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Boolean requiring each jet to pass the MultijetBalanceAlgo#m_beta selection, otherwise it is only applied
      * to jets with \f$p_{T}\f$ > 25% of the leading jet \f$p_{T}\f$ */
     bool m_allJetBeta;
-    /** @brief Run in boostrap mode (See :ref:`Instructions`)*/
+    /** @brief Run in Bootstrap mode (See Instructions)*/
     bool m_bootstrap;
-    /** @brief */
+    /** @brief Apply \a in-situ calibration to the leading jet for Validation mode*/
     bool m_leadingInsitu;
-    /** @brief */
+    /** @brief Do not apply a \f$p_{T}\f$ requirement on JES uncertainty application for Validation mode*/
     bool m_noLimitJESPt;
-    /** @brief */
+    /** @brief Apply previous MJB calibration to the leading jet, performing a closure test*/
     bool m_closureTest;
-    /** @brief */
+    /** @brief Apply MJB correction derived as a function of leading jet \f$p_{T}\f$, not recoil system \f$p_{T}\f$
+     * @note Experimental functionality, you should likely not use this*/
     bool m_leadJetMJBCorrection;
-    /** @brief */
+    /** @brief Reverse the subleading jet \f$p_{T}\f$ requirement, accepting only dijet like events*/
     bool m_reverseSubleading;
     /** @brief True value will allow TTree output */
     bool m_writeTree;
@@ -162,7 +159,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
     bool m_debug;
     /** @brief Maximum number of events to run over */
     int m_maxEvent;
-    /** @brief Name of the truth xAOD container for MC Pileup Check */
+    /** @brief Name of the truth xAOD container for MC Pileup Check, set to "None" if not used */
     std::string m_MCPileupCheckContainer;
     /** @brief Setting for ATLAS Fastsim production samples */
     bool m_isAFII;
@@ -171,135 +168,139 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Option to output the cutflow histograms */
     bool m_useCutFlow;
 
-    /** @brief */
+    /** @brief Number of toys used by the bootstrapping procedure.  Recommendation is 100*/
     int m_systTool_nToys;
-    /** @brief */
+    /** @brief Comma separated list of bin edges for recoil \f$p_{T}\f$*/
     std::string m_binning;
-    /** @brief */
+    /** @brief Root file containing intermediate V+jet \a in-situ calibrations, set to empty if no such calibrations are applied */
     std::string m_VjetCalibFile;
 
-    /** @brief */
+    /** @brief Boolean for performing b-tagging on jets*/
     bool m_bTag;
-    /** @brief */
+    /** @brief Comma separated list of of b-tag working point efficiency percentages*/
     std::string m_bTagWPsString;
-    /** @brief */
-    std::vector<std::string> m_bTagWPs;
-    /** @brief */
+    /** @brief Path to b-tagging CDI file*/
     std::string m_bTagFileName;
-    /** @brief */
+    /** @brief Variable for b-taggign (i.e. MV2c20) */
     std::string m_bTagVar;
-    /** @brief */
+    /** @brief Propagated option from b-tagging tool*/
     bool m_useDevelopmentFile;
-    /** @brief */
+    /** @brief Propagated option from b-tagging tool*/
     bool m_useConeFlavourLabel;
 
-    // configuration variables set automatically
-    /** @brief */
-    bool m_isMC;                      // Is MC
-    /** @brief */
+////// configuration variables set automatically //////
+    /** @brief If input is MC, as automatically determined from xAOD::EventInfo::IS_SIMULATION*/
+    bool m_isMC;
+    /** @brief Vector of subleading jet \f$p_{T}\f$ selection thresholds, filled automatically from MultijetBalanceAlgo#m_MJBIterationThreshold*/
     std::vector<float> m_subLeadingPtThreshold;
-    /** @brief */
+    /** @brief Vector of b-tag working point efficiency percentages, filled automatically from MultijetBalanceAlgo#m_bTag*/
+    std::vector<std::string> m_bTagWPs;
+    /** @brief Set to true automatically if MultijetBalanceAlgo#m_MCPileupCheckContainer is not "None"*/
     bool m_useMCPileupCheck;
-    /** @brief */
+    /** @brief Set to true for iterations beyond the first, as bootstrap mode propagation is handled differently */
     bool m_iterateBootstrap;
-    /** @brief */
+    /** @brief Vector of triggers, filled automatically from MultijetBalanceAlgo#m_triggerAndPt*/
     std::vector<std::string> m_triggers;
-    /** @brief */
+    /** @brief Vector of trigger thresholds, filled automatically from MultijetBalanceAlgo#m_triggerAndPt*/
     std::vector<float> m_triggerThresholds;
-    /** @brief */
+    /** @brief Vector of bins, filled automatically from MultijetBalanceAlgo#m_binning*/
     std::vector<double> m_bins;
-    /** @brief */
+    /** @brief Whether to use V+jet intermediate calibrations, set to true if MultijetBalanceAlgo#m_VjetCalibFile.size()*/
     bool m_VjetCalib;
 
-    //config for Jet Tools
-    /** @brief */
+////// config for Jet Tools //////
+    /** @brief Jet definition (e.g. AntiKt4EMTopo). Propagated option for Jet Tools */
     std::string m_jetDef;
-    /** @brief */
+    /** @brief Calibration sequence for JetCalibTools */
     std::string m_jetCalibSequence;
-    /** @brief */
+    /** @brief Configuration file for JetCalibTools*/
     std::string m_jetCalibConfig;
-    /** @brief */
+    /** @brief Jet cleaning level (i.e. LooseBad), propagated to JetCleaningTool*/
     std::string m_jetCleanCutLevel;
-    /** @brief */
+    /** @brief True to clean ugly jets, propagated to JetCleaningTool*/
     bool m_jetCleanUgly;
-    /** @brief */
+    /** @brief JVT cut value to apply*/
     float m_JVTCut;
-    /** @brief */
+    /** @brief Configuration file for JetUncertainties */
     std::string m_jetUncertaintyConfig;
 
-    // for SystTool
-    /** @brief */
+////// for SystTool //////
+    /** @brief SystTool object for Boostrap mode*/
     SystContainer  * systTool; //!
-    /** @brief */
-    std::vector<double> systTool_ptBins; //!
 
   private:
 
 
 
     #ifndef __CINT__
-    /** @brief */
+    /** @brief JetCalibrationTool instance*/
     JetCalibrationTool   * m_JetCalibrationTool;    //!
-    /** @brief */
+    /** @brief JetCleaningTool instance*/
     JetCleaningTool      * m_JetCleaningTool;       //!
-    /** @brief */
+    /** @brief JetUncertaintiesTool instance*/
     JetUncertaintiesTool * m_JetUncertaintiesTool;  //!
     #endif // not __CINT__
 
-    /** @brief */
+    /** @brief Vector of BTaggingSelectionTool instances*/
     std::vector< BTaggingSelectionTool* >  m_BJetSelectTools; //!
-    /** @brief */
+    /** @brief Vector of BTaggingEfficiencyTool instances*/
     std::vector< BTaggingEfficiencyTool* > m_BJetEffSFTools; //!
 
-    /** @brief */
+    /** @brief Vector of trigger TrigConf::xAODConfigTool instances*/
     std::vector< TrigConf::xAODConfigTool* > m_trigConfTools; //!
-    /** @brief */
+    /** @brief Vector of trigger Trig::TrigDecisionTool instances*/
     std::vector< Trig::TrigDecisionTool* > m_trigDecTools;    //!
 
     //JVTTool
-    /** @brief */
+    /** @brief JetVertexTaggerTool instance*/
     JetVertexTaggerTool      * m_JVTTool;        //!
-    /** @brief */
+    /** @brief ToolHandle<IJetUpdateJvt> instance */
     ToolHandle<IJetUpdateJvt>  m_JVTToolHandle;  //!
 
-    /** @brief */
+    /** @brief Location of primary vertex within xAOD::VertexContainer*/
     int m_pvLocation; //!
 
-    /** @brief */
+    /** @brief Event weight from the MC generation*/
+    float m_mcEventWeight; //!
+    /** @brief AMI cross-section weight, grabbed from file TODO*/
     float m_xs; //!
-    /** @brief */
+    /** @brief AMI acceptance weight, grabbed from file TODO*/
     float m_acceptance; //!
-    /** @brief */
+    /** @brief AMI number of events, grabbed from file TODO*/
     int m_numAMIEvents; //!
-    /** @brief */
+    /** @brief Channel number assigned to the MC sample*/
     int m_mcChannelNumber; //!
-    /** @brief */
+    /** @brief Run number assigned to the data*/
     int m_runNumber; //!
-    /** @brief */
+    /** @brief A stringstream object for various uses*/
     std::stringstream m_ss; //!
 
-    /** @brief */
+    /** @brief Vector of each individual systematic variation*/
     std::vector<std::string> m_sysVar; //!
-    /** @brief */
+    /** @brief Integer corresponding to the type of systematic used.
+     * @note Value is  -1 for Nominal, 
+     * 0 for JetUncertainties, 1 for JetCalibSequence, 2 for MJB alpha, 3 for MJB beta, 4 for MJB \f$p_{T}\f$ asymmetry,
+     * 5 for MJB \f$p_{T}\f$ threshold, 6 for MJB statistical uncertainty. */
     std::vector<int> m_sysTool; //!
-    /** @brief */
+    /** @brief Integer corresponding to the position of a uncertainty in it's tool
+     * @note For example, this would be the number assigned to a JES systematic uncertainty in the JetUncertainties tool*/
     std::vector<int> m_sysToolIndex; //!
-    /** @brief */
+    /** @brief Sign of the systematic uncertainty. 0 for negative, 1 for positive*/
     std::vector<int> m_sysSign; //!
-    /** @brief */
+    /** @brief Position of the Nominal result within m_sysVar */
     int m_NominalIndex; //!
 
-    /** @brief */
+    /** @brief V+jet \a in-situ calibration histograms taken from MultijetBalanceAlgo#m_VjetCalibFile*/
     std::vector< TH1F* > m_VjetHists; //!
-    /** @brief */
+    /** @brief MJB \a in-situ calibration histograms from previous iterations taken from MultijetBalanceAlgo#m_MJBCorrectionFile*/
     std::vector< TH1D* > m_MJBHists; //!
-    /** @brief */
-    std::map<int, int> m_VjetMap; //!
-    /** @brief */
-    std::map<int, int> m_JESMap; //!
-    /** @brief */
+//    std::map<int, int> m_VjetMap; //!
+//    std::map<int, int> m_JESMap; //!
+    /** @brief Substring name given to each JES calibration stage in MultijetBalanceAlgo#m_jetCalibSequence,
+     * used for JetCalibSequence option of MultijetBalanceAlgo#m_sysVariations */
     std::vector<std::string> m_JCSTokens; //!
-    /** @brief */
+    /** @brief Full name of each JES calibration stage (i.e. JetGSCScaleMomentum). 
+     * Has a direct correspondence with MultijetBalanceAlgo#m_JCSTokens*/
     std::vector<std::string> m_JCSStrings; //!
 
     /** @brief Update every cutflow for this selection
@@ -326,59 +327,58 @@ class MultijetBalanceAlgo : public EL::Algorithm
     unsigned int m_iCutflow;     //!
 
   private:
-    /** @brief */
+    /** @brief Calculate the \f$\Delta\phi\f$ between two objects*/
     double DeltaPhi(double phi1, double phi2);
-    /** @brief */
+    /** @brief Calculate the \f$\Delta R\f$ between two objects*/
     double DeltaR(double eta1, double phi1,double eta2, double phi2);
 
 
 
     #ifndef __MAKECINT__
 
-    /** @brief */
+    /** @brief Vector of MiniTree objects to output, each corresponding to a different systematic*/
     std::vector<MiniTree*> m_treeList; //!
-    /** @brief */
+    /** @brief Retrieve event info from the xAOD::EventInfo object and the file TODO
+     * @note: Fills in values for MultijetBalanceAlgo#m_runNumber, MultijetBalanceAlgo#m_mcChannelNumber, MultijetBalanceAlgo#m_xs, MultijetBalanceAlgo#m_acceptance */
     EL::StatusCode getLumiWeights(const xAOD::EventInfo* eventInfo);
-    /** @brief */
+    /** @brief Vector of MultijetHists objects to output, each corresponding to a different systematic*/
     std::vector<MultijetHists*> m_jetHists; //!
 
     #endif
 
-    /** @brief */
+    /** @brief Load all the systematic variations from MultijetBalanceAlgo#m_sysVariations */
     EL::StatusCode loadVariations();
-    /** @brief */
-    EL::StatusCode loadVariationsOld();
-    /** @brief */
+    /** @brief Load the trigger tools*/
     EL::StatusCode loadTriggerTool();
-    /** @brief */
+    /** @brief Load the JVT correction Tool*/
     EL::StatusCode loadJVTTool();
-    /** @brief */
+    /** @brief Load the JetCalibTool*/
     EL::StatusCode loadJetCalibrationTool();
-    /** @brief */
+    /** @brief Find and connect the jet calibration stages for MultijetBalanceAlgo#m_JCSTokens and MultijetBalanceAlgo#m_JCSStrings*/
     EL::StatusCode setupJetCalibrationStages();
-    /** @brief */
+    /** @brief Load the JetCleaningTool*/
     EL::StatusCode loadJetCleaningTool();
-    /** @brief */
+    /** @brief Load the JetUncertainties*/
     EL::StatusCode loadJetUncertaintyTool();
-    /** @brief */
+    /** @brief Load the intermediate V+jet \a in-situ calibration from  MultijetBalanceAlgo#m_VjetCalibFile*/
     EL::StatusCode loadVjetCalibration();
-    /** @brief */
+    /** @brief Load the previous MJB calibrations from MultijetBalanceAlgo#m_MJBCorrectionFile*/
     EL::StatusCode loadMJBCalibration();
-    /** @brief */
+    /** @brief Load the b-tagging tools*/
     EL::StatusCode loadBTagTools();
 
     #ifndef __MAKECINT__
-    /** @brief */
+    /** @brief Apply the JetCalibTool*/
      EL::StatusCode applyJetCalibrationTool( xAOD::Jet* jet);
-    /** @brief */
+    /** @brief Apply the JetCleaningTool*/
      EL::StatusCode applyJetCleaningTool();
-    /** @brief */
+    /** @brief Apply the JetUncertainties*/
      EL::StatusCode applyJetUncertaintyTool( xAOD::Jet* jet , int iVar );
-    /** @brief */
+    /** @brief Apply the intermediate V+jet \a in-situ calibrations*/
      EL::StatusCode applyVjetCalibration( xAOD::Jet* jet , int iVar );
-    /** @brief */
+    /** @brief Apply the MJB calibration from previous iterations */
      EL::StatusCode applyMJBCalibration( xAOD::Jet* jet , int iVar, bool isLead = false );
-    /** @brief */
+    /** @brief Order the jets in a collection to descend in \f$p_{T}\f$*/
      EL::StatusCode reorderJets(std::vector< xAOD::Jet*>* signalJets);
 
     #endif
