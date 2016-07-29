@@ -1,7 +1,5 @@
 # MultijetBalance
 
-Jenkins Test 1
-
 Bootstrap Functionality
 
 
