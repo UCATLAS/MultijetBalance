@@ -1,5 +1,7 @@
+.. _MultijetHists:
 MultijetHists
-========
+-------------
+
 .. doxygenclass:: MultijetHists
    :members:
    :undoc-members:

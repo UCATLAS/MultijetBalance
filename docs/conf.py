@@ -14,6 +14,7 @@
 
 import sys
 import os
+import shlex
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -25,10 +26,25 @@ import os
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
 
+import subprocess, os
+
+CURRDIR = os.path.dirname(os.path.realpath(__file__))
+
+if os.environ.get('READTHEDOCS', None) == 'True':
+    subprocess.call('doxygen', cwd=CURRDIR)
+
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = [
+    'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
+    'breathe',
+    'sphinxarg.ext'
+    ]
+breathe_projects = {"MJB": "doxygen/xml"}
+breathe_default_project = "MJB"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

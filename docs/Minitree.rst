@@ -1,5 +1,7 @@
+.. _Minitree:
 Minitree
 ========
+
 .. doxygenclass:: Minitree
    :members:
    :undoc-members:

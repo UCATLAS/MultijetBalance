@@ -24,7 +24,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_inContainerName"     : "AntiKt4EMTopoJets",
   "m_triggerAndPt" : "HLT_j360:480,HLT_j260:360,HLT_j200:300",
 #  "m_triggerAndPt" : "HLT_j360:420,HLT_j260:325,HLT_j200:250,HLT_j175:225,HLT_j150:200,HLT_j110:175,HLT_j85:125",
-  "m_MJBIteration" : 1,
+  "m_MJBIteration" : 0,
   ## The pt thresholds on the subleading jets for event inclusion:
   "m_MJBIterationThreshold" : "949,1480",
   #"m_MJBIterationThreshold" : "944,1380",  #2015 20.1
@@ -41,8 +41,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
  "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Vjet_2015_207/Vjet_Systematics.root",
 
   ## Systematic Variations to use:
-#  "m_sysVariations" : "Nominal",
-  "m_sysVariations" : "AllSystematics",
+  "m_sysVariations" : "Nominal",
+#  "m_sysVariations" : "AllSystematics",
 #  "m_sysVariations" : "Nominal-MJB",
 
   ## (Deprecated Option) Add statistical systematic for MJB:
@@ -115,11 +115,11 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_jetDef"            : "AntiKt4EMTopo",
   "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
 ## Final 20.1 calibration for validation
-  #"m_jetCalibConfig"    : "JES_2015dataset_recommendation_Feb2016.config",
+  "m_jetCalibConfig"    : "JES_2015dataset_recommendation_Feb2016.config",
 ## Initial 20.1 eta-intercalibration for results
   #"m_jetCalibConfig"    : "JES_MC15Prerecommendation_December2015_EtaIntercalOnly.config",
 ## Initial 20.7 eta-intercalibration for results
-  "m_jetCalibConfig"    : "JES_20_7_Recommendation_May2016_EtaIntercalOnly.config",
+  #"m_jetCalibConfig"    : "JES_20_7_Recommendation_May2016_EtaIntercalOnly.config",
 
   #-- JetCleaning --#
   "m_jetCleanCutLevel"  : "LooseBad",
@@ -130,9 +130,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_JVTCut" : 0.59, # 2016
 
   #-- JetUncertaintiesTool --#
-  #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
+  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
   ### 2015 MJB Systematics
-  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JESNuisanceParametersForMJB.config"
+  #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JESNuisanceParametersForMJB.config"
 
 
   } )
