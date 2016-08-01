@@ -18,6 +18,12 @@ xAODAnaHelpers tag 00-03-32
 
 V+jet calibrations: Vjet_2015_201
 
+Data samples (EXOT2):
+
+ * scripts/sampleLists/2015/Data13TeV_Main_EXOT2_201_gridSamples.txt
+ * scripts/sampleLists/2015/QCDPythia8_EXOT2_201_gridSamples.txt  (Nominal MC sample)
+ * scripts/sampleLists/2015/QCDHerwig_EXOT2_201_gridSamples.txt  (Systematic MC sample)
+
 MJB Calibration 2015 (20.7)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Base,2.4.7
@@ -32,3 +38,9 @@ atlasoff/Reconstruction/Jet/JetUncertainties/tags/JetUncertainties-00-09-40
 
 V+jet calibrations: Vjet_2015_207
 GRL: MJB_207_data15_13TeV.periodAllYear_DetStatus-v75-repro20-01_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml
+
+Data samples (EXOT2):
+
+ * scripts/sampleLists/2015/Data13TeV_Main_EXOT2_207_gridSamples.txt
+ * scripts/sampleLists/2015/QCDPythia8_EXOT2_207_gridSamples.txt  (Nominal MC sample)
+ * scripts/sampleLists/2015/QCDHerwig_EXOT2_207_gridSamples.txt  (Systematic MC sample)
