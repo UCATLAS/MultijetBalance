@@ -110,5 +110,30 @@ Several options may also be set:
  * doBootstrap : Combine bins into statistically relevant binning based on previous results from the bootstrap mode
  * rebinFile : The file with the bootstrap determined rebinning to use.
 
+Bootstrap Plotting
+^^^^^^^^^^^^^^^^^^
+Bootstrap procedes similar to the regular plotting scripts, with scripts found in MultijetBalance/scripts/boostrap
+and driven by transformBootstrap.py.
+Two different kinds of iterations can be performed.
+
+During the first iterations the calibration results are saved in a special SystOutput data format, and must be
+transformed into calibration histograms with the --firstIter option.
+The number of calibration histograms is proportional to the number of toys used in the bootstrap procedure.
+Output histograms are therefore not stored in TDirectories but directly to the ROOT TFile, facilitating the merging of files.
+
+During subsequent iterations the calibration results are saved in output histograms
+that may be manipulated with the --lastIter option.
+Again the TDirectory structure is not used to faciliate file merging.
+Several steps are performed:
+
+ * The first step will hadd the seperate files together
+ * The second step will reformat the file so that the TDirectory structure is included.
+ * The third step will find the mean and RMS of all the toys for each systematic using runBootstrapFitting.py.  This calls runBootstrapRebin on each systematic individually to allow parallelization and to speed things up.
+
+
+The final output is saved to "hist.*.*.RMS.root"
+
+::
+  python MultijetBalanceAlgo/scripts/bootstrap/transformBootstrap.py --rebin --lastIter --dir gridOutput/
 
 
