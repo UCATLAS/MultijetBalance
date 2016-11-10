@@ -122,7 +122,7 @@ def plotActualSysRatios(file):
     settingsHist.SetMarkerColor(kWhite)
     settingsHist.GetYaxis().SetRangeUser(-1., 2.)
     if("MJB" in histName):
-      settingsHist.GetXaxis().SetRangeUser( 300, 3000 )
+      settingsHist.GetXaxis().SetRangeUser( 300, 4000 )
       settingsHist.GetXaxis().SetMoreLogLabels(True)
       settingsHist.GetYaxis().SetRangeUser(-0.03, 0.03)
 

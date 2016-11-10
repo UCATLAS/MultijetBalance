@@ -1,18 +1,8 @@
 #!/usr/bin/env python
 
 ###################################################################
-# calculateFinalMJBGraphs.py                                      #
 # A MJB second stage python script                                #
 # Author Jeff Dandoy, UChicago                                    #
-#                                                                 #
-# This script takes any MJBCorrection or DoubleMJBCorrection file #
-# of histograms and makes them TGraphErrors using exact x-axis    #
-# locations taken from a finely binned recoilPt histogram.        #
-#                                                                 #
-# This is necessary as the number of events is not flat within    #
-# a recoilPt_binned bin. I.E. a single MJB bin can                #
-# span from 1700 to 1900 GeV, even if there are few events above  #
-# 1800 GeV.                                                       #
 #                                                                 #
 ###################################################################
 
@@ -24,7 +14,7 @@ import math
 import ROOT
 
 iterationNumber="1"
-jetType='_AntiKt4EMTopo'
+jetType='_AntiKt4LCTopo'
 
 def renameMJB(sysFileName):
 
@@ -63,7 +53,6 @@ def renameMJB(sysFileName):
     outHistName = outHistName.replace('MCType','MJB_Fragmentation')
 #    outHistName = outHistName.replace('Comupition','Composition')
 #    outHistName = outHistName.replace('LAr_Esmear','Gjet_GamEsmear')
-#    outHistName = outHistName.replace('','').replace('','')
     outHistName += jetType
 
 
@@ -113,6 +102,6 @@ if __name__ == "__main__":
 #  sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
 ##  nominalFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_final.root"
 
-  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea_207_May17/EMFinal/workarea/"
+  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea_LC207_Aug15/L1_Final/workarea/"
   sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
   renameMJB(sysFile)

@@ -26,7 +26,14 @@ from ROOT import *
 import AtlasStyle
 
 
-def combinedPlotNominal(files, normalize, ratio):
+def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
+    
+  if (is2016):
+    endPt = 3500
+    endJetPt = 3500
+  else:
+    endPt = 2000
+    endJetPt = 2500
 
   files = files.split(',')
   dataFile = [file for file in files if ".data." in file][0]
@@ -77,7 +84,7 @@ def combinedPlotNominal(files, normalize, ratio):
 
   ################ Set Color Palate ####################3
 # Data, Herwig, Pythia8, Sherpa
-  colors = [kBlack, kRed, kBlue, kViolet, kCyan]
+  colors = [kBlack, kRed, kBlue, kViolet, kGreen, kCyan]
   markers = [20, 21, 23, 22, 33, 34]
 #  colorMax = 240.
 #  colorMin = 0. #20.
@@ -158,10 +165,10 @@ def combinedPlotNominal(files, normalize, ratio):
         nomHist.Scale( 1./nomHist.Integral() )
 
 
-      if "Sherpa" in files[iDir] and "MJB" in histName:
-        for iBin in range(31, nomHist.GetNbinsX()+1):
-          nomHist.SetBinContent(iBin, 0)
-          nomHist.SetBinError(iBin, 0)
+#      if "Sherpa" in files[iDir] and "MJB" in histName:
+#        for iBin in range(31, nomHist.GetNbinsX()+1):
+#          nomHist.SetBinContent(iBin, 0)
+#          nomHist.SetBinError(iBin, 0)
 
       nomHist.SetLineColor(colors[iDir])
       nomHist.SetMarkerColor(colors[iDir])
@@ -181,9 +188,14 @@ def combinedPlotNominal(files, normalize, ratio):
         #nomHist.GetXaxis().SetRangeUser( 500, 2800 ) #!!public
         #nomHist.SetMaximum(1.06) #!!public
         #nomHist.SetMinimum(0.9701) #!!public
-        nomHist.GetXaxis().SetRangeUser( 300, 2800 )
-        nomHist.SetMaximum(1.2)
-        nomHist.SetMinimum(0.8999)
+        nomHist.GetXaxis().SetRangeUser( 300, endPt )
+        if(isValidation):
+          nomHist.SetMaximum(1.1)
+          nomHist.SetMinimum(0.95001)
+        else:
+          nomHist.SetMaximum(1.2)
+          nomHist.SetMinimum(0.90001)
+        
         nomHist.GetXaxis().SetMoreLogLabels(True)
         nomHist.GetYaxis().SetTitle("#LT p_{T}^{lead jet}/p_{T}^{recoil} #GT")
         nomHist.GetYaxis().SetTitleSize(0.09)
@@ -195,19 +207,19 @@ def combinedPlotNominal(files, normalize, ratio):
       elif( "Pt" in histName) :
         nomHist.GetYaxis().SetTitle("AU")
         if( "jet0" in histName):
-          nomHist.GetXaxis().SetRangeUser( 200, 2000 )
+          nomHist.GetXaxis().SetRangeUser( 200, endJetPt )
         else:
-          nomHist.GetXaxis().SetRangeUser( 0, 800 )
+          nomHist.GetXaxis().SetRangeUser( 0, endJetPt-500 )
       else:
         nomHist.GetYaxis().SetTitle("AU")
       if( "recoilPt" in histName):
         nomHist.GetYaxis().SetTitle("1/N dp_{T}^{recoil}/dN")
-        nomHist.GetXaxis().SetRangeUser( 300, 3000 )
+        nomHist.GetXaxis().SetRangeUser( 300, endPt )
       if not type(nomHist) == TGraphErrors:
         #drawString = "histsamep"
-        drawString = "psame"
+        drawString = "psame e"
       else:
-        drawString = "apsame"
+        drawString = "e0 apsame"
         nomHist.SetMarkerStyle(33)
         nomHist.SetMarkerSize(1.5)
         nomHist.SetLineWidth(4)
@@ -263,36 +275,48 @@ def combinedPlotNominal(files, normalize, ratio):
           ratioHists[iDir-1].GetYaxis().SetNdivisions(7)
           if( "Pt" in histName) :
             if( "jet0" in histName):
-              ratioHists[iDir-1].GetXaxis().SetRangeUser( 200, 2000 )
+              ratioHists[iDir-1].GetXaxis().SetRangeUser( 200, endJetPt )
             else:
-              ratioHists[iDir-1].GetXaxis().SetRangeUser( 0, 800 )
+              ratioHists[iDir-1].GetXaxis().SetRangeUser( 0, endJetPt-500 )
           if( "MJB" in histName) :
             #ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 ) #!!public
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 2500 )
-            ratioHists[iDir-1].SetMaximum(1.05)
-            ratioHists[iDir-1].SetMinimum(0.95)
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, endPt )
+            if( isValidation):
+              ratioHists[iDir-1].SetMaximum(1.02)
+              ratioHists[iDir-1].SetMinimum(0.98)
+            else:
+              ratioHists[iDir-1].SetMaximum(1.05)
+              ratioHists[iDir-1].SetMinimum(0.95)
+            
             ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
           if( "recoilPt" in histName):
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, 3000 )
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, endPt )
             ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
 
      #     if( "jetBeta" in histName):
      #       ratioHists[iDir-1].SetMaximum(1)
      #       ratioHists[iDir-1].SetMinimum(-1)
 
-      ratioHists[0].Draw( "p" )
+      ratioHists[0].Draw( "e0 p" )
       oneLine.Draw("same")
       for iDir in range(1,len(nomDirs)):
-        ratioHists[iDir-1].Draw( "psame" )
+        ratioHists[iDir-1].Draw( "e0 psame" )
 
 
     c1.cd()
     leg.Draw()
     AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Preliminary")
-    AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.3 fb^{-1}")
-    AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events")
+    if (is2016):
+      AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 15 fb^{-1}")
+    else:
+      AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.2 fb^{-1}")
+    if (isValidation):
+      #AtlasStyle.myText(0.2, 0.76, 1, "Dijet Events, Validation")
+      AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events, Validation")
+    else:
+      AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events")
     typeText = "anti-k_{t} R = 0.4"
-    if "_LC_" in dataFile:
+    if "LC" in dataFile:
       typeText += ", LC+JES (in-situ)"
     else:
       typeText += ", EM+JES (in-situ)"
@@ -329,6 +353,8 @@ if __name__ == "__main__":
            help="Comma seperated list of files to use")
   parser.add_argument("--normalize", dest='normalize', action='store_true', default=False, help="Normalize all histograms to unit area")
   parser.add_argument("--ratio", dest='ratio', action='store_true', default=False, help="Draw ratio plots w.r.t. first plot")
+  parser.add_argument("--validation", dest='validation', action='store_true', default=False, help="Running validation mode")
+  parser.add_argument("--is2016", dest='is2016', action='store_true', default=False, help="Running on 2016 data")
   args = parser.parse_args()
 
-  combinedPlotNominal(args.files, args.normalize, args.ratio)
+  combinedPlotNominal(args.files, args.normalize, args.ratio, args.validation, args.is2016)

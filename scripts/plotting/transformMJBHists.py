@@ -31,11 +31,13 @@ f_printOnly = False
 
 ## Choose the MC types to run on
 ## The first MC type will be the nominal, while the second will be a systematic variation
-#mcTypes = ["Herwig"]
 #mcTypes = ["Pythia", "Herwig", "Data207"]
-mcTypes = ["Pythia", "Herwig"]
-#mcTypes = ["Herwig", "Pythia", "Sherpa"]
+#mcTypes = ["Pythia","CombineLast2","DropLast1","DropLast2"]
+mcTypes = ["Pythia","Sherpa"]
 
+
+isValidation = False
+is2016 = False
 
 ## Order of steps to perform.  All are turned to False by default
 f_getPtHist = False
@@ -51,13 +53,16 @@ f_plotSL = False
 #f_combine = True #Combine MC files
 #f_calculateMJB = True # Calculate new histograms to be added to root file
 f_plotRelevant = True # Most important Plots
-#f_plotAll = True # All plots
+f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 
 ################# Running Options ########################3
 
 ## lastPt to use for MJB result
-endPt = 2000
+if (is2016):
+  endPt = 3500
+else:
+  endPt = 2000
 
 #doFinal will turn on the final step of finding the proper bin center from the jet pt spectrum
 #it requires input TTrees
@@ -65,9 +70,7 @@ doFinal = True
 
 #doBootstrap will combine bins based on previously derived bootstrap binnings
 doBootstrap = True
-#rebinFile = "gridOutput/workarea/Bootstrap1_EM_2/workarea/hist.data.all.significant.root"
-#rebinFile = "gridOutput/workarea/Sys_Bootstrap1_EM/workarea/hist.data.all.significant.root"
-rebinFile = "gridOutput/workarea_207_May17/BS1/workarea/hist.data.all.significant.root"
+rebinFile = "gridOutput/workarea_LC207_Aug15/B1/workarea/hist.data.all.significant.root"
 
 #doFit will perform a gaussian fit on each bin rather than get the mean
 doFit = True
@@ -265,34 +268,42 @@ if(f_calculateMJB):
 
 if(f_plotRelevant):
 
-#  ## plotNominal.py ##
-#  files = glob.glob(args.workDir+'/*MJB_initial.root')+glob.glob(args.workDir+'/*DoubleMJB_initial.root')
-#  if(doFinal):
-#    files += glob.glob(args.workDir+'/*MJB_final.root')
-#    #files += glob.glob(args.workDir+'/*all.MJB_final.root')+glob.glob(args.workDir+'/*.DoubleMJB_final.root')
-#  for file in files:
-#    print 'python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file
-#    if (not f_printOnly):
-#      os.system('python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file)
-#    #f_plotSys = False;
-#    #f_addGagik = False
-#    #plotNominal.plotNominal(file, f_plotSys, f_addGagik);
-#
-#  if(doMC and doJZSlices):
-#    files = sorted(glob.glob(args.workDir+'/*JZ*.scaled.root'))
-#    files = ','.join(files)
-#    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files
-#    if (not f_printOnly):
-#      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files)
-#    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files
-#    if (not f_printOnly):
-#      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files)
+  ## plotNominal.py ##
+  files = glob.glob(args.workDir+'/*MJB_initial.root')+glob.glob(args.workDir+'/*DoubleMJB_initial.root')
+  if(doFinal):
+    files += glob.glob(args.workDir+'/*MJB_final.root')
+    #files += glob.glob(args.workDir+'/*all.MJB_final.root')+glob.glob(args.workDir+'/*.DoubleMJB_final.root')
+  for file in files:
+    print 'python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file
+    if (not f_printOnly):
+      os.system('python MultijetBalance/scripts/plotting/plotNominal.py -b --file '+file)
+    #f_plotSys = False;
+    #f_addGagik = False
+    #plotNominal.plotNominal(file, f_plotSys, f_addGagik);
+
+  if(doMC and doJZSlices):
+    files = sorted(glob.glob(args.workDir+'/*JZ*.scaled.root'))
+    files = ','.join(files)
+    if ( isValidation ):
+      files += ' --validation'
+    if (is2016):
+      files += ' --is2016'
+    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files
+    if (not f_printOnly):
+      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --files '+files)
+    print 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files
+    if (not f_printOnly):
+      os.system('python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --files '+files)
 
   if(doMC and doData):
     if( not doFit ):
       files = sorted(glob.glob(args.workDir+'/*.MJB_initial.root'))
       if len(files) > 0:
         files = ','.join(files)
+        if ( isValidation ):
+          files += ' --validation'
+        if (is2016):
+          files += ' --is2016'
         command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
         print command
         if (not f_printOnly):
@@ -302,6 +313,10 @@ if(f_plotRelevant):
       files = sorted(glob.glob(args.workDir+'/*.fit_MJB_initial.root'))
       if len(files) > 0:
         files = ','.join(files)
+        if ( isValidation ):
+          files += ' --validation'
+        if (is2016):
+          files += ' --is2016'
         command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
         print command
         if (not f_printOnly):
@@ -311,6 +326,10 @@ if(f_plotRelevant):
       files = sorted(glob.glob(args.workDir+'/*.MJB_final.root'))
       if len(files) > 0:
         files = ','.join(files)
+        if ( isValidation ):
+          files += ' --validation'
+        if (is2016):
+          files += ' --is2016'
         command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --ratio --files '+files
         print command
         if (not f_printOnly):
@@ -354,6 +373,14 @@ if(f_plotAll):
     if (not f_printOnly):
       os.system(command)
     ##plotAll.plotAll(file)
+
+  files = glob.glob(args.workDir+'/*.scaled.root') #+glob.glob(args.workDir+'/*MJB*.root')
+  if len(files) > 0:
+    files = ','.join(files)
+    command = 'python MultijetBalance/scripts/plotting/combinedPlotNominal.py -b --normalize --ratio --files '+files
+    print command
+    if (not f_printOnly):
+      os.system(command)
 
 #if(f_plotSL):
 #  ## plotSL.py ##

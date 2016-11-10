@@ -103,6 +103,8 @@ def main():
   datasetList.sort()
   ## choose only file types given by arguement types ##
   datasetList = [ dataset for dataset in datasetList if any(variant in dataset for variant in datasetVariants)]
+  ## Remove duplicate output file 
+  datasetList = [dataset for dataset in datasetList if not "_duplicates_" in dataset]
   print '\nmatching datasets:'
   for dataset in datasetList:
     print ' %s'%dataset

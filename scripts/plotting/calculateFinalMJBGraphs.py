@@ -172,14 +172,19 @@ def getXaxisFromTree_leadJet(MJBHist, ptTree):
   xValueErrors = []
   ptHist = TH1F("ptHist", "ptHist", 1, 0, 1e7)
   for iBin in range(1, MJBHist.GetNbinsX()+1):
+    print "Looking at iBin", iBin
     edgeLow = MJBHist.GetXaxis().GetBinLowEdge(iBin)*1e3
     edgeUp = MJBHist.GetXaxis().GetBinUpEdge(iBin)*1e3
+    print "yes"
 
     #binning doesn't matter as GetMean() is unbinned
     ptTree.Draw('leadJetPt >> ptHist', 'weight*(recoilPt>='+str(edgeLow)+' && recoilPt<'+str(edgeUp)+')')
+    print "weighting"
     xValues.append( ptHist.GetMean() )
+    print "ok"
     if( xValues[-1] == 0. ): #If no events, then set to average of bin edges
       xValues[-1] = (edgeUp+edgeLow)/2./1e3
+    print "done"
 
     xValueErrors.append( 0. )
 

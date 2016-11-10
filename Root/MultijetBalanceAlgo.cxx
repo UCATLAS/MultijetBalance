@@ -307,6 +307,10 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
     systTool = new SystContainer(m_sysVar, m_bins, m_systTool_nToys);
   }
 
+  for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
+    cout << iVar << " var is " << m_sysVar.at(iVar) << " at index " << m_sysToolIndex.at(iVar) << endl;
+  }
+
   if(m_useCutFlow) {
     Info("initialize()", "Setting Cutflow");
 
@@ -393,7 +397,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       return EL::StatusCode::FAILURE;
     }
     for(int unsigned iVar=0; iVar < m_sysVar.size(); ++iVar){
-      cout << "iVar/Nominal " << iVar << " " << m_NominalIndex << endl;
+      //cout << "iVar/Nominal " << iVar << " " << m_NominalIndex << endl;
       if (m_writeNominalTree && (int) iVar != m_NominalIndex)
         continue;
 
@@ -409,7 +413,11 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
     for( unsigned int iTree=0; iTree < m_treeList.size(); ++iTree){
       m_treeList.at(iTree)->AddEvent(m_eventDetailStr);
-      m_treeList.at(iTree)->AddJets( (m_jetDetailStr+" MJBbTag_"+m_bTagWPsString).c_str());
+      if (m_bTagWPsString.size() > 0){
+        m_treeList.at(iTree)->AddJets( (m_jetDetailStr+" MJBbTag_"+m_bTagWPsString).c_str());
+      }else{
+        m_treeList.at(iTree)->AddJets( (m_jetDetailStr).c_str());
+      }
       m_treeList.at(iTree)->AddTrigger( m_trigDetailStr );
 //      m_treeList.at(iTree)->AddMJB(m_MJBDetailStr);
     }//for iTree
@@ -513,8 +521,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   //Assign detEta for jets .  Will this be changed by calibrations?
   if(m_debug) Info("execute()", "DetEta ");
   for(unsigned int iJet=0; iJet < originalSignalJets->size(); ++iJet){
-    xAOD::JetFourMom_t jetConstituentP4 = originalSignalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetEMScaleMomentum");
-    //xAOD::JetFourMom_t jetConstituentP4 = originalSignalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum");
+    //xAOD::JetFourMom_t jetConstituentP4 = originalSignalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetEMScaleMomentum");
+    xAOD::JetFourMom_t jetConstituentP4 = originalSignalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum");
     originalSignalJets->at(iJet)->auxdecor< float >( "detEta") = jetConstituentP4.eta();
   }
 
@@ -615,7 +623,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
           signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
           signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
           signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
-        } else { //Get GSC Correction  for leading jet
+        } else { //Get GSC Correction for leading jet
           xAOD::JetFourMom_t jetCalibGSCCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetGSCScaleMomentum");
           signalJets->at(iJet)->auxdata< float >("pt") = jetCalibGSCCopy.Pt();
           signalJets->at(iJet)->auxdata< float >("eta") = jetCalibGSCCopy.Eta();
@@ -690,7 +698,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 
     if(m_debug) Info("execute()", "Jet Cleaning ");
-    //// Specialized jet Cleaning: ignore event if any of the used jets are not clean ////
+    //// Ignore event if any of the used jets are not clean ////
     for(unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
       if(! m_JetCleaningTool->accept( *(signalJets->at(iJet))) ){
         wk()->skipEvent();  return EL::StatusCode::SUCCESS;
@@ -814,7 +822,6 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     eventInfo->auxdecor< float >( "recoilM" ) = recoilJets.M();
     eventInfo->auxdecor< float >( "recoilE" ) = recoilJets.E();
     eventInfo->auxdecor< float >( "ptBal" ) = signalJets->at(0)->pt() / recoilJets.Pt();
-    eventInfo->auxdecor< float >( "ptBal2" ) = 0.5 * (signalJets->at(0)->pt() + recoilJets.Pt()) / recoilJets.Pt();
 
     for(unsigned int iJet=0; iJet < signalJets->size(); ++iJet){
 
@@ -1544,6 +1551,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
 
 
   TFile* MJBFile = TFile::Open( gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/"+m_MJBCorrectionFile).c_str() ), "READ" );
+  if(m_debug)  std::cout << "Loaded MJB File" << std::endl;
   if (m_closureTest)
     m_ss << m_MJBIteration;
   else
@@ -1565,13 +1573,13 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
     if (dirName.find( mjbIterPrefix ) != std::string::npos) { //If it's a Iteration Dir
       TH1D *MJBHist;
       MJBHist = (TH1D*) MJBFile->Get( (dirName+"/"+histPrefix).c_str() );
+      //Remove Iteration part of name
       std::string newHistName = dirName.substr(11);
       if( newHistName.find("MCType") == std::string::npos ){   
       //if( newHistName.find("MCType") == std::string::npos && newHistName.find("MJB") == std::string::npos ){   //!!!
-      //Remove Iteration part of name
-      MJBHist->SetName( newHistName.c_str() );
-      MJBHist->SetDirectory(0);
-      m_MJBHists.push_back(MJBHist);
+        MJBHist->SetName( newHistName.c_str() );
+        MJBHist->SetDirectory(0);
+        m_MJBHists.push_back(MJBHist);
       }
     }
   }
@@ -1631,9 +1639,6 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
 
 //    for(unsigned int i=0; i < m_MJBHists.size(); ++i){
 //      cout << m_MJBHists.at(i)->GetName() << endl;
-//    }
-//    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-//      cout << "var " << m_sysVar.at(iVar) << endl;
 //    }
 
   MJBFile->Close();
