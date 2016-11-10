@@ -217,7 +217,7 @@ def plotNominal(file, f_plotSys, f_addGagik):
     c1.cd()
     leg.Draw()
     AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Internal")
-    AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.3 fb^{-1}")
+    AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.2 fb^{-1}")
 
     if "Pt" in histName or "alpha" in histName:
       pad1.SetLogy()

@@ -244,7 +244,6 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
   static SG::AuxElement::ConstAccessor<float> alpha ("alpha");
   static SG::AuxElement::ConstAccessor<int> njet ("njet");
   static SG::AuxElement::ConstAccessor<float> ptAsym ("ptAsym");
-  static SG::AuxElement::ConstAccessor<float> ptBal2 ("ptBal2");
   static SG::AuxElement::ConstAccessor<float> recoilEta ("recoilEta");
   static SG::AuxElement::ConstAccessor<float> recoilPhi ("recoilPhi");
   static SG::AuxElement::ConstAccessor<float> recoilM ("recoilM");

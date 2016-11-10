@@ -12,8 +12,9 @@ from time import strftime
 
 ### User Options ###
 test = False # does not run the jobs
-config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB.py"
-extraTag = "MJB" # Extra output tag for all files
+config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_EM207.py"
+#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2015_LC207.py"
+extraTag = "" # Extra output tag for all files
 
 
 timestamp = strftime("_%Y%m%d")
@@ -40,16 +41,27 @@ outputTags = []
 
 ## File lists and specific output Tags
 
-files.append("MultijetBalance/scripts/sampleLists/QCDPythia8_EXOT2_207_gridSamples.txt")
-outputTags.append("QCDPy_R4")
-#files.append("MultijetBalance/scripts/sampleLists/QCDHerwig_EXOT2_207_gridSamples.txt")
-#outputTags.append("QCDH_BS3")
-#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_EXOT2_207_gridSamples.txt")
-#outputTags.append("Ex_R3")
-#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Main_207_gridSamples.txt")
-#outputTags.append("Mn")
-#files.append("MultijetBalance/scripts/sampleLists/Data13TeV_Debug_207_gridSamples.txt")
-#outputTags.append("Db")
+##2016##
+#files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_EXOT2_gridSamples.txt")
+#outputTags.append("Db_V1")
+files.append("MultijetBalance/scripts/sampleLists/Data2016_Main_EXOT2_gridSamples.txt")
+outputTags.append("Ex_V1")
+
+files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_EXOT2_207_gridSamples.txt")
+outputTags.append("QCDPE_V1")
+files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_EXOT2_207_gridSamples.txt")
+outputTags.append("QCDSE_V1")
+
+#files.append("MultijetBalance/scripts/sampleLists/2015/Data13TeV_Debug_EXOT2_207_gridSamples.txt")
+#outputTags.append("Db_R1")
+#files.append("MultijetBalance/scripts/sampleLists/2015/Data13TeV_Main_EXOT2_207_gridSamples.txt")
+#outputTags.append("Ex_B1")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
+#outputTags.append("QCDPJ_R0")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
+#outputTags.append("QCDSJ_R0")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDHerwig_JETM1_207_gridSamples.txt")
+#outputTags.append("QCDHJ_R0")
 
 for iFile, file_in in enumerate(files):
 
@@ -76,7 +88,7 @@ for iFile, file_in in enumerate(files):
 
   command = './xAODAnaHelpers/scripts/xAH_run.py'
   if runType == 'grid':
-    command += ' --inputDQ2'
+    command += ' --inputRucio'
   command += ' --inputList --files '+file_in
   command += ' --config '+config_name
   command += ' --force --submitDir '+submit_dir

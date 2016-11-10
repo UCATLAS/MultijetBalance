@@ -137,3 +137,111 @@ The final output is saved to "hist.*.*.RMS.root"
   python MultijetBalanceAlgo/scripts/bootstrap/transformBootstrap.py --rebin --lastIter --dir gridOutput/
 
 
+Full Instructions
+^^^^^^^^^^^^^^^^^
+
+You need a new JESUncertainties config and root file from Kate Pachal. The JetUncertainties package must be downloaded
+and these files placed in the corret place.
+
+A few edits need to be made to the config file:
+change "UncertaintyRootFile" to point to the new ROOT file.
+Change the JESComponent numbering so that there are no numbers skipped!  We need this because we use the JESComponent number
+to get an index.
+Previously this only required chaning 100, 101, and 102 to lower numbers.
+Also the name "LAr_Esmear" should be switched to "Gjet_GamEsmear".
+
+First stage of running:
+Run MC stages 0 and 1, because each stage is independent of the previous results. Switch stages with only m_MJBIteration.
+Run data stage 0 and bootstrap stage 0.  Bootstrap only requires changing m_bootstrap and m_systTool_nToys. 
+
+Submit jobs to grid using runGridSubmission.py
+Download jobs with downloadAndMerge.py
+Place all output into same directory, with hist\, tree\, SystToolOutput, etc.
+Run plotting code on this directory, i.e. python MultijetBalance/scripts/plotting/transform.py --dir path/to/files/
+mv double MJB file, hist.combined.Pythia.Fit_DoubleMJB_initial.root , to MultijetBalance/data/ to use as input for next iteration
+Just set in config file "m_MJBIteration" : 1 and "m_MJBCorrectionFile" 
+
+
+Trigger Efficiency Cutoff
+-------------------------
+
+Each trigger should be used only in a region of full efficiency wrt recoil pt.
+These values are set via the m_triggerAndPt config variable, as described above.
+The cutoff files can be calculated using MultijetBalance/scripts/binning/checkTrigger.py.
+This calculates the efficiency of a trigger wrt a reference supporting trigger, and find the point at which it's 99.5% efficient.
+
+This code first creates histograms of the efficiencies using::
+  
+  python checkTrigger.py --calculate --data --file path/to/file.root
+
+Use the ``--mc`` option if running on MC.
+Use the ``--nevents`` option if you'd only like to run on a subset of the events (10 million should be plenty).
+An optional output tag can be added with the ``--outName`` option.
+Use the ``-dir`` option to run over a directory with several files.
+Before using this file, the first few lines of checkTrigger() should be edited with the triggers to use, in descending order.
+This code will create an output directory called ``triggerPlots`` in the same directory as the input file.
+
+After calculating the efficiencies with ``--calculate``, the efficiencies may be plotted with::
+
+  python checkTrigger --plot --file path/to/file.root
+
+Trigger are calculated using one of three methods.
+Here the trigger in question is ``higher``, and ``lower`` is the next lowest trigger.
+Unprescaled method should be used only for the first unprescaled trigger, and uses the logic ``(higher && lower) / lower``.
+This should not be used for prescaled triggers, as there is no guarantee an event triggering ``higher`` will also trigger ``lower``.
+For the prescaled method, the logic is instead ``higher / (higher || lower)``.
+A third method, unbiased, is only to be used for MC when no trigger requirement is made on the TTree events.
+The method is ``higher/nevents``, calculating the number of all events that pass the ``higher`` trigger.
+All methods are calculated by default.
+
+Binning
+-------
+
+The binning in recoil pt should be chosen so that enough statistics are in each bin.
+In general, 10,000 events should be used in each bin, though at higher recoil pt this will be lower.
+
+First a histogram with fine binning (1 GeV) must be created.
+This is done with ::
+
+  python getBinning.py --fineHist --file path/to/file.root
+
+This file is stored in a new directory, ``binningPlots/``, stored in the same directory as the input file.
+The binning can then be calculated using::
+
+  python getBinning.py --calcBin --file path/to/file.root
+
+Here the beginning of ``getBinning.py`` should first be edited with the ``eventThreshold``, ``numRequiredBins``, and ``calcBinEdges``.
+``eventThreshold`` is the number of required events in the bin, nominally set to 10,000.
+``numRequiredBins`` is the minimum width of the bins, in GeV.
+Once not enough events are in a bin, this value is doubled permanently for all subsequent bins.
+``calcBinEdges`` is a list containing at least the first bin edge, as well as other bin edges the user is requiring.
+New bins will only be calculated after the last entry in ``calcBinEdges``.
+
+The new bin edges will be printed to screen, and an output plot will be made as BinningCalculation.png.
+
+
+Iterative thresholds
+--------------------
+
+The MJB is an iterative procedure, and at each stage events can only be used if the subleading jet pt is below a certain threshold.
+This first threshold is set entirely by the reach of the input V+jet calibrations, but the subsequent thresholds 
+are set by the statistics.
+The number of events in each bin after requring a specific subleading jet pt cut can be found with::
+  
+  python getBinning.py --iterHist --file path/to/file.root
+
+The beginning of this file should first be edited with the ``iterativeEdges`` and ``iterativeCutoffs``.
+Here ``iterativeEdges`` are the bin edges determined in the previous step,
+and ``iterativeCutoffs`` are the subleading jet pt cutoffs to test.
+These cutoffs should be identical to one of the bin edges, as it defines the point at which the previous calibration
+can be used for the next iteartion.
+These results are saved to IterativeBinningHist.root in the ``binningPlots/`` directory.
+
+To plot the distributions after various pt cuts, use::
+
+  python getBinning.py --plotIter --file path/to/file.root
+
+The statistics in each bin after a subleading jet pt cut can be seen, and the iterative cuts can be determined.
+
+
+

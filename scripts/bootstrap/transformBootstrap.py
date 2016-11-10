@@ -33,8 +33,8 @@ f_printOnly = False
 #f_MC = True
 
 ##Last Iteration
-f_combine = False
-f_reformat = False
+f_combine = True
+f_reformat = True
 f_calculateRebin = True
 
 

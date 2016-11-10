@@ -20,7 +20,9 @@ print "Using ASG version {0}".format(args.version)
 
 dict_pkg = {
             '2.4.7': [],
-            '2.4.8': []
+            '2.4.8': [],
+            '2.4.17': [],
+            '2.4.20': []
            }
 
 try:

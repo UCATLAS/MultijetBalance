@@ -35,7 +35,6 @@ void MiniTree::AddEventUser(std::string detailStringMJB)
   m_tree->Branch("alpha", &m_alpha, "alpha/F");
   m_tree->Branch("avgBeta", &m_avgBeta, "avgBeta/F");
   m_tree->Branch("ptBal", &m_ptBal, "ptBal/F");
-  m_tree->Branch("ptBal2", &m_ptBal2, "ptBal2/F");
 
   m_tree->Branch("recoilPt", &m_recoilPt, "recoilPt/F");
   m_tree->Branch("recoilEta", &m_recoilEta, "recoilEta/F");
@@ -99,7 +98,6 @@ void MiniTree::FillEventUser( const xAOD::EventInfo* eventInfo ) {
   m_alpha = eventInfo->auxdecor< float >( "alpha" );
   m_avgBeta = eventInfo->auxdecor< float >( "avgBeta" );
   m_ptBal = eventInfo->auxdecor< float >( "ptBal" );
-  m_ptBal2 = eventInfo->auxdecor< float >( "ptBal2" );
 
   if( eventInfo->isAvailable< float >("recoilPt") )
     m_recoilPt = eventInfo->auxdecor< float >( "recoilPt" );
@@ -150,7 +148,7 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
 
 
 
-  for(int iB=0; iB < m_jet_BTagNames.size(); ++iB){
+  for(unsigned int iB=0; iB < m_jet_BTagNames.size(); ++iB){
     std::string thisBTagName = m_jet_BTagNames.at(iB);
 
   
@@ -188,7 +186,7 @@ void MiniTree::ClearJetsUser(const std::string jetName ) {
 //  m_jet_HECFrac.clear();
   m_jet_TileFrac.clear();
 //  m_jet_EnergyPerSampling.clear();
-  for(int iB=0; iB < m_jet_BTagNames.size(); ++iB){
+  for(unsigned int iB=0; iB < m_jet_BTagNames.size(); ++iB){
     m_jet_BTagBranches.at(iB).clear();
     m_jet_BTagSFBranches.at(iB).clear();
   }

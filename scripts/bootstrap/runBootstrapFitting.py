@@ -44,7 +44,7 @@ def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
 
     if (f_rebin):
       command = "runBootstrapRebin --file "+inFile+" --sysType "+sys
-      command += " --upperEdge 2000 --threshold 2"
+      command += " --upperEdge 2000 --threshold 9"
       if( f_fit ):
         command += ' --fit'
     else:

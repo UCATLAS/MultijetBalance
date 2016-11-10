@@ -56,9 +56,9 @@ def plotSysRatios(file):
 
 
   ## Combine systematics in types ##
-  sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
+#  sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
 #  sysTypesToUse = ["MJB_ptt23", "MJB_ptt27", "MJB_ptt30", "MJB_ptt20"]
-  #sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "MCType"]
+  sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta"]
 
   sysTypes = []
   for sysType in sysTypesToUse:
@@ -116,7 +116,7 @@ def plotSysRatios(file):
     settingsHist.SetMarkerColor(kWhite)
     settingsHist.GetYaxis().SetRangeUser(-1., 2.)
     if("MJB" in histName):
-      settingsHist.GetXaxis().SetRangeUser( 300, 3000 )
+      settingsHist.GetXaxis().SetRangeUser( 300, 4000 )
       settingsHist.GetXaxis().SetMoreLogLabels(True)
       settingsHist.GetYaxis().SetRangeUser(-0.03, 0.03)
 
