@@ -288,8 +288,8 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
   // load all variations
   setupJetCalibrationStages();
-  loadJetUncertaintyTool();
-  loadVariations();
+  EL_RETURN_CHECK("init", loadJetUncertaintyTool());
+  EL_RETURN_CHECK("init", loadVariations());
 
   loadTriggerTool();
   loadJVTTool();
@@ -1145,9 +1145,10 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
   // Add the configuration if AllSystematics is used //
   if( m_sysVariations.find("AllSystematics") != std::string::npos){
     if(m_isMC){
-      m_sysVariations = "Nominal-MJB";
+      m_sysVariations = "Nominal-localMJB";
     }else{
-      m_sysVariations = "Nominal-Special-MJB-AllZjet-AllGjet-AllLAr";
+      m_sysVariations = "Nominal-localMJB-AllZjet-AllGjet-AllLAr-AllEtaIntercalibration-AllPileup-AllFlavor-AllPunchThrough";
+      //m_sysVariations = "Nominal-localMJB-AllMJB-AllZjet-AllGjet-AllLAr-AllEtaIntercalibration-AllPileup-AllFlavor-AllPunchThrough";
     }
     //m_sysVariations = "Nominal-JetCalibSequence-Special-MJB-AllZjet-AllGjet-AllLAr";
   }
@@ -1181,66 +1182,48 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
         m_sysVar.push_back("JCS_"+m_JCSTokens.at(iJCS) ); m_sysTool.push_back( 1 ); m_sysToolIndex.push_back( iJCS ); m_sysSign.push_back(0);
       }
 
-    /////////////////////////////// Special ///////////////////////////////
-    }else if( varVector.at(iVar).compare("Special") == 0 ){
+//Delete    /////////////////////////////// Special ///////////////////////////////
+//Delete    }else if( varVector.at(iVar).compare("Special") == 0 ){
+//Delete
+//Delete      ifstream fileIn( gSystem->ExpandPathName( m_jetUncertaintyConfig.c_str() ) );
+//Delete      std::string line;
+//Delete      std::string subStr;
+//Delete      while (getline(fileIn, line)){
+//Delete        if( (line.find(".Name:") != std::string::npos) && (line.find("_prop") == std::string::npos) && (line.find("_orig") == std::string::npos)){
+//Delete          //get JES number
+//Delete          istringstream iss(line);
+//Delete          iss >> subStr;
+//Delete          std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
+//Delete          int thisJESNumber = atoi( thisJESNumberStr.c_str() );
+//Delete          //next get JES Name
+//Delete          iss >> subStr;
+//Delete          std::string thisJESName = subStr;
+//Delete          if( (thisJESName.find( "EtaIntercalibration" ) != std::string::npos) ||
+//Delete              (thisJESName.find( "Pileup" ) != std::string::npos) ||
+//Delete              (thisJESName.find( "Flavor" ) != std::string::npos) ||
+//Delete              (thisJESName.find( "PunchThrough" ) != std::string::npos) ){
+//Delete            //next get JES name
+//Delete            iss >> subStr;
+//Delete            std::string tmpJESName = thisJESName;
+//Delete            if( tmpJESName.find("MCTYPE") != std::string::npos){
+//Delete              tmpJESName.replace( tmpJESName.find("MCTYPE"), 6, "MC15");
+//Delete            }
+//Delete            int JESSpot = m_JetUncertaintiesTool->getComponentIndex( "JET_"+tmpJESName );
+//Delete
+//Delete            if( JESSpot >= m_JetUncertaintiesTool->getNumComponents() ){
+//Delete              Error( "loadVar", " Could not find component JET_%s, exiting.", tmpJESName.c_str());
+//Delete              return EL::StatusCode::FAILURE;
+//Delete            }
+//Delete            if( m_debug )  Info("loadVar", "JES %s is at %i", tmpJESName, JESSpot);
+//Delete            //Name - JES Tool - JES Number - sign
+//Delete            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( JESSpot ); m_sysSign.push_back( 1 );
+//Delete            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( JESSpot ); m_sysSign.push_back( 0 );
+//Delete
+//Delete          } //if a Special JES
+//Delete        }//if the relevant Name line
+//Delete      }//for each line in JES config
 
-      ifstream fileIn( gSystem->ExpandPathName( m_jetUncertaintyConfig.c_str() ) );
-      std::string line;
-      std::string subStr;
-      while (getline(fileIn, line)){
-        if (line.find(".Name:") != std::string::npos){
-          //get JES number
-          istringstream iss(line);
-          iss >> subStr;
-          std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
-          int thisJESNumber = atoi( thisJESNumberStr.c_str() );
-          //next get JES Name
-          iss >> subStr;
-          std::string thisJESName = subStr;
-          if( (thisJESName.find( "EtaIntercalibration" ) != std::string::npos) ||
-              (thisJESName.find( "Pileup" ) != std::string::npos) ||
-              (thisJESName.find( "Flavor" ) != std::string::npos) ||
-              (thisJESName.find( "PunchThrough" ) != std::string::npos) ){
-            //next get JES name
-            iss >> subStr;
-
-            //Name - JES Tool - JES Number - sign
-            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 1 );
-            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 0 );
-
-          } //if a Special JES
-        }//if the relevant Name line
-      }//for each line in JES config
-
-
-//    /////////  A dedicated set, not for general running ////////////
-//    } else if( varVector.at(iVar).find("Dedicated") != std::string::npos ){
-//      vector< std::string > JESNames;
-//      vector< int > JESNumbers;
-//      JESNames.push_back("Zjet_Jvt");  JESNumbers.push_back(1);
-//      JESNames.push_back("Zjet_ElecESZee");  JESNumbers.push_back(2);
-//      JESNames.push_back("Zjet_ElecEsmear");  JESNumbers.push_back(3);
-//      JESNames.push_back("Gjet_Jvt");  JESNumbers.push_back(53);
-//      JESNames.push_back("Gjet_GamESZee");  JESNumbers.push_back(54);
-//      JESNames.push_back("LAr_Esmear");  JESNumbers.push_back(55); // is Gjet_GamEsmear
-//
-////      for(int iJES=0; iJES < 100; ++iJES){
-////        //cout << "!!!!!Checking JES " << thisJESName << endl;
-////        cout << "name for " << iJES << "  is " << m_JetUncertaintiesTool->getComponentName(iJES) << endl;
-////
-////      }
-////
-//      for(unsigned int iJES=0; iJES < JESNames.size(); ++iJES){
-//        int thisJESNumber = JESNumbers.at(iJES);
-//        std::string thisJESName = JESNames.at(iJES);
-//        cout << "!!!!!Checking JES " << thisJESName << endl;
-//        cout << "name for this one is " << m_JetUncertaintiesTool->getComponentName(thisJESNumber-1) << endl;
-//
-//        m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 1 );
-//        m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 0 );
-//      }
-
-    ////////////////////////////////// GJ, ZJ, or LAr /////////////////////////////////////////
+    ////////////////////////////////// JES Uncertainties /////////////////////////////////////////
     } else if( varVector.at(iVar).find("All") != std::string::npos ){
 
       //Get JES systematic type from name
@@ -1250,34 +1233,41 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
       std::string line;
       std::string subStr;
       while (getline(fileIn, line)){
-        if (line.find(".Name:") != std::string::npos){
+        //Only get relevant lines, and nothing from propagated MJB (prop)!
+        if( (line.find(".Name:") != std::string::npos) && (line.find("_prop") == std::string::npos) && (line.find("_orig") == std::string::npos)){
 
-          //get JES number
           istringstream iss(line);
           iss >> subStr;
-          std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
-          int thisJESNumber = atoi( thisJESNumberStr.c_str() );
+          ////old method to get JES number
+          //std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
+          //int thisJESNumber = atoi( thisJESNumberStr.c_str() );
 
           //next get JES Name
           iss >> subStr;
           std::string thisJESName = subStr;
-//          cout << "!!!!!Checking JES " << thisJESName << endl;
-//          cout << "name for this one is " << m_JetUncertaintiesTool->getComponentName(thisJESNumber-1) << endl;
-//          int thisJESIndex = m_JetUncertaintiesTool->getComponentIndex("JET_"+thisJESName);
 
-//          cout << "index vs number is " << thisJESIndex << " : " << thisJESNumber << endl;
           if( thisJESName.find( sysType ) != std::string::npos ){
+            std::string tmpJESName = thisJESName;
+            if( tmpJESName.find("MCTYPE") != std::string::npos){
+              tmpJESName.replace( tmpJESName.find("MCTYPE"), 6, "MC15");
+            }
+            unsigned int JESSpot = m_JetUncertaintiesTool->getComponentIndex( "JET_"+tmpJESName );
 
+            if( JESSpot >= m_JetUncertaintiesTool->getNumComponents() ){
+              Error( "loadVar", " Could not find component JET_%s, exiting.", tmpJESName.c_str());
+              return EL::StatusCode::FAILURE;
+            }
+            if( m_debug )  Info("loadVar", "JES %s is at %i", tmpJESName.c_str(), JESSpot);
             //Name - JES Tool - JES Number - sign
-            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 1 );
-            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( thisJESNumber-1 ); m_sysSign.push_back( 0 );
+            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( JESSpot ); m_sysSign.push_back( 1 );
+            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( JESSpot ); m_sysSign.push_back( 0 );
 
           } //if the current JES type
         }//if the relevant Name line
       }//for each line in JES config
 
     //////////////////////////////////////// MJB  /////////////////////////////////////////
-    } else if( varVector.at(iVar).compare("MJB") == 0 ){
+    } else if( varVector.at(iVar).compare("localMJB") == 0 ){
       //Name - MJB Variation - MJB Value - sign
 
       int systValue[2];

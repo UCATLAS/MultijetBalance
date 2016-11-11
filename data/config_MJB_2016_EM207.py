@@ -10,7 +10,8 @@ c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
                                      "m_storePassHLT"                : True,
                                      "m_storeTrigDecisions"          : True,
                                      "m_applyTriggerCut"             : True,
-                                     "m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110",
+                                     "m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175",
+                                     #"m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110",
                                      "m_checkDuplicatesData"         : False,
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True
@@ -33,17 +34,16 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 ## 2016 initial validation binning
   "m_binning"   : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #23bins
-#!  "m_binning"   : "300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #37 bins
+#  "m_binning"   : "300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #37 bins
 #  "m_binning"  : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2500,3000,3500",
-#  "m_binning"  : "300,360,420,480,540,600,660,720,780,840,900,960,1020,1140,1260,1480,2000", #17 bins
 
 
  ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibratino! ##
  "m_VjetCalibFile"  : "",
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal",
-#  "m_sysVariations" : "AllSystematics",
+#  "m_sysVariations" : "Nominal",
+  "m_sysVariations" : "AllSystematics",
 #  "m_sysVariations" : "Nominal-MJB",
 
   ## (Deprecated Option) Add statistical systematic for MJB:
@@ -132,7 +132,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #-- JetUncertaintiesTool --#
   #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
   ### 2016 ICHEP offical Systematics
-  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/ICHEP2016/JES2015_SR_Scenario1.config"
+  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/ICHEP2016/JES2015_AllNuisanceParameters.config"
+  #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/ICHEP2016/JES2015_SR_Scenario1.config"
 
 
   } )
