@@ -162,6 +162,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     bool m_isAFII;
     /** @brief Option to output the cutflow histograms */
     bool m_useCutFlow;
+    /** @brief File containing the MC sample cross-section values */
+    std::string m_XSFile;
 
     /** @brief Number of toys used by the bootstrapping procedure.  Recommendation is 100*/
     int m_systTool_nToys;

@@ -29,7 +29,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_MJBIteration" : 0,
   ## The pt thresholds on the subleading jets for event inclusion. -1 gets taken from the V+jet file.
   ## This is set automatically in m_validation to a large number!
-  "m_MJBIterationThreshold" : "-1,1700",
+  "m_MJBIterationThreshold" : "900,1700",
+  #"m_MJBIterationThreshold" : "-1,1700",
   ## For higher iterations:
 #  "m_MJBCorrectionFile" : "Iteration0_EM_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
 
@@ -106,6 +107,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #!!  "m_isDAOD" : True,
 #!!  "m_useCutFlow" : False,
 
+  "m_XSFile"  : "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt", 
 
 ### Tool Configurations ###
 

@@ -95,6 +95,7 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_MCPileupCheckContainer = "AntiKt4TruthJets";
   m_isAFII = false;
   m_useCutFlow = true;
+  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt"; 
 
 
   m_bTag = true;
@@ -1079,7 +1080,7 @@ EL::StatusCode MultijetBalanceAlgo::getLumiWeights(const xAOD::EventInfo* eventI
     m_acceptance = 1;
   }else{
     m_mcChannelNumber = eventInfo->mcChannelNumber();
-    ifstream fileIn(  gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt") ) );
+    ifstream fileIn(  gSystem->ExpandPathName( m_XSFile.c_str() ) );
     std::string runNumStr = std::to_string( m_mcChannelNumber );
 
     std::string line;
