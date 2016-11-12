@@ -31,15 +31,27 @@ Relevant MJB Configurations are:
  * m_sysVariation : The systematic variations to run (Nominal for none, AllSystematics for all)
  * m_writeNominalTree : Output the TTree for the nominal result only
 
-There are also several modes.
-The ``Validation mode`` allows you to apply the insitu calibrations to the leading jet, which is normally calibrated only up to etaJES.
-``Validation mode`` allows you to check the performance of the jet calibration for high-pt jets.
-This should only be done for a single iteration (0).
-This mode requires the following options:
+.. note::
 
- * m_leadingInsitu : Apply the insitu calibration to the leading jet
- * m_noLimtJESPt : Apply calibrations to jets of any pt
- * m_MJBIterationThreshold : Set to a very large number (i.e. "9999" GeV)
+  Multijet calibration is run after the eta-intercalibration and concurrently with the V+jet in situ calibrations.
+  To retrieve the appropriate calibration, a special JetCalibTools configuration file should be acquired with only
+  the eat-intercalibration stage.
+  If one can not be retrieved, the --m_leadingGSC will give approximate results, though will technically be wrong for leading
+  jets between 0.8 and 1.2 TeV.
+  A special set of V+jet calibrations should also be acquired and used, as detailed below.
+
+There are also several modes.
+The ``Validation mode`` allows you to apply the insitu calibrations to the leading jet, which is normally calibrated only up to eta-intercalibration.
+``Validation mode`` allows you to check the performance of the previous jet calibration for high-pt jets.
+This will only be performed for the first iteration, ``m_MJBIteration`` = 0, and will automatically set the subleading jet pt threshold
+to a large value of ``m_MJBIterationThreshold`` = 999999.
+This mode is set with the ``m_validation`` option.
+This mode can also be performed on dijet events by also setting ``m_numJets`` to 2 and ``m_ptAsym`` to 1.0.
+
+The ``Closure mode`` checks the closure of a derived MJB calibration.
+It is not well tested, so caution should be taken!
+For a given iteration, the subleading jets will be calibrated as expected, using V+jet calibrations or previous MJB calibrations.
+The leading jet will also be calibrated with the previous MJB calibration only (not V+jet, even if the pt is within range).
 
 The ``Bootstrap mode`` allows you to save toys to calculate the statistical correlations between systematic uncertainties, and is complemented by the scripts in MultijetBalance/scripts/bootstrap/ .
 Toys are saved in a unique output file called SystToolOutput.
@@ -140,27 +152,52 @@ The final output is saved to "hist.*.*.RMS.root"
 Full Instructions
 ^^^^^^^^^^^^^^^^^
 
-You need a new JESUncertainties config and root file from Kate Pachal. The JetUncertainties package must be downloaded
-and these files placed in the corret place.
-
-A few edits need to be made to the config file:
-change "UncertaintyRootFile" to point to the new ROOT file.
-Change the JESComponent numbering so that there are no numbers skipped!  We need this because we use the JESComponent number
-to get an index.
-Previously this only required chaning 100, 101, and 102 to lower numbers.
-Also the name "LAr_Esmear" should be switched to "Gjet_GamEsmear".
-
 First stage of running:
 Run MC stages 0 and 1, because each stage is independent of the previous results. Switch stages with only m_MJBIteration.
 Run data stage 0 and bootstrap stage 0.  Bootstrap only requires changing m_bootstrap and m_systTool_nToys. 
 
-Submit jobs to grid using runGridSubmission.py
-Download jobs with downloadAndMerge.py
+Submit jobs to grid using runGridSubmission.py.
+Download jobs with downloadAndMerge.py.
 Place all output into same directory, with hist\, tree\, SystToolOutput, etc.
-Run plotting code on this directory, i.e. python MultijetBalance/scripts/plotting/transform.py --dir path/to/files/
-mv double MJB file, hist.combined.Pythia.Fit_DoubleMJB_initial.root , to MultijetBalance/data/ to use as input for next iteration
-Just set in config file "m_MJBIteration" : 1 and "m_MJBCorrectionFile" 
+Run plotting code on this directory, i.e. python MultijetBalance/scripts/plotting/transform.py --dir path/to/files/.
+mv double MJB file, hist.combined.Pythia.Fit_DoubleMJB_initial.root , to MultijetBalance/data/ to use as input for next iteration.
+Just set in config file "m_MJBIteration" : 1 and "m_MJBCorrectionFile" .
 
+Special Inputs
+=============
+
+The MJB is performed after the eta-intercalibration stage and concurrently with the V+jet stages.
+Several unique input files are required that should be acquired from the relevant experts.
+
+JetCalibTool Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A special JetCalibTool config file is required that only includes the eta-intercalibration.
+This is generally included in the package, with a name like JES_20_7_Recommendation_May2016_EtaIntercalOnly.config.
+This is essential for retrieving the proper calibration of subleading jets and leading jets between 0.8 and 1.2.
+
+V+jet Nominal Calibration
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The nominal V+jet calibration will be in a text file from the output of the preliminary combination stage.
+The file correction.txt should be renamed to something like Vjet_LCJES_R4.txt (depending on jet type and radius)
+and then processed with convertVjetToHist.py to Vjet_Nominal.root. 
+It is this file which contains the histogram of the nominal calibration, and which is passed to the code with ``--m_VjetCalibFile``.
+
+
+V+jet Systematic Calibrations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The V+jet systematic calibrations will be processed into an intermediary root file and config file for JetUncertainties.
+These should be placed in the share directory of a downloaded JetUncertainties package, 
+and passed to the code with ``--m_jetUncertaintyConfig``.
+
+A few edits need to be made to the config file:
+ * Change "UncertaintyRootFile" to point to the new ROOT file.
+ * Change the uncertainty name "LAr_Esmear" should be switched to "Gjet_GamEsmear".
+
+Extra Functionality
+===================
 
 Trigger Efficiency Cutoff
 -------------------------

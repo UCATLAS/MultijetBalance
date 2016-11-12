@@ -40,7 +40,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 
  ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibration! ##
-# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/PreviousConfigs/2015_207_EM/Vjet_2015_207/Vjet_Systematics.root",
+# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/PreviousConfigs/2015_207_EM/Vjet_2015_207/Vjet_Nominal.root",
  "m_VjetCalibFile"  : "",
 
  ## Use GSC value, not insitu, for leading jet.
