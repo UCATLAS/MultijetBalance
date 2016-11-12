@@ -26,6 +26,8 @@
 #include <sstream>
 
 #include "JetMomentTools/JetVertexTaggerTool.h"
+#include "AsgTools/AnaToolHandle.h"
+#include "JetJvtEfficiency/JetJvtEfficiency.h"
 
 #include "xAODBTaggingEfficiency/BTaggingSelectionTool.h"
 #include "xAODBTaggingEfficiency/BTaggingEfficiencyTool.h"
@@ -114,6 +116,12 @@ class MultijetBalanceAlgo : public EL::Algorithm
      *   - JetCalibSequence : Include each stage of the jet calibration procedure (origin, etaJES, GSC, etc.)
      * */
     std::string m_sysVariations;
+    /** @brief Apply previous MJB calibration to the leading jet, performing a closure test*/
+    bool m_closureTest;
+    /** @brief Run in validation mode, applying full insitu calibration to all jets (See Instructions)*/
+    bool m_validation;
+    /** @brief Run in Bootstrap mode (See Instructions)*/
+    bool m_bootstrap;
     /** @brief Use MJB statistical uncertainties
      * @note This is untested, do not use!*/
     bool m_MJBStatsOn;
@@ -127,22 +135,13 @@ class MultijetBalanceAlgo : public EL::Algorithm
     float m_beta;
     /** @brief \f$p_{T}\f$ threshold for each jet to be included (default 25 GeV)*/
     float m_ptThresh;
-    /** @brief Boolean requiring each jet to pass the MultijetBalanceAlgo#m_beta selection, otherwise it is only applied
-     * to jets with \f$p_{T}\f$ > 25% of the leading jet \f$p_{T}\f$ */
-    bool m_allJetBeta;
-    /** @brief Run in Bootstrap mode (See Instructions)*/
-    bool m_bootstrap;
-    /** @brief Apply \a in-situ calibration to the leading jet for Validation mode*/
-    bool m_leadingInsitu;
-    /** @brief Do not apply a \f$p_{T}\f$ requirement on JES uncertainty application for Validation mode*/
-    bool m_noLimitJESPt;
-    /** @brief Apply previous MJB calibration to the leading jet, performing a closure test*/
-    bool m_closureTest;
-    /** @brief Apply MJB correction derived as a function of leading jet \f$p_{T}\f$, not recoil system \f$p_{T}\f$
-     * @note Experimental functionality, you should likely not use this*/
-    bool m_leadJetMJBCorrection;
-    /** @brief Reverse the subleading jet \f$p_{T}\f$ requirement, accepting only dijet like events*/
-    bool m_reverseSubleading;
+    /** @brief Boolean requiring each jet to pass the MultijetBalanceAlgo#m_beta selection only for
+     * jets with \f$p_{T}\f$ > 25% of the leading jet \f$p_{T}\f$ */
+    bool m_looseBetaCut;
+    /** @brief Apply the GSC-stage calibration to the leading jet when calibrating.  This should only be used
+     * if a special eta-intercalibration stage insitu file is not available, and is a close approximate.  
+     * @note It is an exact approximation if the leading jet detEta cut is changed from 1.2 to 0.8 */
+    bool m_leadingGSC;
     /** @brief True value will allow TTree output */
     bool m_writeTree;
     /** @brief True value will write out only the Nominal TTree */
@@ -163,10 +162,10 @@ class MultijetBalanceAlgo : public EL::Algorithm
     std::string m_MCPileupCheckContainer;
     /** @brief Setting for ATLAS Fastsim production samples */
     bool m_isAFII;
-    /** @brief Setting for Derived xAODs, rather than original xAODs */
-    bool m_isDAOD;
     /** @brief Option to output the cutflow histograms */
     bool m_useCutFlow;
+    /** @brief File containing the MC sample cross-section values */
+    std::string m_XSFile;
 
     /** @brief Number of toys used by the bootstrapping procedure.  Recommendation is 100*/
     int m_systTool_nToys;
@@ -192,7 +191,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief If input is MC, as automatically determined from xAOD::EventInfo::IS_SIMULATION*/
     bool m_isMC;
     /** @brief Vector of subleading jet \f$p_{T}\f$ selection thresholds, filled automatically from MultijetBalanceAlgo#m_MJBIterationThreshold*/
-    std::vector<float> m_subLeadingPtThreshold;
+    std::vector<float> m_subleadingPtThreshold;
     /** @brief Vector of b-tag working point efficiency percentages, filled automatically from MultijetBalanceAlgo#m_bTag*/
     std::vector<std::string> m_bTagWPs;
     /** @brief Set to true automatically if MultijetBalanceAlgo#m_MCPileupCheckContainer is not "None"*/
@@ -219,8 +218,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     std::string m_jetCleanCutLevel;
     /** @brief True to clean ugly jets, propagated to JetCleaningTool*/
     bool m_jetCleanUgly;
-    /** @brief JVT cut value to apply*/
-    float m_JVTCut;
+    /** @brief JVT working point to apply*/
+    std::string m_JVTWP;
     /** @brief Configuration file for JetUncertainties */
     std::string m_jetUncertaintyConfig;
 
@@ -251,11 +250,13 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Vector of trigger Trig::TrigDecisionTool instances*/
     std::vector< Trig::TrigDecisionTool* > m_trigDecTools;    //!
 
-    //JVTTool
+    //JVTUpdateTool
     /** @brief JetVertexTaggerTool instance*/
     JetVertexTaggerTool      * m_JVTTool;        //!
     /** @brief ToolHandle<IJetUpdateJvt> instance */
-    ToolHandle<IJetUpdateJvt>  m_JVTToolHandle;  //!
+    ToolHandle<IJetUpdateJvt>  m_JVTUpdate_handle;  //!
+    //JVTEffTool
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JVTEff_handle; //!
 
     /** @brief Location of primary vertex within xAOD::VertexContainer*/
     int m_pvLocation; //!
@@ -290,8 +291,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Position of the Nominal result within m_sysVar */
     int m_NominalIndex; //!
 
-    /** @brief V+jet \a in-situ calibration histograms taken from MultijetBalanceAlgo#m_VjetCalibFile*/
-    std::vector< TH1F* > m_VjetHists; //!
+    /** @brief V+jet \a in-situ nominal calibration histogram taken from MultijetBalanceAlgo#m_VjetCalibFile*/
+    TH1F* m_VjetHist; //!
     /** @brief MJB \a in-situ calibration histograms from previous iterations taken from MultijetBalanceAlgo#m_MJBCorrectionFile*/
     std::vector< TH1D* > m_MJBHists; //!
 //    std::map<int, int> m_VjetMap; //!
@@ -380,6 +381,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
      EL::StatusCode applyMJBCalibration( xAOD::Jet* jet , int iVar, bool isLead = false );
     /** @brief Order the jets in a collection to descend in \f$p_{T}\f$*/
      EL::StatusCode reorderJets(std::vector< xAOD::Jet*>* signalJets);
+    /** @brief For jets below subleading pt threshold, call (optionally) applyVjetCalibration and applyJetUncertaintyTool */ 
+    EL::StatusCode calibrateBelowThreshold(xAOD::Jet* jet, int iSysVar );
 
     #endif
 

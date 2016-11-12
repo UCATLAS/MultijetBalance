@@ -27,8 +27,10 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #"m_triggerAndPt" : "HLT_j380:500,HLT_j260:350,HLT_j175:250,HLT_j110:200",  #Used for validation
 #  "m_triggerAndPt" : "HLT_j360:420,HLT_j260:325,HLT_j200:250,HLT_j175:225,HLT_j150:200,HLT_j110:175,HLT_j85:125", #original
   "m_MJBIteration" : 0,
-  ## The pt thresholds on the subleading jets for event inclusion:
-  #"m_MJBIterationThreshold" : "949,1700",
+  ## The pt thresholds on the subleading jets for event inclusion. -1 gets taken from the V+jet file.
+  ## This is set automatically in m_validation to a large number!
+  "m_MJBIterationThreshold" : "900,1700",
+  #"m_MJBIterationThreshold" : "-1,1700",
   ## For higher iterations:
 #  "m_MJBCorrectionFile" : "Iteration0_EM_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
 
@@ -38,8 +40,12 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_binning"  : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2500,3000,3500",
 
 
- ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibratino! ##
+ ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibration! ##
+# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/PreviousConfigs/2015_207_EM/Vjet_2015_207/Vjet_Nominal.root",
  "m_VjetCalibFile"  : "",
+
+ ## Use GSC value, not insitu, for leading jet.
+#"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
 #  "m_sysVariations" : "Nominal",
@@ -55,8 +61,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_alpha" : 0.3,
 #  "m_beta" : 1.0,
 #  "m_ptThresh" : 25,  #in GeV
-  ## Force removal of all jets within beta:
-#  "m_allJetBeta" : True,
+  ## Looser beta cut to improve statistics
+#  "m_looseBetaCut" : True,
 
 #------ Bootstrap Mode ------#
 #  "m_bootstrap" : True,
@@ -65,11 +71,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #------ Validation Mode ------#
   #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-  "m_leadingInsitu" : True,
-  # Allow calibrations of subleading jets beyond JetCalibTool limit:
-  "m_noLimitJESPt" : True,
-  # Make subleading threshold super high
-  "m_MJBIterationThreshold" : "9999999",
+#  "m_validation" : True,
   ## Dijet validation mode: ##
 #  "m_numJets"  : 2,
 #  "m_ptAsym" : 1.0,
@@ -82,16 +84,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_leadingInsitu" : True,
 #  "m_noLimitJESPt" :  True,
 
-#------ Not Used ------#
+#------ Closure Test Mode ------#
   ##Apply MJB correction to the leading jet:
 #  "m_closureTest" : True,
-
-  ## (Deprecated Option) Bin corrections against leading jet pt, not against reference jet pt:
-#!!  "m_leadJetMJBCorrection" : True,
-
-  ## Deprecated Option) Force subleading jet to be greater than
-#!!  "m_reverseSubleading" : True,
-
 
 ### Plotting Options ###
 #  "m_writeTree" : True,
@@ -104,8 +99,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_trigDetailStr" : "basic passTriggers",
 
 ### Extra Options ###
-#  "m_debug"      :  True,
-#  "m_maxEvent" : 2000,
+  "m_debug"      :  False,
   ## Remove problematic Pileup events from low pt MC slices:
   "m_MCPileupCheckContainer" : "AntiKt4TruthJets",
 
@@ -113,6 +107,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #!!  "m_isDAOD" : True,
 #!!  "m_useCutFlow" : False,
 
+  "m_XSFile"  : "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt", 
 
 ### Tool Configurations ###
 
@@ -127,7 +122,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_jetCleanUgly"      : True,
 
   #-- JVT --#
-  "m_JVTCut" : 0.59, # 2016
+  #"m_JVTWP" : "Medium", # 2016
 
   #-- JetUncertaintiesTool --#
   #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
