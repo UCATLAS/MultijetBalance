@@ -113,7 +113,7 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_jetCalibConfig = "";
   m_jetCleanCutLevel = "";
   m_jetCleanUgly = false;
-  m_JVTCut = 0.0;
+  m_JVTWP = "Medium";
   m_jetUncertaintyConfig = "";
 
 }
@@ -677,18 +677,18 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
     if(m_debug) Info("execute()", "Apply JVT ");
     for(unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
-      signalJets->at(iJet)->auxdata< float >("Jvt") = m_JVTToolHandle->updateJvt( *(signalJets->at(iJet)) );
-      if( signalJets->at(iJet)->pt() < 60.*GeV && fabs(signalJets->at(iJet)->auxdecor< float >("detEta")) < 2.4 ){
-        if( signalJets->at(iJet)->getAttribute<float>( "Jvt" ) < m_JVTCut ) { 
-//          cout << "Removing jet with pt/eta/jvt " << signalJets->at(iJet)->pt() << "/" << signalJets->at(iJet)->auxdecor< float >("detEta") << "/" << signalJets->at(iJet)->getAttribute<float>( "Jvt" ) << endl;
-          signalJets->erase(signalJets->begin()+iJet);  --iJet;
-        }
+      signalJets->at(iJet)->auxdata< float >("Jvt") = m_JVTUpdate_handle->updateJvt( *(signalJets->at(iJet)) );
+      if( !m_JVTEff_handle->passesJvtCut( *(signalJets->at(iJet)) ) ){
+        signalJets->erase(signalJets->begin()+iJet);  --iJet;
       }
     }
     if (signalJets->size() < m_numJets)
       continue;
     passCut(iVar); //JVF
 
+    //Old, manual JVT method
+    //if( signalJets->at(iJet)->pt() < 60.*GeV && fabs(signalJets->at(iJet)->auxdecor< float >("detEta")) < 2.4 ){
+    //  if( signalJets->at(iJet)->getAttribute<float>( "Jvt" ) < m_JVTCut ) { 
 
     if(m_debug) Info("execute()", "Jet Cleaning ");
     //// Ignore event if any of the used jets are not clean ////
@@ -1278,10 +1278,17 @@ EL::StatusCode MultijetBalanceAlgo :: loadTriggerTool(){
 // initialize and configure the JVT correction tool
 EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
   if(m_debug) Info("loadJVTTool", "loadJVTTool");
-  m_JVTTool = new JetVertexTaggerTool("jvtag");
-  m_JVTToolHandle = ToolHandle<IJetUpdateJvt>("jvtag");
+
+  //// Set up tagger tool to update JVT value after calibration
+  m_JVTTool = new JetVertexTaggerTool("JVTUpdateTool");
+  m_JVTUpdate_handle = ToolHandle<IJetUpdateJvt>("JVTUpdateTool");
   RETURN_CHECK("loadJVTTool", m_JVTTool->setProperty("JVTFileName","JetMomentTools/JVTlikelihood_20140805.root"), "");
-  RETURN_CHECK("loadJVTTool", m_JVTTool->initialize(), "");
+  RETURN_CHECK("loadJVTTool", m_JVTTool->initialize(), "Failed to initialize JVT Tool");
+
+  //// Set up tool to check JVT value
+  RETURN_CHECK("loadJVTTool", m_JVTEff_handle.makeNew<CP::JetJvtEfficiency>("JVTEffTool_handle"), "Failed to create handle to CP::JetJvtEfficiency for JVT");
+  RETURN_CHECK("loadJVTTool", m_JVTEff_handle.setProperty("WorkingPoint", m_JVTWP ),"Failed to set Working Point property of JetJvtEfficiency for JVT");
+  RETURN_CHECK("loadJVTTool", m_JVTEff_handle.initialize(), "Failed to properly initialize CP::JetJvtEfficiency for JVT");
 
   return EL::StatusCode::SUCCESS;
 }

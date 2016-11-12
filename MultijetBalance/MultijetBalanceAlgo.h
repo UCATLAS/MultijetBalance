@@ -26,6 +26,8 @@
 #include <sstream>
 
 #include "JetMomentTools/JetVertexTaggerTool.h"
+#include "AsgTools/AnaToolHandle.h"
+#include "JetJvtEfficiency/JetJvtEfficiency.h"
 
 #include "xAODBTaggingEfficiency/BTaggingSelectionTool.h"
 #include "xAODBTaggingEfficiency/BTaggingEfficiencyTool.h"
@@ -216,8 +218,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     std::string m_jetCleanCutLevel;
     /** @brief True to clean ugly jets, propagated to JetCleaningTool*/
     bool m_jetCleanUgly;
-    /** @brief JVT cut value to apply*/
-    float m_JVTCut;
+    /** @brief JVT working point to apply*/
+    std::string m_JVTWP;
     /** @brief Configuration file for JetUncertainties */
     std::string m_jetUncertaintyConfig;
 
@@ -248,11 +250,13 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Vector of trigger Trig::TrigDecisionTool instances*/
     std::vector< Trig::TrigDecisionTool* > m_trigDecTools;    //!
 
-    //JVTTool
+    //JVTUpdateTool
     /** @brief JetVertexTaggerTool instance*/
     JetVertexTaggerTool      * m_JVTTool;        //!
     /** @brief ToolHandle<IJetUpdateJvt> instance */
-    ToolHandle<IJetUpdateJvt>  m_JVTToolHandle;  //!
+    ToolHandle<IJetUpdateJvt>  m_JVTUpdate_handle;  //!
+    //JVTEffTool
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JVTEff_handle; //!
 
     /** @brief Location of primary vertex within xAOD::VertexContainer*/
     int m_pvLocation; //!

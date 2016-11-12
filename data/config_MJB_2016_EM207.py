@@ -122,7 +122,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_jetCleanUgly"      : True,
 
   #-- JVT --#
-  "m_JVTCut" : 0.59, # 2016
+  #"m_JVTWP" : "Medium", # 2016
 
   #-- JetUncertaintiesTool --#
   #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
