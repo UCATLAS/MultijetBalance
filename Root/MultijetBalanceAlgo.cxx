@@ -59,41 +59,45 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   // initialize().
 
   // configuration variables set by user
+  m_validation = false;
+  m_closureTest = false;
+  m_bootstrap = false;
+
+
   m_inContainerName = "";
   m_triggerAndPt = "";
   m_MJBIteration = 0;
   m_MJBIterationThreshold = "";
   m_MJBCorrectionFile = "";
+  m_binning = "";
+  m_VjetCalibFile = "";
+  m_leadingGSC  = false;
+  m_systTool_nToys = 100;
+
   m_sysVariations = "Nominal";
   m_MJBStatsOn = false;
+
   m_numJets = 3;
   m_ptAsym = 0.8;
   m_alpha = 0.3;
   m_beta = 1.0;
   m_ptThresh = 25.;
   m_allJetBeta = false;
-  m_bootstrap = false;
-  m_leadingInsitu = false;
-  m_noLimitJESPt = false;
-  m_closureTest = false;
-  m_leadJetMJBCorrection = false;
-  m_reverseSubleading = false;
+
   m_writeTree = false;
   m_writeNominalTree = false;
   m_MJBDetailStr = "";
   m_eventDetailStr = "";
   m_jetDetailStr = "";
   m_trigDetailStr = "";
+
   m_debug = false;
-  m_maxEvent = -1;
   m_MCPileupCheckContainer = "AntiKt4TruthJets";
   m_isAFII = false;
-  m_isDAOD = true;
   m_useCutFlow = true;
-  m_systTool_nToys = 100;
-  m_binning = "";
-  m_VjetCalibFile = "";
 
+
+  m_bTag = true;
   m_bTagFileName = "$ROOTCOREBIN/data/xAODAnaHelpers/2015-PreRecomm-13TeV-MC12-CDI-October23_v1.root";
   m_bTagVar    = "MV2c20";
 //  m_bTagOP = "FixedCutBEff_70";
@@ -101,7 +105,6 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_useConeFlavourLabel = true;
   m_bTagWPsString = "77,85";
 
-  m_bTag = true;
 
   //config for Jet Tools
   m_jetDef = "";
@@ -149,6 +152,28 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
     m_triggerThresholds.push_back( std::stof(thisSubStr.substr(thisSubStr.find_first_of(':')+1, thisSubStr.size()) , &sz) *GeV );
   }
 
+  // Save subleading pt thresholds to use
+  std::stringstream ss2(m_MJBIterationThreshold);
+  while( std::getline(ss2, thisSubStr, ',')) {
+    m_subleadingPtThreshold.push_back( std::stof(thisSubStr, &sz) * GeV );
+  }
+
+  //If using MCPileupCheck
+  if( m_MCPileupCheckContainer.compare("None") == 0 )
+    m_useMCPileupCheck = false;
+  else
+    m_useMCPileupCheck = true;
+  
+
+  if( m_validation ){
+    if( m_MJBIteration > 0 ){
+      Error("config","Trying to run validation mode on an MJBIteration above 0, which is not allowed. Maybe you want to use m_closureTest instead? Exiting.");
+      return EL::StatusCode::FAILURE;
+    }
+    Info("config", "Setting subleading pt threshold to a large number in validation mode");
+    m_subleadingPtThreshold.at(0) = 999999.;
+  }// if m_validation
+
   // Setup bootstrap depending upon iteration
   m_iterateBootstrap = false;
   if( m_bootstrap && m_MJBIteration > 0){
@@ -164,26 +189,20 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
   if( m_writeNominalTree )
     m_writeTree = true;
 
-  m_comEnergy = "13TeV";
-  if( m_MCPileupCheckContainer.compare("None") == 0 )
-    m_useMCPileupCheck = false;
-  else
-    m_useMCPileupCheck = true;
-
-
+  // Determine if special V+jets calibrations are to be used
   if (m_VjetCalibFile.size() > 0){
     m_VjetCalib = true;
   } else {
     m_VjetCalib = false;
   }
-
-  // Find subleading pt threshold based on iteration
-  std::stringstream ss2(m_MJBIterationThreshold);
-  while( std::getline(ss2, thisSubStr, ',')) {
-    m_subLeadingPtThreshold.push_back( std::stof(thisSubStr, &sz) * GeV );
+  // if subleading threshold 0 is set to -1000, the value will be determined from the code.
+  // Don't let this happen if we're not using m_VjetCalib
+  if( !m_VjetCalib && (m_subleadingPtThreshold.at(0) == -1000) ){
+    Error("config", "Not running on VjetCalib, yet first MJBIterationThreshold is set to -1.  Exiting.");
+    return EL::StatusCode::FAILURE;
   }
 
-  ///// Tool Config parameters /////
+  ///// Jet calib and uncertainty Tool Config parameters /////
 
   m_jetUncertaintyConfig = gSystem->ExpandPathName( m_jetUncertaintyConfig.c_str() );
 
@@ -274,34 +293,28 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
   m_eventCounter = -1;
 
   const xAOD::EventInfo* eventInfo = 0;
-  HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store);
+  RETURN_CHECK("init", HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store), "Failed to retrieve EventInfo");
   m_isMC = ( eventInfo->eventType( xAOD::EventInfo::IS_SIMULATION ) ) ? true : false;
 
-  if ( this->configure() == EL::StatusCode::FAILURE ) {
-    Error("initialize()", "Failed to properly configure. Exiting." );
-    return EL::StatusCode::FAILURE;
-  }
+  EL_RETURN_CHECK("init:configure", this->configure() );
 
-  if( getLumiWeights(eventInfo) == EL::StatusCode::FAILURE) {
-    return EL::StatusCode::FAILURE;
-  }
+  EL_RETURN_CHECK("init", getLumiWeights(eventInfo) );
 
   // load all variations
   setupJetCalibrationStages();
   EL_RETURN_CHECK("init", loadJetUncertaintyTool());
   EL_RETURN_CHECK("init", loadVariations());
 
-  loadTriggerTool();
-  loadJVTTool();
+  EL_RETURN_CHECK("init", loadTriggerTool());
+  EL_RETURN_CHECK("init", loadJVTTool());
   //load Calibration and systematics files
-  loadJetCalibrationTool();
-  loadJetCleaningTool();
-  loadBTagTools();
+  EL_RETURN_CHECK("init", loadJetCalibrationTool());
+  EL_RETURN_CHECK("init", loadJetCleaningTool());
+  EL_RETURN_CHECK("init", loadBTagTools());
   if (m_VjetCalib)
-    loadVjetCalibration();
+    EL_RETURN_CHECK("init", loadVjetCalibration());
 
-  if (loadMJBCalibration() == EL::StatusCode::FAILURE)
-    return EL::StatusCode::FAILURE;
+  EL_RETURN_CHECK("init", loadMJBCalibration());
 
   if( m_bootstrap ){
     systTool = new SystContainer(m_sysVar, m_bins, m_systTool_nToys);
@@ -321,8 +334,6 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
     m_cutflowFirst = origCutflowHist->GetXaxis()->FindBin("njets");
     origCutflowHistW->GetXaxis()->FindBin("njets");
-    origCutflowHist->GetXaxis()->FindBin( "QuickTrigger");
-    origCutflowHistW->GetXaxis()->FindBin("QuickTrigger");
     origCutflowHist->GetXaxis()->FindBin( "centralLead");
     origCutflowHistW->GetXaxis()->FindBin("centralLead");
     origCutflowHist->GetXaxis()->FindBin( "detEta");
@@ -440,10 +451,6 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   if(m_debug) Info("execute()", "Begin Execute");
   ++m_eventCounter;
 
-  if(m_maxEvent > -1 && m_eventCounter >  m_maxEvent){
-    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
-  }
-
   if(m_eventCounter %100000 == 0)
     Info("execute()", "Event # %i", m_eventCounter);
 
@@ -457,24 +464,31 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   //const xAOD::EventInfo* eventInfo = HelperFunctions::getContainer<xAOD::EventInfo>("EventInfo", m_event, m_store);
   const xAOD::EventInfo* eventInfo = 0;
-  HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store);
+  RETURN_CHECK("exec", HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store), "Failed to retrieve EventInfo");
   m_mcEventWeight = (m_isMC ? eventInfo->mcEventWeight() : 1.) ;
 
   //const xAOD::VertexContainer* vertices = HelperFunctions::getContainer<xAOD::VertexContainer>("PrimaryVertices", m_event, m_store);;
   const xAOD::VertexContainer* vertices = 0;
-  HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store);
+  RETURN_CHECK("exec", HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store), "Failed to retrieve PrimaryVertices");
   m_pvLocation = HelperFunctions::getPrimaryVertexLocation( vertices );  //Get primary vertex for JVF cut
 
   //const xAOD::JetContainer* inJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_inContainerName, m_event, m_store);
   const xAOD::JetContainer* inJets = 0;
-  HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store);
+  RETURN_CHECK("exec", HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store), "Failed to retrieve JetContainer");
 
+  const xAOD::JetContainer* truthJets = 0;
+  if(m_useMCPileupCheck && m_isMC){
+    //truthJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_MCPileupCheckContainer, m_event, m_store);
+    RETURN_CHECK("exec", HelperFunctions::retrieve(truthJets, m_MCPileupCheckContainer, m_event, m_store), "Failed to retrieve truthJets");
+  }
+
+  //// Pass njets ////
   if(inJets->size() < m_numJets){
     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
   }
   passCutAll(); //njets
 
-  //Create an editable shallow copy and a removable container
+  /////Create an editable shallow copy and a removable container //////
   std::pair< xAOD::JetContainer*, xAOD::ShallowAuxContainer* > originalSignalJetsSC = xAOD::shallowCopyContainer( *inJets );
 
   std::vector< xAOD::Jet*>* originalSignalJets = new std::vector< xAOD::Jet* >();
@@ -482,18 +496,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
      originalSignalJets->push_back( thisJet );
    }
 
-  const xAOD::JetContainer* truthJets = 0;
-  if(m_useMCPileupCheck && m_isMC){
-    //truthJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_MCPileupCheckContainer, m_event, m_store);
-    HelperFunctions::retrieve(truthJets, m_MCPileupCheckContainer, m_event, m_store);
-  }
 
-  /////////////////////////// Begin Selections and Creation of Variables ///////////////////////////////
-  if(m_debug) Info("execute()", "Begin Selections ");
-  //Standard values that may be varied
-  float alphaCut, betaCut, ptAsymCut, ptThresholdCut;
-
-
+  ////////////////////////////////// Apply Calibrations, store jetCorr ////////////////////////////////////////
   if(m_debug) Info("execute()", "Get Raw Kinematics ");
   vector<TLorentzVector> rawJetKinematics;
   for (unsigned int iJet = 0; iJet < originalSignalJets->size(); ++iJet){
@@ -508,21 +512,13 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     originalSignalJets->at(iJet)->auxdecor< float >( "jetCorr") = originalSignalJets->at(iJet)->pt() / rawJetKinematics.at(iJet).Pt() ;
   }
   reorderJets( originalSignalJets );
-//start
 
-  if(m_debug) Info("execute()", "QuickTrigger");
-  //Initial check of lead jet pt
-  if( originalSignalJets->at(0)->pt() < 200.*GeV  ){
-    delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
-    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
-  }
-  passCutAll(); // QuickTrigger
+  /////////////////////////// Begin Selections and Creation of Variables ///////////////////////////////
+  if(m_debug) Info("execute()", "Begin Selections");
 
-  //Assign detEta for jets .  Will this be changed by calibrations?
-  if(m_debug) Info("execute()", "DetEta ");
+  if(m_debug) Info("execute()", "Detector Eta checks");
   for(unsigned int iJet=0; iJet < originalSignalJets->size(); ++iJet){
-    //xAOD::JetFourMom_t jetConstituentP4 = originalSignalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetEMScaleMomentum");
-    xAOD::JetFourMom_t jetConstituentP4 = originalSignalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum");
+    xAOD::JetFourMom_t jetConstituentP4 = originalSignalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum"); // or JetEMScaleMomentum
     originalSignalJets->at(iJet)->auxdecor< float >( "detEta") = jetConstituentP4.eta();
   }
 
@@ -555,36 +551,42 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   }
   passCutAll(); //mcCleaning
 
+  if(m_debug) Info("execute()", "Subleading jet pt cut ");
+  //The insitu calibrations are derived on calibrated pts, and assumed to be ~ uncalibrated pt, so that correction is applied to uncalibrated pt.
+  //The subleading cut must be applied to uncalibrated pt, otherwise we get behavior like 1200->1250 pt (good and keep), 1201->1201 pt (bad but keep).
+  //We want to delete events with 1201 pt jets in this situation
+  //This also work for when calibration makes pt go down.
+  //
+  //Technically this causes down and up syst. variations to have different pt selections on the final objects.  
+  //i.e. on 950 uncalibrated, up variation may cut on 990 calibrated while down variation cuts on 980 calibrated. 
+  //No easy way to avoid this, and disjoint-ness in systematic variations is more palatable
+  //
+  //TODO : This needs to be changed in case m_leadingGSC is chosen!!
+  if( originalSignalJets->at(1)->pt() > m_subleadingPtThreshold.at(m_MJBIteration) ){
+    delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
+    wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+  }
 
-  //Save original pt of all jets
-  //!! to pointer?
+  // The following code will manually edit jet 4-vectors in various ways.
+  // Save the original kinematics of all jets to be reapplied after each loop
   vector<TLorentzVector> originalJetKinematics;
   for (unsigned int iJet = 0; iJet < originalSignalJets->size(); ++iJet){
     TLorentzVector thisJet;
     thisJet.SetPtEtaPhiE(originalSignalJets->at(iJet)->pt(), originalSignalJets->at(iJet)->eta(), originalSignalJets->at(iJet)->phi(), originalSignalJets->at(iJet)->e());
     originalJetKinematics.push_back(thisJet);
   }
-
-  //!! Add the following for the EIC issue
-  //Because the V+jet calibrations can be less than 1, there exists a disjoint jet pt spectrum.
-  //I.e. if V+jet calibration ends at 950 GeV, but a 950 GeV jets goes to 945 GeV, then jets at 946 GeV should be ignored
-  //Therefore we need the subleading jet pt cut to be applied at the eta-intercalibration level!
-  //This is only required for the first iteration
-  if( m_VjetCalib  && m_MJBIteration == 0){
-   if( (!m_reverseSubleading && (originalJetKinematics.at(1).Pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) )
-       || (m_reverseSubleading && (originalJetKinematics.at(1).Pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ) ){
-
-     delete originalSignalJetsSC.first; delete originalSignalJetsSC.second; delete originalSignalJets;
-     wk()->skipEvent();  return EL::StatusCode::SUCCESS;
-   }
-  }
+  passCutAll(); //ptSub
 
   int m_cutflowFirst_SystLoop = m_iCutflow; //Get cutflow position for systematic looping
+  //A vector of temporary jet objects whose 4-vectors can be edited.
+  //This will be reset after each systematic loop.
   vector< xAOD::Jet*>* signalJets = new std::vector< xAOD::Jet* >();
 
+  float alphaCut, betaCut, ptAsymCut, ptThresholdCut;
   for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
 
     if(m_debug) Info("execute()", "Starting variation %i %s", iVar, m_sysVar.at(iVar).c_str());
+    
     //Reset standard values
     *signalJets = *originalSignalJets;
     m_iCutflow = m_cutflowFirst_SystLoop;
@@ -593,7 +595,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     ptAsymCut = m_ptAsym;
     ptThresholdCut = m_ptThresh*GeV;
 
-    //Set relevant variations for this iVar
+    //Set relevant MJB variations for this iVar
     if( m_sysTool.at(iVar) == 2 ){ //alpha
       alphaCut = (double) m_sysToolIndex.at(iVar)  / 100.;
     }else if( m_sysTool.at(iVar) == 3 ){ //beta
@@ -603,73 +605,63 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     }else if( m_sysTool.at(iVar) == 5 ){ //ptt
       ptThresholdCut = (double) m_sysToolIndex.at(iVar) * GeV;
     }
-
-
-    if(m_debug) Info("execute()", "Apply other calibrations ");
+    
+    if(m_debug) Info("execute()", "Set calibration level for all jets");
+    // Must reset jet kinematics for each loop of systematic variations
     for (unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
 
+      /////////////////// Get calibration stage of the jet /////////////////////////
       if(m_sysTool.at(iVar) == 1){
+        // A systematic variation that lets us use any jet calibration stage for all jets
         int iCalibStage = m_sysToolIndex.at(iVar);
         xAOD::JetFourMom_t jetCalibStageCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>( m_JCSStrings.at(iCalibStage).c_str() );
         signalJets->at(iJet)->auxdata< float >("pt") = jetCalibStageCopy.Pt();
         signalJets->at(iJet)->auxdata< float >("eta") = jetCalibStageCopy.Eta();
         signalJets->at(iJet)->auxdata< float >("phi") = jetCalibStageCopy.Phi();
         signalJets->at(iJet)->auxdata< float >("e") = jetCalibStageCopy.E();
+        continue; //Don't apply any further calibrations or uncertainties for this jet, skip to the next jet
       } else {
 
-        // Must reset jet kinematics for this iVar of m_sysVar
-        if( iJet !=0 || m_leadingInsitu ){ //Use Insitu Correction
-          signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
-          signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
-          signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
-          signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
-        } else { //Get GSC Correction for leading jet
+        //Use final insitu correction if not leading jet or we want to fully calibrate leading jet 
+        if ( m_leadingGSC && iJet == 0){ // Set GSC-stage for leading jet
           xAOD::JetFourMom_t jetCalibGSCCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetGSCScaleMomentum");
           signalJets->at(iJet)->auxdata< float >("pt") = jetCalibGSCCopy.Pt();
           signalJets->at(iJet)->auxdata< float >("eta") = jetCalibGSCCopy.Eta();
           signalJets->at(iJet)->auxdata< float >("phi") = jetCalibGSCCopy.Phi();
           signalJets->at(iJet)->auxdata< float >("e") = jetCalibGSCCopy.E();
+        } else { // Use in-situ correction. (This should be after eta-intercalibration if using V+jets
+          signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
+          signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
+          signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
+          signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
         }
       }
 
+      //////// Now apply futher V+jet & MJB calibrations as well as systematic variations ////////
 
-      if(iJet == 0){
-        if( m_leadingInsitu){ //Apply standard systematic to lead jet
-          applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
-        } else if( m_closureTest ){ //Apply MJB to lead jet
-          //apply previous correction for closure test??
-          applyMJBCalibration( signalJets->at(iJet), iVar, true );
-        }
-      }//leading jet
-
-      if(iJet > 0){  //Apply standard systematic to subleading jets
-        //!! Changed it to manually select based on subleading pt, due to EIC issue
-        //!! Might need to change this so jetuncertaintytool is applied beyond subLeadingPtThreshold
-        if( m_noLimitJESPt || signalJets->at(iJet)->pt() <= m_subLeadingPtThreshold.at(0) ){
-          if (m_VjetCalib)
-            applyVjetCalibration( signalJets->at(iJet) , iVar );
-          applyJetUncertaintyTool( signalJets->at(iJet) , iVar );
-        }else{
+      if( m_validation ){
+        //All jets get treated the same in validation mode, and no MJB-specific calibrations are applied
+        calibrateBelowThreshold( signalJets->at(iJet) , iVar );
+      } else if( m_closureTest ){
+        //Leading jet with MJB-derived calibration only, other jets as normally calibrated
+        if (iJet == 0 || (signalJets->at(iJet)->pt() > m_subleadingPtThreshold.at(0)) ){
           applyMJBCalibration( signalJets->at(iJet) , iVar );
+        }else{
+          calibrateBelowThreshold( signalJets->at(iJet) , iVar );
+        }
+      } else {
+        //Regular mode, apply extra calibrations to subleading jets
+        if( iJet > 0 ){
+          if( signalJets->at(iJet)->pt() > m_subleadingPtThreshold.at(0) ){
+            applyMJBCalibration( signalJets->at(iJet) , iVar );
+          }else{
+            calibrateBelowThreshold( signalJets->at(iJet) , iVar );
+          }
         }
       }
 
-    }
+    }//for jets
     reorderJets( signalJets );
-
-    if(m_debug) Info("execute()", "Subleading pt selection ");
-    //If not using Vjet calibration or on high MJB iteration, now check subleading jet pt threshold!
-    if( m_MJBIteration > 0 || !m_VjetCalib){
-
-      if( !m_reverseSubleading && (signalJets->at(1)->pt() > m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //require subleading less than limit
-          continue;
-      }else if( m_reverseSubleading && (signalJets->at(1)->pt() <= m_subLeadingPtThreshold.at(m_MJBIteration)) ){ //force subleading greater than limit
-          continue;
-      }
-      passCut(iVar); //ptSub
-    } else {
-      passCut(iVar); //because it already passed before
-    }
 
     if(m_debug) Info("execute()", "Pt threshold ");
     for (unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
@@ -1094,7 +1086,7 @@ EL::StatusCode MultijetBalanceAlgo::getLumiWeights(const xAOD::EventInfo* eventI
     m_acceptance = 1;
   }else{
     m_mcChannelNumber = eventInfo->mcChannelNumber();
-    ifstream fileIn(  gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/XsAcc_"+m_comEnergy+".txt").c_str() ) );
+    ifstream fileIn(  gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt") ) );
     std::string runNumStr = std::to_string( m_mcChannelNumber );
 
     std::string line;
@@ -1520,11 +1512,18 @@ EL::StatusCode MultijetBalanceAlgo :: loadVjetCalibration(){
 
   //Only retrieve Nominal container
   std::string correctionName = containerType+"_correction";
-  TH1F *h = (TH1F*) VjetFile->Get( correctionName.c_str() );
-  h->SetDirectory(0); //Detach histogram from file to memory
-  m_VjetHists.push_back(h);
-
+  m_VjetHist = (TH1F*) VjetFile->Get( correctionName.c_str() );
+  m_VjetHist->SetDirectory(0); //Detach histogram from file to memory
   VjetFile->Close();
+
+  //// Find out the subleading jet pt cut for V+jets ////
+  if( m_subleadingPtThreshold.at(0) == -1000 ){
+    m_subleadingPtThreshold.at(0) = m_VjetHist->GetXaxis()->GetBinUpEdge( m_VjetHist->GetNbinsX() );
+    //float lastCalibFactor = m_VjetHist->GetBinContent( m_VjetHist->GetNbinsX() );
+    //m_subleadingPtThreshold.at(0) = floor( m_subleadingPtThreshold.at(0)*(1./lastCalibFactor) );
+    Info("loadVjetCalibration", "Setting first subleading jet pt threshold to %f, taken from the V+jet configuration file", m_subleadingPtThreshold.at(0));
+  }
+ 
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1549,9 +1548,6 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
 
   std::string mjbIterPrefix = "Iteration"+m_ss.str()+"_";
   std::string histPrefix = "DoubleMJB";
-  if (m_leadJetMJBCorrection){
-    histPrefix += "_leadJet";
-  }
 
   m_ss.str( std::string() );
 
@@ -1649,20 +1645,18 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( xAOD::Jet* jet){
 EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , int iVar ){
   if(m_debug) Info("applyJetUncertaintyTool()", "applyJetUncertaintyTool");
 
-  if( ( m_isMC ) //JetUncertaintyTool doesn't apply to MC
-    || ( m_sysTool.at(iVar) != 0 ) ) //If not JetUncertaintyTool
+  if( m_isMC //JetUncertaintyTool doesn't apply to MC
+    || ( m_sysTool.at(iVar) != 0 ) ) //If not a JetUncertaintyTool sys variation
     return EL::StatusCode::SUCCESS;
 
-  if( !m_noLimitJESPt && (jet->pt() > m_subLeadingPtThreshold.at(0)) ){  //Can't be above 800 GeV
-    return EL::StatusCode::SUCCESS;
-  }
-
+  //Get the calibration
   float thisUncertainty = 1.;
   if( m_sysSign.at(iVar) == 1)
     thisUncertainty += m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
   else
     thisUncertainty -= m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
 
+  //Apply the calibration to the TLorentzVector
   TLorentzVector thisJet;
   thisJet.SetPtEtaPhiE( jet->pt(), jet->eta(), jet->phi(), jet->e() );
   thisJet *= thisUncertainty;
@@ -1675,25 +1669,24 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , 
 }
 
 
+// Apply the Vjet Calibration to jets below the first subleadingPtThreshold
 EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( xAOD::Jet* jet , int iVar ){
-  if(m_debug) Info("applyVjetCalibration()", "applyVjetCalibration ");
+  if(m_debug) Info("applyVjetCalibration", "applyVjetCalibration ");
 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
-  if( (m_sysTool.at(iVar) == 1) || jet->pt() < 20.*GeV ){ //If NoCorr or not in V+jet correction range
-    return EL::StatusCode::SUCCESS;
-  }
-//!!  if( !m_noLimitJESPt && jet->pt() > m_subLeadingPtThreshold.at(0) )
-//!!    return EL::StatusCode::SUCCESS;
+  //if( (m_sysTool.at(iVar) == 1) || jet->pt() < 20.*GeV ){ //If NoCorr or not in V+jet correction range
 
-  float thisCalibration = 1.;
   //Get nominal V+jet correction
-  thisCalibration = m_VjetHists.at(0)->GetBinContent( m_VjetHists.at(0)->FindBin(jet->pt()/GeV) );
+  float thisCalibration = 1.;
+  thisCalibration = m_VjetHist->GetBinContent( m_VjetHist->FindBin(jet->pt()/GeV) );
 
+
+  //Modify the TLorentzVector
   TLorentzVector thisJet;
   thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
-  thisJet *= (1./thisCalibration); //modify TLV
+  thisJet *= (1./thisCalibration);
   jet->auxdata< float >("pt") = thisJet.Pt();
   jet->auxdata< float >("eta") = thisJet.Eta();
   jet->auxdata< float >("phi") = thisJet.Phi();
@@ -1703,33 +1696,18 @@ EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( xAOD::Jet* jet , int
 }
 
 EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int iVar, bool isLead /*=false*/ ){
-  if(m_debug) Info("applyMJBCalibration()", "applyMJBCalibration ");
+  if(m_debug) Info("applyMJBCalibration", "applyMJBCalibration ");
 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
-  //No correction for first iteration
-  if (m_MJBIteration == 0 && !m_closureTest)
-    return EL::StatusCode::SUCCESS;
 
-  //If it's lead jet but not the closure test
-  if( isLead && !m_closureTest)
-    return EL::StatusCode::SUCCESS;
-
-//  //!! Temporary for EIC issue: remove the following 3 lines
-//  // if it's a subleading jet but below the 800 GeV limit
-//  if( !isLead && jet->pt() <= m_subLeadingPtThreshold.at(0))
-//    return EL::StatusCode::SUCCESS;
-
-  // If it's for a subcalibration of JCS, don't apply this calibration
-  if(m_sysTool.at(iVar) == 1)
-    return EL::StatusCode::SUCCESS;
-
+  // Get calibration
   float thisCalibration = 1. / m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) );
 
   // MJB Statistical Systematic //
+  // This is not well tested!! TODO
   // Is the error from the first iteration applied for the first iteration? If so, this needs to be done later in the plotting code
-
   if (m_sysTool.at(iVar) == 6){
     int reverseIndex = m_sysToolIndex.at(iVar);
     int numBins = m_MJBHists.at(iVar)->GetNbinsX();
@@ -1741,10 +1719,10 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int 
 
   }
 
+  // Apply calibration to TLorentzVector
   TLorentzVector thisJet;
   thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
   thisJet *= thisCalibration; //modify TLV
-  //(**jet) *= (thisCalibration); //following Gagik...
   jet->auxdata< float >("pt") = thisJet.Pt();
   jet->auxdata< float >("eta") = thisJet.Eta();
   jet->auxdata< float >("phi") = thisJet.Phi();
@@ -1772,3 +1750,15 @@ EL::StatusCode MultijetBalanceAlgo :: reorderJets( std::vector< xAOD::Jet*>* the
   return EL::StatusCode::SUCCESS;
 }
 
+EL::StatusCode MultijetBalanceAlgo::calibrateBelowThreshold(xAOD::Jet* jet, int iSysVar ){
+  if(m_debug) Info("calibrateBelowThreshold()", "calibrateBelowThreshold ");
+
+  //First calibrate for V+jet - this will check the proper pt automatically!
+  if (m_VjetCalib)
+    applyVjetCalibration( jet , iSysVar );
+  //JetUncertainty comes after V+jet Calibration, as these files *should* have been generated using V+jet!
+  //This will only use the same pt range as the Vjet
+  applyJetUncertaintyTool( jet , iSysVar );
+
+  return EL::StatusCode::SUCCESS;
+}
