@@ -133,9 +133,9 @@ class MultijetBalanceAlgo : public EL::Algorithm
     float m_beta;
     /** @brief \f$p_{T}\f$ threshold for each jet to be included (default 25 GeV)*/
     float m_ptThresh;
-    /** @brief Boolean requiring each jet to pass the MultijetBalanceAlgo#m_beta selection, otherwise it is only applied
-     * to jets with \f$p_{T}\f$ > 25% of the leading jet \f$p_{T}\f$ */
-    bool m_allJetBeta;
+    /** @brief Boolean requiring each jet to pass the MultijetBalanceAlgo#m_beta selection only for
+     * jets with \f$p_{T}\f$ > 25% of the leading jet \f$p_{T}\f$ */
+    bool m_looseBetaCut;
     /** @brief Apply the GSC-stage calibration to the leading jet when calibrating.  This should only be used
      * if a special eta-intercalibration stage insitu file is not available, and is a close approximate.  
      * @note It is an exact approximation if the leading jet detEta cut is changed from 1.2 to 0.8 */

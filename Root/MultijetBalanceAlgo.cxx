@@ -82,7 +82,7 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_alpha = 0.3;
   m_beta = 1.0;
   m_ptThresh = 25.;
-  m_allJetBeta = false;
+  m_looseBetaCut = false;
 
   m_writeTree = false;
   m_writeNominalTree = false;
@@ -508,7 +508,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   if(m_debug) Info("execute()", "Apply Jet Calibration Tool ");
   for(unsigned int iJet=0; iJet < originalSignalJets->size(); ++iJet){
-    applyJetCalibrationTool( originalSignalJets->at(iJet) );
+    EL_RETURN_CHECK("execute", applyJetCalibrationTool( originalSignalJets->at(iJet) ) );
     originalSignalJets->at(iJet)->auxdecor< float >( "jetCorr") = originalSignalJets->at(iJet)->pt() / rawJetKinematics.at(iJet).Pt() ;
   }
   reorderJets( originalSignalJets );
@@ -750,12 +750,10 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     if(m_debug) Info("execute()", "Beta Selection ");
     double smallestBeta=10., avgBeta = 0., thisBeta=0.;
     for(unsigned int iJet=1; iJet < signalJets->size(); ++iJet){
-      // !! thisBeta = fabs(TVector2::Phi_mpi_pi( signalJets->at(iJet)->phi() - signalJets->at(0)->phi() ));
       thisBeta = DeltaPhi(signalJets->at(iJet)->phi(), signalJets->at(0)->phi() );
-      //std::cout << thisBeta << " " << signalJets->at(iJet)->pt() << std::endl;
-      if( m_allJetBeta )
+      if( !m_looseBetaCut && (thisBeta < smallestBeta) ) 
         smallestBeta = thisBeta;
-      else if( (thisBeta < smallestBeta) && (signalJets->at(iJet)->pt() > signalJets->at(0)->pt()*0.25) )
+      else if( m_looseBetaCut && (thisBeta < smallestBeta) && (signalJets->at(iJet)->pt() > signalJets->at(0)->pt()*0.25) )
         smallestBeta = thisBeta;
       avgBeta += thisBeta;
       signalJets->at(iJet)->auxdecor< float >( "beta") = thisBeta;
@@ -868,12 +866,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
         if(signalJets)  m_treeList.at(iTree)->FillJets(  plottingJets);
         m_treeList.at(iTree)->FillTrigger( eventInfo );
         m_treeList.at(iTree)->Fill();
-//        m_treeList.at(iTree)->ClearMJB();
 
-        //if(eventInfo)   m_nominalTree->FillEvent( eventInfo    );
-        //if(signalJets)  m_nominalTree->FillJets(  *plottingJets  );
-        //m_nominalTree->Fill();
-        //m_nominalTree->ClearUser();
         delete plottingJets;
         delete plottingJetsAux;
       }//If it's not m_writeNominalTree or else we're on the nominal sample
@@ -887,7 +880,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   }//For each iVar
 
-//!! Other ideas
+//!! Other ideas for quicker plotting
 /*
     std::pair< xAOD::JetContainer*, xAOD::ShallowAuxContainer* > originalSignalJetsSC = xAOD::shallowCopyContainer( *inJets );
     xAOD::JetContainer* plottingJets = new xAOD::JetContainer();
@@ -1174,47 +1167,6 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
         m_sysVar.push_back("JCS_"+m_JCSTokens.at(iJCS) ); m_sysTool.push_back( 1 ); m_sysToolIndex.push_back( iJCS ); m_sysSign.push_back(0);
       }
 
-//Delete    /////////////////////////////// Special ///////////////////////////////
-//Delete    }else if( varVector.at(iVar).compare("Special") == 0 ){
-//Delete
-//Delete      ifstream fileIn( gSystem->ExpandPathName( m_jetUncertaintyConfig.c_str() ) );
-//Delete      std::string line;
-//Delete      std::string subStr;
-//Delete      while (getline(fileIn, line)){
-//Delete        if( (line.find(".Name:") != std::string::npos) && (line.find("_prop") == std::string::npos) && (line.find("_orig") == std::string::npos)){
-//Delete          //get JES number
-//Delete          istringstream iss(line);
-//Delete          iss >> subStr;
-//Delete          std::string thisJESNumberStr = subStr.substr(subStr.find_first_of('.')+1, subStr.find_last_of('.')-subStr.find_first_of('.')-1 );
-//Delete          int thisJESNumber = atoi( thisJESNumberStr.c_str() );
-//Delete          //next get JES Name
-//Delete          iss >> subStr;
-//Delete          std::string thisJESName = subStr;
-//Delete          if( (thisJESName.find( "EtaIntercalibration" ) != std::string::npos) ||
-//Delete              (thisJESName.find( "Pileup" ) != std::string::npos) ||
-//Delete              (thisJESName.find( "Flavor" ) != std::string::npos) ||
-//Delete              (thisJESName.find( "PunchThrough" ) != std::string::npos) ){
-//Delete            //next get JES name
-//Delete            iss >> subStr;
-//Delete            std::string tmpJESName = thisJESName;
-//Delete            if( tmpJESName.find("MCTYPE") != std::string::npos){
-//Delete              tmpJESName.replace( tmpJESName.find("MCTYPE"), 6, "MC15");
-//Delete            }
-//Delete            int JESSpot = m_JetUncertaintiesTool->getComponentIndex( "JET_"+tmpJESName );
-//Delete
-//Delete            if( JESSpot >= m_JetUncertaintiesTool->getNumComponents() ){
-//Delete              Error( "loadVar", " Could not find component JET_%s, exiting.", tmpJESName.c_str());
-//Delete              return EL::StatusCode::FAILURE;
-//Delete            }
-//Delete            if( m_debug )  Info("loadVar", "JES %s is at %i", tmpJESName, JESSpot);
-//Delete            //Name - JES Tool - JES Number - sign
-//Delete            m_sysVar.push_back( thisJESName+"_pos" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( JESSpot ); m_sysSign.push_back( 1 );
-//Delete            m_sysVar.push_back( thisJESName+"_neg" ); m_sysTool.push_back( 0 ); m_sysToolIndex.push_back( JESSpot ); m_sysSign.push_back( 0 );
-//Delete
-//Delete          } //if a Special JES
-//Delete        }//if the relevant Name line
-//Delete      }//for each line in JES config
-
     ////////////////////////////////// JES Uncertainties /////////////////////////////////////////
     } else if( varVector.at(iVar).find("All") != std::string::npos ){
 
@@ -1476,21 +1428,6 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
 
   m_JetUncertaintiesTool->msg().setLevel( MSG::ERROR ); // VERBOSE, INFO, DEBUG
 
-
-//  //Setup integer mapping of JetUncertaintiesTool systematics to use
-//  std::string jetSystNames[4] = {"EtaIntercalibration_Modelling", "EtaIntercalibration_TotalStat", "Flavor_Composition", "Flavor_Response"};
-//   int jetSystNums[4] = {56, 57, 64, 65}; // for JES_2012/Final/InsituJES2012_AllNuisanceParameters.config
-//  //int jetSystNums[4] = {3, 4, 11, 12}; // for JES_2012/Final/InsituJES2012_3NP_Scenario1.config
-//
-//  for(unsigned int iJESVar=0; iJESVar < 4; ++iJESVar){
-//    std::string thisJetSystName = jetSystNames[iJESVar];
-//    int thisJetSystNum = jetSystNums[iJESVar];
-//    for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
-//      if( m_sysVar.at(iVar).find( thisJetSystName ) != std::string::npos )
-//        m_JESMap[iVar] = thisJetSystNum;
-//    }//iVar
-//  }//iJESVar
-
   return EL::StatusCode::SUCCESS;
 }
 
@@ -1523,7 +1460,6 @@ EL::StatusCode MultijetBalanceAlgo :: loadVjetCalibration(){
     //m_subleadingPtThreshold.at(0) = floor( m_subleadingPtThreshold.at(0)*(1./lastCalibFactor) );
     Info("loadVjetCalibration", "Setting first subleading jet pt threshold to %f, taken from the V+jet configuration file", m_subleadingPtThreshold.at(0));
   }
- 
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1538,7 +1474,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
   if( m_isMC )
     return EL::StatusCode::SUCCESS;
 
-
+  // Load the file.  If m_closureTest, then apply the current iteration
   TFile* MJBFile = TFile::Open( gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/"+m_MJBCorrectionFile).c_str() ), "READ" );
   if(m_debug)  std::cout << "Loaded MJB File" << std::endl;
   if (m_closureTest)
@@ -1562,32 +1498,34 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
       //Remove Iteration part of name
       std::string newHistName = dirName.substr(11);
       if( newHistName.find("MCType") == std::string::npos ){   
-      //if( newHistName.find("MCType") == std::string::npos && newHistName.find("MJB") == std::string::npos ){   //!!!
         MJBHist->SetName( newHistName.c_str() );
         MJBHist->SetDirectory(0);
         m_MJBHists.push_back(MJBHist);
       }
     }
   }
+
   // Fix the systematics mappings to match the input MJB corrections
   std::vector<std::string> new_sysVar;
   std::vector<int> new_sysTool;
   std::vector<int> new_sysToolIndex;
   std::vector<int> new_sysSign;
 
-
   int foundCount = 0;
+  // Loop over each input MJB systematic histogram
   for(unsigned int i=0; i < m_MJBHists.size(); ++i){
     bool foundMatch = false;
     std::string histName = m_MJBHists.at(i)->GetName();
+
+    //Add the MCType systematic if it's in the input, as this isn't added regularly
     if( histName.find("MCType") != std::string::npos ){
       new_sysVar.push_back( histName );
-      new_sysTool.push_back( m_sysTool.at(m_NominalIndex) );
+      new_sysTool.push_back( m_sysTool.at(m_NominalIndex) ); //Treat like nominal calibration
       new_sysToolIndex.push_back( m_sysToolIndex.at(m_NominalIndex) );
       new_sysSign.push_back( m_sysSign.at(m_NominalIndex) );
       foundMatch = true;
-    } else { //find the matching values
-
+    } else {
+      // Loop over the loaded systematics and find the match
       for(unsigned int iVar=0; iVar < m_sysVar.size(); ++iVar){
         if( histName.find( m_sysVar.at(iVar) ) != std::string::npos ){
           new_sysVar.push_back( histName );
@@ -1701,7 +1639,6 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
-
   // Get calibration
   float thisCalibration = 1. / m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) );
 
@@ -1727,7 +1664,6 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int 
   jet->auxdata< float >("eta") = thisJet.Eta();
   jet->auxdata< float >("phi") = thisJet.Phi();
   jet->auxdata< float >("e") = thisJet.E();
-
 
   return EL::StatusCode::SUCCESS;
 }

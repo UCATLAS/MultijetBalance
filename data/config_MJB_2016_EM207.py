@@ -60,8 +60,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_alpha" : 0.3,
 #  "m_beta" : 1.0,
 #  "m_ptThresh" : 25,  #in GeV
-  ## Force removal of all jets within beta:
-#  "m_allJetBeta" : True,
+  ## Looser beta cut to improve statistics
+#  "m_looseBetaCut" : True,
 
 #------ Bootstrap Mode ------#
 #  "m_bootstrap" : True,
