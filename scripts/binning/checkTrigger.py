@@ -282,6 +282,7 @@ def checkTrigger():
 
 #            h_eff[iFile].SetMaximum(2)
             if iFile == 0:
+              h_eff[iFile].SetTitle(";"+thisVar+" (GeV); Efficiency")
               h_eff[iFile].Draw("")
               ROOT.gPad.Update()
               graph = h_eff[iFile].GetPaintedGraph()
@@ -289,13 +290,15 @@ def checkTrigger():
               ROOT.gPad.Update()
             else:
               h_eff[iFile].Draw("same")
+              graph = h_eff[iFile].GetPaintedGraph()
+              ROOT.gPad.Update()
 
             fits[iFile].Draw("same")
 
 
       
           AtlasStyle.ATLAS_LABEL(0.2,0.9, 1,"    Internal ("+thisVar+")")
-          AtlasStyle.myText(0.2,0.84,1, "#sqrt{s} = 13 TeV, 3.6 fb^{-1}")
+          AtlasStyle.myText(0.2,0.84,1, "#sqrt{s} = 13 TeV, ~27 fb^{-1}")
           for iFile, thisFile in enumerate(files):
             EffString = fileLabels[iFile].replace('_',' ')+" "+str(fullyEfficientPt[iFile] )
             AtlasStyle.myText(0.2,0.78-(0.06*iFile),1, EffString ) 
@@ -328,7 +331,7 @@ def getEfficiencyPoint( EfficiencyFit):
  
   maxEff = EfficiencyFit.GetParameter(0)
   print "Maximum efficiency is at ", maxEff
-  return int(math.ceil(EfficiencyFit.GetX( 0.99*maxEff )))
+  return int(math.ceil(EfficiencyFit.GetX( 0.995*maxEff )))
 
 def EffFit(x, p):
   
