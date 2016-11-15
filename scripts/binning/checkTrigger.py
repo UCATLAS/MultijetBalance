@@ -1,11 +1,7 @@
-import ROOT, array, sys, os
 import math
 import time
 import glob
 
-sys.path.insert(0, '../plotting/')
-import AtlasStyle
-AtlasStyle.SetAtlasStyle()
 
 import argparse
 
@@ -19,18 +15,25 @@ parser.add_argument("--file", dest='file', default="", help="Input file name.")
 parser.add_argument("--outName", dest='outName', default="Study", help="Tag to append to output name.")
 parser.add_argument("--nevents", dest='nevents', type=int, default = -1, help="Maximum number of events to run over.")
 parser.add_argument("--dir", dest='dir', default="", help="Directory containing input files, used if --file is not set.")
+parser.add_argument("--tag", dest='tag', default="", help="Tag for selecting input files.")
 args = parser.parse_args()
+
+import ROOT, array, sys, os
+sys.path.insert(0, '../plotting/')
+import AtlasStyle
+AtlasStyle.SetAtlasStyle()
 
 def checkTrigger():
   startTime = time.time()
-  triggers = ["HLT_j380","HLT_j260","HLT_j175","HLT_j110"]
+  #triggers = ["HLT_j380","HLT_j260"]
+  triggers = ["HLT_j380","HLT_j260","HLT_j175","HLT_j110", "HLT_j85"]
   types = ["unprescaled", "unbiased", "prescaled"]
 
   if args.f_calculate:
     if len(args.file) > 0:
       fileNames = [args.file]
     else:
-      fileNames = glob.glob( args.dir+'/*.root' )
+      fileNames = glob.glob( args.dir+'/*'+args.tag+'*.root' )
   
   
     treeName = "outTree_Nominal"
@@ -78,6 +81,19 @@ def checkTrigger():
         # denominator for jetpt
         h_jetpt_denom[-1].append( ROOT.TH1F(thisType+"_jetpt_denom_"+trigger, "h_jetpt_denom", 300, 50, 2000) )
   
+
+    totalEntries = 0
+    totalCount = 0
+    for fileName in fileNames:
+  
+      inFile = ROOT.TFile.Open(fileName, "READ")
+      tree = inFile.Get(treeName)
+      print fileName
+      totalEntries += tree.GetEntries()
+      inFile.Close()
+
+    print "Running over a total of ", totalEntries, "events"
+
     for fileName in fileNames:
   
       inFile = ROOT.TFile.Open(fileName, "READ")
@@ -117,12 +133,11 @@ def checkTrigger():
       count = 0
       while tree.GetEntry(count):
         count += 1
+        totalCount += 1
         if (args.nevents > -1) and (count > args.nevents):
           break
   
-        if count%100000 == 0:
-          print count
-          print "It's been", (time.time() - startTime)/60. , "minutes.  Event rate is ", count/(time.time()-startTime), " events per second"
+        if totalCount%1e5 == 0:  print "Event ", totalCount, ". It's been", (time.time() - startTime)/60. , "minutes.  Event rate is ", totalCount/(time.time()-startTime), " events per second.  We need about ", (totalEntries-totalCount)*(time.time()-startTime)/totalCount/60., " more minutes."
   
   # !!TODO add back asym cut?
   #      if( jet_pt[1]*1000/recoilPt[0] > 0.8):
@@ -174,6 +189,7 @@ def checkTrigger():
               if trigger in passedTriggers and triggers[iT+1] in passedTriggers:
                 h_recoilpt_numer[iT][iType].Fill( recoilPt[0]/1e3, weight[0]*cutflowWeight )
                 h_jetpt_numer[iT][iType].Fill( jet_pt[0], weight[0]*cutflowWeight )
+      inFile.Close()
   
   
     outFile.Write()
@@ -186,9 +202,13 @@ def checkTrigger():
       fileNames = [args.file]
       outDir = os.path.dirname(args.file)+'/'
     else:
-      fileNames = glob.glob( args.dir+'/*.root' )
+      fileNames = glob.glob( args.dir+'/*'+args.tag+'*.root' )
       outDir = args.dir+'/'
 
+    if (args.outName):
+      outDir += args.outName+'/'
+      if not os.path.exists( outDir ):
+        os.makedirs( outDir )
   
     fileLabels = []
     colors = [ROOT.kBlack, ROOT.kRed, ROOT.kBlue]
@@ -197,7 +217,6 @@ def checkTrigger():
       fileLabels.append( os.path.basename(fileName).replace('TriggerHists_','').replace('.root','') )
   
   
-    c1 = ROOT.TCanvas()
   
     types = ["unprescaled", "prescaled"]
     variables = ["recoilpt","jetpt"]
@@ -215,6 +234,8 @@ def checkTrigger():
       for thisType in types:
         for thisVar in variables:
           h_numer, h_denom = [], []
+
+          h_eff = []
     
           for iFile, thisFile in enumerate(files):
             
@@ -228,65 +249,91 @@ def checkTrigger():
     
     
           fullyEfficientPt = []
+          fits = []
           ## Divide numerator and denominator to get efficiency turn-on curve
           for iT, trig in enumerate(h_numer):
-            h_numer[iT].Divide( h_denom[iT] )
+            #h_numer[iT].Divide( h_denom[iT] )
+            #h_eff.append( h_numer[iT] )
+
+            minPt, triggerPt = findMinimum( h_numer[iT], h_denom[iT] )
+            thisTEff = ROOT.TEfficiency(h_numer[iT], h_denom[iT])
+            thisTEff.SetLineColor( colors[iT] )
+            thisTEff.SetMarkerColor( colors[iT] )
+            thisTEff.SetMarkerSize( 1 )
+            h_eff.append( thisTEff )
+
+            thisFit = ROOT.TF1( 'Fit_'+h_numer[iT].GetName(), EffFit, minPt, triggerPt+200, 3)
+            thisFit.SetParameters(0.8, 300, 50) #From a low pt trigger turn-on, relatively meaningless
+            thisFit.SetParLimits(0, 0., 1.)
+            thisTEff.Fit(thisFit)
+            thisFit.SetLineColor( colors[iT] )
+            #thisFit.SetLineWidth( 1 )
+            fits.append( thisFit)
+            #fit1.Draw()
+            #time.sleep(100)
     
-            thisEfficiencyPt = getEfficiencyPoint( h_numer[iT], h_denom[iT] )
+            thisEfficiencyPt = getEfficiencyPoint( thisFit )
             fullyEfficientPt.append( thisEfficiencyPt )
     
+          c1 = ROOT.TCanvas()
           leg = ROOT.TLegend(0.7, 0.7, 0.9, 0.9)
           for iFile, thisFile in enumerate(files):
-            leg.AddEntry( h_numer[iFile], fileLabels[iFile], "l")
+            leg.AddEntry( h_eff[iFile], fileLabels[iFile], "l")
 
-            h_numer[iFile].SetMaximum(2)
+#            h_eff[iFile].SetMaximum(2)
             if iFile == 0:
-              h_numer[iFile].Draw()
+              h_eff[iFile].Draw("")
+              ROOT.gPad.Update()
+              graph = h_eff[iFile].GetPaintedGraph()
+              graph.SetMaximum(2)
+              ROOT.gPad.Update()
             else:
-              h_numer[iFile].Draw("same")
-      
-          AtlasStyle.ATLAS_LABEL(0.2,0.9, 1,"  Internal")
-          AtlasStyle.myText(0.2,0.84,1, "#sqrt{s} = 13 TeV, 3.6 fb^{-1}")
-          EffString = thisVar+" "
-          for iFile, thisFile in enumerate(files):
-            EffString += fileLabels[iFile]+" "+str(fullyEfficientPt[iFile] )
+              h_eff[iFile].Draw("same")
 
-          AtlasStyle.myText(0.2,0.78,2, EffString ) 
+            fits[iFile].Draw("same")
+
+
       
-          leg.Draw("same")
+          AtlasStyle.ATLAS_LABEL(0.2,0.9, 1,"    Internal ("+thisVar+")")
+          AtlasStyle.myText(0.2,0.84,1, "#sqrt{s} = 13 TeV, 3.6 fb^{-1}")
+          for iFile, thisFile in enumerate(files):
+            EffString = fileLabels[iFile].replace('_',' ')+" "+str(fullyEfficientPt[iFile] )
+            AtlasStyle.myText(0.2,0.78-(0.06*iFile),1, EffString ) 
+      
+#          leg.Draw("same")
       
           plotName = outDir+thisType+'_'+thisVar+'_'+trigger+'.png'
           c1.SaveAs(plotName);
       
           c1.Clear();
 
-def getEfficiencyPoint( thisRatio, thisDenom ):
+def findMinimum( numerHist, denomHist ):
+
+  ratioHist = numerHist.Clone("tmpHist")
+  ratioHist.Divide(denomHist)
+  ratioHist.Draw()
+  triggerPt = numerHist.GetName().split('_')[-1]
+  #triggerPt = [thisStr for thisStr in numerHist.GetName().split('_') if thisStr.startswith('j')][0]
+  triggerPt = int( triggerPt[1:])
+  print "Found trigger value", triggerPt
+
+  ratioHist.GetXaxis().SetRangeUser(3, triggerPt)
+  minPt = ratioHist.GetXaxis().GetBinLowEdge( ratioHist.GetMinimumBin() )
+  return minPt, triggerPt
+
+def getEfficiencyPoint( EfficiencyFit):
+
+  #hist = EfficiencyFit.GetHistogram()
+  #hist.Draw()
  
-  #Set bins of 0 after turn-on to 1.  These beens have 0 events in numerator and denominator
-  for iBin in range(thisRatio.FindFirstBinAbove(0.5), thisRatio.GetNbinsX()+1 ):
-    if thisDenom.GetBinContent(iBin) == 0:
-      thisRatio.SetBinContent(iBin, 1)
-  #Set all bin errors to 0    
-  for iBin in range(1, thisRatio.GetNbinsX()+1 ):
-    thisRatio.SetBinError(iBin, 0)
+  maxEff = EfficiencyFit.GetParameter(0)
+  print "Maximum efficiency is at ", maxEff
+  return int(math.ceil(EfficiencyFit.GetX( 0.99*maxEff )))
 
-  ####### Calculate pt of full efficiency.   ####
-
-  ptStart = int( thisRatio.GetName().split('_')[-1].replace('j','') )
-  print ptStart
-  minBin = 1+thisRatio.GetXaxis().FindBin( ptStart)
-
-  effBin = minBin
-
-  for iBin in range(minBin+1, thisRatio.GetNbinsX()):
-    if thisRatio.GetBinContent( iBin ) > thisRatio.GetBinContent( effBin ):
-      effBin = iBin
-    else:
-      break
-    if thisRatio.GetBinContent( iBin ) > 0.99:
-      break
-
-  return thisRatio.GetXaxis().GetBinLowEdge( effBin )
+def EffFit(x, p):
+  
+  #return (1/2.)*(1+ROOT.TMath.Erf( (x[0]-p[0])/(math.sqrt(2)*p[1]) ) )
+  return (p[0]/2.)*(1+ROOT.TMath.Erf( (x[0]-p[1])/(math.sqrt(2)*p[2]) ) )
   
 if __name__ == "__main__":
   checkTrigger()
