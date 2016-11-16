@@ -9,20 +9,10 @@
 #include "xAODTracking/VertexContainer.h"
 #include <xAODJet/JetContainer.h>
 #include "xAODEventInfo/EventInfo.h"
-#include <MultijetBalance/MultijetBalanceAlgo.h>
-#include <xAODAnaHelpers/HelperFunctions.h>
-#include <MultijetBalance/MultijetHists.h>
 #include "xAODCore/ShallowCopy.h"
 #include "xAODJet/JetContainer.h"
 #include "xAODJet/JetAuxContainer.h"
 
-// external tools include(s):
-#include "JetCalibTools/JetCalibrationTool.h"
-#include "JetSelectorTools/JetCleaningTool.h"
-#include "JetUncertainties/JetUncertaintiesTool.h"
-#include "TrigConfxAOD/xAODConfigTool.h"
-#include "TrigDecisionTool/TrigDecisionTool.h"
-//#include "xAODTrigMissingET/TrigMissingETContainer.h"
 
 // ROOT include(s):
 #include "TFile.h"
@@ -37,6 +27,22 @@
 // package include(s):
 #include <xAODAnaHelpers/tools/ReturnCheck.h>
 #include <xAODAnaHelpers/tools/ReturnCheckConfig.h>
+#include <MultijetBalance/MultijetBalanceAlgo.h>
+#include <xAODAnaHelpers/HelperFunctions.h>
+#include <MultijetBalance/MultijetHists.h>
+
+// external tools include(s):
+#include "JetCalibTools/JetCalibrationTool.h"
+#include "JetUncertainties/JetUncertaintiesTool.h"
+#include "JetSelectorTools/JetCleaningTool.h"
+#include "JetMomentTools/JetVertexTaggerTool.h"
+#include "JetJvtEfficiency/JetJvtEfficiency.h"
+
+#include "xAODBTaggingEfficiency/BTaggingSelectionTool.h"
+#include "xAODBTaggingEfficiency/BTaggingEfficiencyTool.h"
+
+#include "TrigConfxAOD/xAODConfigTool.h"
+#include "TrigDecisionTool/TrigDecisionTool.h"
 
 #include "SystTool/SystContainer.h"
 
@@ -49,7 +55,12 @@ ClassImp(MultijetBalanceAlgo)
 
 MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   Algorithm(),
-  m_name(name)
+  m_name(name),
+  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
+  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
+  m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
+  m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
+  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JBTEfficiencyTool_"+name)
 {
   // Here you put any code for the base initialization of variables,
   // e.g. initialize all pointers to 0.  Note that you should only put
@@ -80,7 +91,7 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_numJets = 3;
   m_ptAsym = 0.8;
   m_alpha = 0.3;
-  m_beta = 1.0;
+  m_beta = 0.6;
   m_ptThresh = 25.;
   m_looseBetaCut = false;
 
@@ -307,10 +318,10 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
   EL_RETURN_CHECK("init", loadVariations());
 
   EL_RETURN_CHECK("init", loadTriggerTool());
-  EL_RETURN_CHECK("init", loadJVTTool());
   //load Calibration and systematics files
   EL_RETURN_CHECK("init", loadJetCalibrationTool());
   EL_RETURN_CHECK("init", loadJetCleaningTool());
+  EL_RETURN_CHECK("init", loadJVTTool());
   EL_RETURN_CHECK("init", loadBTagTools());
   if (m_VjetCalib)
     EL_RETURN_CHECK("init", loadVjetCalibration());
@@ -492,6 +503,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   /////Create an editable shallow copy and a removable container //////
   std::pair< xAOD::JetContainer*, xAOD::ShallowAuxContainer* > originalSignalJetsSC = xAOD::shallowCopyContainer( *inJets );
 
+
   std::vector< xAOD::Jet*>* originalSignalJets = new std::vector< xAOD::Jet* >();
   for( auto thisJet : *(originalSignalJetsSC.first) ) {
      originalSignalJets->push_back( thisJet );
@@ -509,7 +521,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   if(m_debug) Info("execute()", "Apply Jet Calibration Tool ");
   for(unsigned int iJet=0; iJet < originalSignalJets->size(); ++iJet){
-    EL_RETURN_CHECK("execute", applyJetCalibrationTool( originalSignalJets->at(iJet) ) );
+//    EL_RETURN_CHECK("execute", applyJetCalibrationTool( originalSignalJets->at(iJet) ) );
+    m_JetCalibrationTool_handle->applyCorrection( *(originalSignalJets->at(iJet)) );
     originalSignalJets->at(iJet)->auxdecor< float >( "jetCorr") = originalSignalJets->at(iJet)->pt() / rawJetKinematics.at(iJet).Pt() ;
   }
   reorderJets( originalSignalJets );
@@ -592,7 +605,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     *signalJets = *originalSignalJets;
     m_iCutflow = m_cutflowFirst_SystLoop;
     alphaCut = m_alpha; //0.3
-    betaCut = m_beta; //1.0
+    betaCut = m_beta; 
     ptAsymCut = m_ptAsym;
     ptThresholdCut = m_ptThresh*GeV;
 
@@ -677,8 +690,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
     if(m_debug) Info("execute()", "Apply JVT ");
     for(unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
-      signalJets->at(iJet)->auxdata< float >("Jvt") = m_JVTUpdate_handle->updateJvt( *(signalJets->at(iJet)) );
-      if( !m_JVTEff_handle->passesJvtCut( *(signalJets->at(iJet)) ) ){
+      signalJets->at(iJet)->auxdata< float >("Jvt") = m_JVTUpdateTool_handle->updateJvt( *(signalJets->at(iJet)) );
+      if( !m_JetJVTEfficiencyTool_handle->passesJvtCut( *(signalJets->at(iJet)) ) ){
         signalJets->erase(signalJets->begin()+iJet);  --iJet;
       }
     }
@@ -693,7 +706,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     if(m_debug) Info("execute()", "Jet Cleaning ");
     //// Ignore event if any of the used jets are not clean ////
     for(unsigned int iJet = 0; iJet < signalJets->size(); ++iJet){
-      if(! m_JetCleaningTool->accept( *(signalJets->at(iJet))) ){
+      if(! m_JetCleaningTool_handle->keep( *(signalJets->at(iJet))) ){
         wk()->skipEvent();  return EL::StatusCode::SUCCESS;
       }//clean jet
     }
@@ -714,11 +727,11 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       passedTriggers = true;
 
     for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
-      auto triggerChainGroup = m_trigDecTools.at(iT)->getChainGroup(m_triggers.at(iT));
+      auto triggerChainGroup = m_AllTrigDecisionTool_handles.at(iT)->getChainGroup(m_triggers.at(iT));
       if(recoilJets.Pt() > m_triggerThresholds.at(iT)){
         if( triggerChainGroup->isPassed() ){
           passedTriggers = true;
-          prescale = m_trigDecTools.at(iT)->getPrescale(m_triggers.at(iT));
+          prescale = m_AllTrigDecisionTool_handles.at(iT)->getPrescale(m_triggers.at(iT));
         }
         break;
       }//recoil Pt
@@ -754,7 +767,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       thisBeta = DeltaPhi(signalJets->at(iJet)->phi(), signalJets->at(0)->phi() );
       if( !m_looseBetaCut && (thisBeta < smallestBeta) ) 
         smallestBeta = thisBeta;
-      else if( m_looseBetaCut && (thisBeta < smallestBeta) && (signalJets->at(iJet)->pt() > signalJets->at(0)->pt()*0.25) )
+      //RUN1 else if( m_looseBetaCut && (thisBeta < smallestBeta) && (signalJets->at(iJet)->pt() > signalJets->at(0)->pt()*0.25) )
+      else if( m_looseBetaCut && (thisBeta < smallestBeta) && (signalJets->at(iJet)->pt() > signalJets->at(0)->pt()*0.1) )
         smallestBeta = thisBeta;
       avgBeta += thisBeta;
       signalJets->at(iJet)->auxdecor< float >( "beta") = thisBeta;
@@ -762,7 +776,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     avgBeta /= (signalJets->size()-1);
     eventInfo->auxdecor< float >( "avgBeta" ) = avgBeta;
 
-    if( smallestBeta < betaCut ){ //1.0
+    if( smallestBeta < betaCut ){ 
         continue;
     }
     passCut(iVar); //beta
@@ -773,7 +787,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       for(unsigned int iJet=0; iJet < signalJets->size(); ++iJet){
         //m_MJBDetailStr  is bTag85
         SG::AuxElement::Decorator< int > isBTag( ("BTag_"+m_bTagWPs.at(iB)+"Fixed").c_str() );
-        if( m_BJetSelectTools.at(iB)->accept( signalJets->at(iJet) ) ) {
+        if( m_AllBTaggingSelectionTool_handles.at(iB)->accept( signalJets->at(iJet) ) ) {
           isBTag( *signalJets->at(iJet) ) = 1;
         }else{
           isBTag( *signalJets->at(iJet) ) = 0;
@@ -785,9 +799,9 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
         if( m_isMC && fabs(signalJets->at(iJet)->eta()) < 2.5 ){
           CP::CorrectionCode BJetEffCode;
           if( isBTag( *signalJets->at(iJet) ) == 1 ){
-            BJetEffCode = m_BJetEffSFTools.at(iB)->getScaleFactor( *signalJets->at(iJet), thisSF );
+            BJetEffCode = m_AllBTaggingEfficiencyTool_handles.at(iB)->getScaleFactor( *signalJets->at(iJet), thisSF );
           }else{
-            BJetEffCode = m_BJetEffSFTools.at(iB)->getInefficiencyScaleFactor( *signalJets->at(iJet), thisSF );
+            BJetEffCode = m_AllBTaggingEfficiencyTool_handles.at(iB)->getInefficiencyScaleFactor( *signalJets->at(iJet), thisSF );
           }
           if (BJetEffCode == CP::CorrectionCode::Error){
             Warning( "execute()", "Error in m_BJetEFFSFTool's getEfficiencyScaleFactor, setting Scale Factor to -2");
@@ -950,17 +964,6 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
     delete systTool;  systTool = nullptr;
   }
 
-  if(m_bTag){
-    for(unsigned int iB=0; iB < m_bTagWPs.size(); ++iB){ 
-    delete m_BJetSelectTools.at(iB); m_BJetSelectTools.at(iB) = nullptr;
-    if(m_isMC)
-      delete m_BJetEffSFTools.at(iB); m_BJetEffSFTools.at(iB) = nullptr;
-    }
-  }
-
-  delete m_JetCalibrationTool; m_JetCalibrationTool = nullptr;
-  delete m_JetCleaningTool; m_JetCleaningTool = nullptr;
-  delete m_JetUncertaintiesTool; m_JetUncertaintiesTool = nullptr;
 
   //Need to retroactively fill original bins of these histograms
   if(m_useCutFlow) {
@@ -1196,9 +1199,9 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
             if( tmpJESName.find("MCTYPE") != std::string::npos){
               tmpJESName.replace( tmpJESName.find("MCTYPE"), 6, "MC15");
             }
-            unsigned int JESSpot = m_JetUncertaintiesTool->getComponentIndex( "JET_"+tmpJESName );
+            unsigned int JESSpot = m_JetUncertaintiesTool_handle->getComponentIndex( "JET_"+tmpJESName );
 
-            if( JESSpot >= m_JetUncertaintiesTool->getNumComponents() ){
+            if( JESSpot >= m_JetUncertaintiesTool_handle->getNumComponents() ){
               Error( "loadVar", " Could not find component JET_%s, exiting.", tmpJESName.c_str());
               return EL::StatusCode::FAILURE;
             }
@@ -1222,9 +1225,9 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
       m_sysVar.push_back("MJB_a"+to_string(systValue[0])+"_neg" );   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( systValue[0] ); m_sysSign.push_back(0);
       m_sysVar.push_back("MJB_a"+to_string(systValue[1])+"_pos" );   m_sysTool.push_back( 2 ); m_sysToolIndex.push_back( systValue[1] ); m_sysSign.push_back(1);
 
-      //Beta systematics are +-.5 (*10)
-      systValue[0] = round(m_beta*10)-5;
-      systValue[1] = round(m_beta*10)+5;
+      //Beta systematics are +-.4 (*10)
+      systValue[0] = round(m_beta*10)-4;
+      systValue[1] = round(m_beta*10)+4;
       m_sysVar.push_back("MJB_b"+to_string(systValue[0])+"_neg" );   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( systValue[0] ); m_sysSign.push_back(0);
       m_sysVar.push_back("MJB_b"+to_string(systValue[1])+"_pos" );   m_sysTool.push_back( 3 ); m_sysToolIndex.push_back( systValue[1] ); m_sysSign.push_back(1);
 
@@ -1257,18 +1260,27 @@ EL::StatusCode MultijetBalanceAlgo :: loadTriggerTool(){
 
   if(m_debug) Info("loadTriggerTool", "loadTriggerTool");
   for(unsigned int iT=0; iT < m_triggers.size(); ++iT){
-    TrigConf::xAODConfigTool* tmpTrigConfTool = new TrigConf::xAODConfigTool( ("xAODConfigTool_"+m_triggers.at(iT)).c_str() );
-    tmpTrigConfTool->initialize();
-    ToolHandle< TrigConf::ITrigConfigTool > configHandle( tmpTrigConfTool );
 
-    Trig::TrigDecisionTool* tmpTrigDecTool = new Trig::TrigDecisionTool( ("TrigDecisionTool_"+m_triggers.at(iT)).c_str() );
-    tmpTrigDecTool->setProperty( "ConfigTool", configHandle );
-    tmpTrigDecTool->setProperty( "TrigDecisionKey", "xTrigDecision" );
-    tmpTrigDecTool->setProperty( "OutputLevel", MSG::INFO);
-    tmpTrigDecTool->initialize();
+    asg::AnaToolHandle<Trig::TrigDecisionTool> this_TrigDecisionTool_handle;    
+    this_TrigDecisionTool_handle.setTypeAndName("Trig::TrigDecisionTool/TrigDecisionTool_"+m_triggers.at(iT)+"_"+m_name);
+    asg::AnaToolHandle<TrigConf::ITrigConfigTool> this_TrigConfigTool_handle;
+    this_TrigConfigTool_handle.setTypeAndName("TrigConf::xAODConfigTool/TrigConfigTool_"+m_triggers.at(iT)+"_"+m_name);
 
-    m_trigConfTools.push_back( tmpTrigConfTool );
-    m_trigDecTools.push_back( tmpTrigDecTool );
+    if( !this_TrigDecisionTool_handle.isUserConfigured() ){
+
+      ANA_CHECK( ASG_MAKE_ANA_TOOL( this_TrigConfigTool_handle, TrigConf::xAODConfigTool ) ); 
+      ANA_CHECK( this_TrigConfigTool_handle.retrieve() );
+
+      ANA_CHECK( ASG_MAKE_ANA_TOOL( this_TrigDecisionTool_handle, Trig::TrigDecisionTool ) );
+      ANA_CHECK( this_TrigDecisionTool_handle.setProperty( "ConfigTool", this_TrigConfigTool_handle.getHandle() ) );
+      ANA_CHECK( this_TrigDecisionTool_handle.setProperty( "TrigDecisionKey", "xTrigDecision" ) );
+      ANA_CHECK( this_TrigDecisionTool_handle.retrieve() );
+
+
+
+    }
+    m_AllTrigDecisionTool_handles.push_back( this_TrigDecisionTool_handle );
+    m_AllTrigConfigTool_handles.push_back( this_TrigConfigTool_handle );
 
   }
 
@@ -1280,15 +1292,17 @@ EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
   if(m_debug) Info("loadJVTTool", "loadJVTTool");
 
   //// Set up tagger tool to update JVT value after calibration
-  m_JVTTool = new JetVertexTaggerTool("JVTUpdateTool");
-  m_JVTUpdate_handle = ToolHandle<IJetUpdateJvt>("JVTUpdateTool");
-  RETURN_CHECK("loadJVTTool", m_JVTTool->setProperty("JVTFileName","JetMomentTools/JVTlikelihood_20140805.root"), "");
-  RETURN_CHECK("loadJVTTool", m_JVTTool->initialize(), "Failed to initialize JVT Tool");
+  if( !m_JVTUpdateTool_handle.isUserConfigured() ){
+    ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JVTUpdateTool_handle, JetVertexTaggerTool) );
+    ANA_CHECK( m_JVTUpdateTool_handle.setProperty("JVTFileName","JetMomentTools/JVTlikelihood_20140805.root") );
+    ANA_CHECK( m_JVTUpdateTool_handle.retrieve() );
+  }
 
-  //// Set up tool to check JVT value
-  RETURN_CHECK("loadJVTTool", m_JVTEff_handle.makeNew<CP::JetJvtEfficiency>("JVTEffTool_handle"), "Failed to create handle to CP::JetJvtEfficiency for JVT");
-  RETURN_CHECK("loadJVTTool", m_JVTEff_handle.setProperty("WorkingPoint", m_JVTWP ),"Failed to set Working Point property of JetJvtEfficiency for JVT");
-  RETURN_CHECK("loadJVTTool", m_JVTEff_handle.initialize(), "Failed to properly initialize CP::JetJvtEfficiency for JVT");
+  if( !m_JetJVTEfficiencyTool_handle.isUserConfigured() ){
+    ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetJVTEfficiencyTool_handle, CP::JetJvtEfficiency) );
+    ANA_CHECK( m_JetJVTEfficiencyTool_handle.setProperty("WorkingPoint", m_JVTWP) );
+    ANA_CHECK( m_JetJVTEfficiencyTool_handle.retrieve() );
+  }
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1296,10 +1310,15 @@ EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
 EL::StatusCode MultijetBalanceAlgo :: loadJetCalibrationTool(){
 
   if(m_debug) Info("loadJetCalibrationTool", "loadJetCalibrationTool");
-  m_JetCalibrationTool = new JetCalibrationTool("JetCorrectionTool", m_jetDef, m_jetCalibConfig, m_jetCalibSequence, !m_isMC);
-  m_JetCalibrationTool->msg().setLevel( MSG::ERROR); // VERBOSE, INFO, DEBUG
 
-  RETURN_CHECK( "loadJetCalibrationTool", m_JetCalibrationTool->initializeTool("JetCorrectionTool"), "");
+  if( !m_JetCalibrationTool_handle.isUserConfigured() ){
+    ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetCalibrationTool_handle, JetCalibrationTool) );
+    ANA_CHECK( m_JetCalibrationTool_handle.setProperty("JetCollection", m_jetDef) );
+    ANA_CHECK( m_JetCalibrationTool_handle.setProperty("ConfigFile", m_jetCalibConfig) );
+    ANA_CHECK( m_JetCalibrationTool_handle.setProperty("CalibSequence", m_jetCalibSequence) );
+    ANA_CHECK( m_JetCalibrationTool_handle.setProperty("IsData", !m_isMC) );
+    ANA_CHECK( m_JetCalibrationTool_handle.retrieve() );
+  }
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1312,39 +1331,52 @@ EL::StatusCode MultijetBalanceAlgo :: loadBTagTools(){
   }
 
   for(unsigned int iB=0; iB < m_bTagWPs.size(); ++iB){ 
-    // Initialize & Configure the BJetSelectionTool
-    BTaggingSelectionTool* m_BJetSelectTool = new BTaggingSelectionTool( "BJetSelectionTool" );
-    m_BJetSelectTool->msg().setLevel( MSG::INFO ); // DEBUG, VERBOSE, INFO, ERROR
 
-    std::string thisBTagOP = "FixedCutBEff_"+m_bTagWPs.at(iB);
-  
-    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("MaxEta",2.5),"Failed to set property:MaxEta");
-    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("MinPt",20000.),"Failed to set property:MinPt");
-    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("FlvTagCutDefinitionsFileName",m_bTagFileName.c_str()),"Failed to set property:FlvTagCutDefinitionsFileName");
-    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("TaggerName",          m_bTagVar),"Failed to set property: TaggerName");
-    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("OperatingPoint",      thisBTagOP),"Failed to set property: OperatingPoint");
-    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()),"Failed to set property: JetAuthor");
-    RETURN_CHECK( "loadBTagTools()", m_BJetSelectTool->initialize(), "Failed to properly initialize the BJetSelectionTool");
-    Info("loadBTagTools()", "BTaggingSelectionTool initialized : %s ", m_BJetSelectTool->name().c_str() );
-    m_BJetSelectTools.push_back(m_BJetSelectTool);
-  
-    // Initialize & Configure the BJetEfficiencyCorrectionTool
-    BTaggingEfficiencyTool* m_BJetEffSFTool = nullptr;
-    if( m_isMC ) {
-      m_BJetEffSFTool = new BTaggingEfficiencyTool( "BJetEfficiencyCorrectionTool" );
-      m_BJetEffSFTool->msg().setLevel( MSG::INFO ); // DEBUG, VERBOSE, INFO, ERROR
-  
-      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("TaggerName",          m_bTagVar),"Failed to set property");
-      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("OperatingPoint",      thisBTagOP),"Failed to set property");
-      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()),"Failed to set property");
-      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("ScaleFactorFileName", m_bTagFileName.c_str()),"Failed to set property");
-      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("UseDevelopmentFile",  m_useDevelopmentFile), "Failed to set property");
-      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->setProperty("ConeFlavourLabel",    m_useConeFlavourLabel), "Failed to set property");
-      RETURN_CHECK( "loadBTagTools()", m_BJetEffSFTool->initialize(), "Failed to properly initialize the BJetEfficiencyCorrectionTool");
-      Info("loadBTagTools()", "BTaggingEfficiencyTool initialized : %s ", m_BJetEffSFTool->name().c_str() );
+    // Initialize & Configure the BJetSelectionTool
+    asg::AnaToolHandle<IBTaggingSelectionTool> this_BTaggingSelectionTool_handle;
+    this_BTaggingSelectionTool_handle.setTypeAndName("BTaggingSelectionTool/BTaggingSelectionTool_"+m_bTagWPs.at(iB)+"_"+m_name);
+
+    if( !this_BTaggingSelectionTool_handle.isUserConfigured() ){
+      ANA_CHECK( ASG_MAKE_ANA_TOOL( this_BTaggingSelectionTool_handle, BTaggingSelectionTool ) );
+
+      std::string thisBTagOP = "FixedCutBEff_"+m_bTagWPs.at(iB);
+      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("MaxEta",2.5) );
+      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("MinPt",20000.) );
+      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("FlvTagCutDefinitionsFileName",m_bTagFileName.c_str()) );
+      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("TaggerName",          m_bTagVar) );
+      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("OperatingPoint",      thisBTagOP) );
+      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()) );
+
+      ANA_CHECK( this_BTaggingSelectionTool_handle.retrieve() );
+      Info("loadBTagTools()", "BTaggingSelectionTool initialized : %s ", this_BTaggingSelectionTool_handle.name().c_str() );
+
     }
-    m_BJetEffSFTools.push_back(m_BJetEffSFTool);
-  }
+    m_AllBTaggingSelectionTool_handles.push_back( this_BTaggingSelectionTool_handle );
+
+    // Initialize & Configure the BJetEfficiencyCorrectionTool
+
+    if( m_isMC) {
+      asg::AnaToolHandle<IBTaggingEfficiencyTool> this_BTaggingEfficiencyTool_handle;
+      this_BTaggingEfficiencyTool_handle.setTypeAndName("BTaggingEfficiencyTool/BTaggingEfficiencyTool_"+m_bTagWPs.at(iB)+"_"+m_name);
+
+      if( !this_BTaggingEfficiencyTool_handle.isUserConfigured() ){
+        ANA_CHECK( ASG_MAKE_ANA_TOOL( this_BTaggingEfficiencyTool_handle, BTaggingEfficiencyTool ) );
+
+        std::string thisBTagOP = "FixedCutBEff_"+m_bTagWPs.at(iB);
+        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("TaggerName",          m_bTagVar) );
+        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("OperatingPoint",      thisBTagOP) );
+        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()) );
+        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("ScaleFactorFileName", m_bTagFileName.c_str()) );
+        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("UseDevelopmentFile",  m_useDevelopmentFile) );
+        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("ConeFlavourLabel",    m_useConeFlavourLabel) );
+
+        ANA_CHECK( this_BTaggingEfficiencyTool_handle.retrieve() );
+        Info("loadBTagTools()", "BTaggingEfficiencyTool initialized : %s ", this_BTaggingEfficiencyTool_handle.name().c_str() );
+
+      }
+      m_AllBTaggingEfficiencyTool_handles.push_back( this_BTaggingEfficiencyTool_handle );
+    }
+  }//for iB working points
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1400,13 +1432,15 @@ EL::StatusCode MultijetBalanceAlgo :: setupJetCalibrationStages() {
 EL::StatusCode MultijetBalanceAlgo :: loadJetCleaningTool(){
   if(m_debug) Info("loadJetCleaningTool", "loadJetCleaningTool");
 
-  m_JetCleaningTool = new JetCleaningTool("JetCleaning");
-  RETURN_CHECK( "loadJetCleaningTool", m_JetCleaningTool->setProperty( "CutLevel", m_jetCleanCutLevel), "");
-  if (m_jetCleanUgly){
-    RETURN_CHECK( "JetCalibrator::initialize()", m_JetCleaningTool->setProperty( "DoUgly", true), "");
-  }
+  if( !m_JetCleaningTool_handle.isUserConfigured() ){
+    ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetCleaningTool_handle, JetCleaningTool) );
+    ANA_CHECK( m_JetCleaningTool_handle.setProperty("CutLevel", m_jetCleanCutLevel) );
+    if (m_jetCleanUgly){
+      ANA_CHECK( m_JetCleaningTool_handle.setProperty("DoUgly", true) );
+    }
 
-  RETURN_CHECK( "loadJetCleaningTool", m_JetCleaningTool->initialize(), "JetCleaning Interface succesfully initialized!");
+    ANA_CHECK( m_JetCleaningTool_handle.retrieve() );
+  }
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1415,9 +1449,8 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetCleaningTool(){
 EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
   if(m_debug) Info("loadJetUncertaintyTool()", "loadJetUncertaintyTool");
 
-  m_JetUncertaintiesTool = new JetUncertaintiesTool("JESProvider");
   std::string thisJetDef = "";
-  if( m_inContainerName.find("AntiKt4EMTopo") != std::string::npos)
+  if( m_inContainerName.find("AntiKt4EMTopo") != std::string::npos )
     thisJetDef = "AntiKt4EMTopo";
   else if( m_inContainerName.find("AntiKt6EMTopo") != std::string::npos )
     thisJetDef = "AntiKt6EMTopo";
@@ -1426,15 +1459,18 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
   else if( m_inContainerName.find("AntiKt6LCTopo") != std::string::npos )
     thisJetDef = "AntiKt6LCTopo";
 
-  RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("JetDefinition", thisJetDef), "" );
-  if(m_isAFII)
-    RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("MCType", "AFII"), "" );
-  else
-    RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("MCType", "MC15"), "" );
-  RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->setProperty("ConfigFile",m_jetUncertaintyConfig), "" );
-  RETURN_CHECK( "loadJetUncertaintyTool", m_JetUncertaintiesTool->initialize(), "" );
+  if( !m_JetUncertaintiesTool_handle.isUserConfigured() ){
+    ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetUncertaintiesTool_handle, JetUncertaintiesTool) );
+    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("JetDefinition", thisJetDef) );
+    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", m_jetUncertaintyConfig) );
+    if( m_isAFII ){
+      ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("MCType", "AFII") );
+    }else{
+      ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("MCType", "MC15") );
+    }
 
-  m_JetUncertaintiesTool->msg().setLevel( MSG::ERROR ); // VERBOSE, INFO, DEBUG
+    ANA_CHECK( m_JetUncertaintiesTool_handle.retrieve() );
+  }
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1578,15 +1614,15 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
 return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( xAOD::Jet* jet){
-  if(m_debug) Info("applyJetCalibrationTool()", "applyJetCalibrationTool");
-  if ( m_JetCalibrationTool->applyCorrection( *jet ) == CP::CorrectionCode::Error ) {
-    Error("execute()", "JetCalibrationTool reported a CP::CorrectionCode::Error");
-    Error("execute()", "%s", m_name.c_str());
-    return StatusCode::FAILURE;
-  }
-  return EL::StatusCode::SUCCESS;
-}
+//EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( xAOD::Jet* jet){
+//  if(m_debug) Info("applyJetCalibrationTool()", "applyJetCalibrationTool");
+//  if ( m_JetCalibrationTool_handle->applyCorrection( *jet ) == CP::CorrectionCode::Error ) {
+//    Error("execute()", "JetCalibrationTool reported a CP::CorrectionCode::Error");
+//    Error("execute()", "%s", m_name.c_str());
+//    return StatusCode::FAILURE;
+//  }
+//  return EL::StatusCode::SUCCESS;
+//}
 
 EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , int iVar ){
   if(m_debug) Info("applyJetUncertaintyTool()", "applyJetUncertaintyTool");
@@ -1598,9 +1634,9 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , 
   //Get the calibration
   float thisUncertainty = 1.;
   if( m_sysSign.at(iVar) == 1)
-    thisUncertainty += m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
+    thisUncertainty += m_JetUncertaintiesTool_handle->getUncertainty(m_sysToolIndex.at(iVar), *jet);
   else
-    thisUncertainty -= m_JetUncertaintiesTool->getUncertainty(m_sysToolIndex.at(iVar), *jet);
+    thisUncertainty -= m_JetUncertaintiesTool_handle->getUncertainty(m_sysToolIndex.at(iVar), *jet);
 
   //Apply the calibration to the TLorentzVector
   TLorentzVector thisJet;

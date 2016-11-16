@@ -10,18 +10,21 @@ c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
                                      "m_storePassHLT"                : True,
                                      "m_storeTrigDecisions"          : True,
                                      "m_applyTriggerCut"             : True,
-                                     "m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175",
-                                     #"m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110",
+                                     "m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110",
+                                     #"m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110|HLT_j85",
                                      "m_checkDuplicatesData"         : False,
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True
                                      } )
-
-c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
+#prescales in run 307861
+#15 - 301, 25 - 124, 35 - 18.3, 45 - 88,  55 - 40.7, 60 - 20, 85 - 14, 110 - 5.7, 150 - 11.8, 175 - 4.1, 260 - 1.2, 
 
 ### MJB Configuration  ###
+c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
+
   "m_inContainerName"     : "AntiKt4EMTopoJets",
-  "m_triggerAndPt" : "HLT_j380:500,HLT_j260:350,HLT_j175:300",
+#  "m_triggerAndPt" : "", #Leave this empty for efficiency studies!
+  "m_triggerAndPt" : "HLT_j380:550,HLT_j260:3400,HLT_j175:300,HLT_j110:200",
 #  min binning 2016 from study on tight beta cut: "HLT_j380:466,HLT_j260:320, HLT_j175:180",
 #  min binning 2016 from study on loose beta cut: ,
   #"m_triggerAndPt" : "HLT_j380:500,HLT_j260:350,HLT_j175:250,HLT_j110:200",  #Used for validation
@@ -29,13 +32,13 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_MJBIteration" : 0,
   ## The pt thresholds on the subleading jets for event inclusion. -1 gets taken from the V+jet file.
   ## This is set automatically in m_validation to a large number!
-  "m_MJBIterationThreshold" : "900,1700",
-  #"m_MJBIterationThreshold" : "-1,1700",
+  #"m_MJBIterationThreshold" : "999999",
+  "m_MJBIterationThreshold" : "-1,1700",
   ## For higher iterations:
 #  "m_MJBCorrectionFile" : "Iteration0_EM_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
 
 ## 2016 initial validation binning
-  "m_binning"   : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #23bins
+  "m_binning"   : "200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #23bins
 #  "m_binning"   : "300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #37 bins
 #  "m_binning"  : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2500,3000,3500",
 
@@ -49,8 +52,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
   ## Systematic Variations to use:
 #  "m_sysVariations" : "Nominal",
-  "m_sysVariations" : "AllSystematics",
-#  "m_sysVariations" : "Nominal-MJB",
+#  "m_sysVariations" : "AllSystematics",
+  "m_sysVariations" : "Nominal-localMJB",
 
   ## (Deprecated Option) Add statistical systematic for MJB:
 #  "m_MJBStatsOn" : True,
@@ -59,10 +62,10 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_numJets"  : 3,
   "m_ptAsym" : 0.8,
 #  "m_alpha" : 0.3,
-#  "m_beta" : 1.0,
+  "m_beta" : 0.6,
 #  "m_ptThresh" : 25,  #in GeV
   ## Looser beta cut to improve statistics
-#  "m_looseBetaCut" : True,
+  "m_looseBetaCut" : True,
 
 #------ Bootstrap Mode ------#
 #  "m_bootstrap" : True,
@@ -71,8 +74,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #------ Validation Mode ------#
   #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-#  "m_validation" : True,
-  ## Dijet validation mode: ##
+  "m_validation" : True,
+#  ## Dijet validation mode: ##
 #  "m_numJets"  : 2,
 #  "m_ptAsym" : 1.0,
 

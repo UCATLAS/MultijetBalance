@@ -17,7 +17,7 @@ config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_EM207.py"
 extraTag = "" # Extra output tag for all files
 
 
-timestamp = strftime("_%Y%m%d")
+timestamp = strftime("_%m%d")
 if not test:
   if not os.path.exists("gridOutput"):
     os.system("mkdir gridOutput")
@@ -45,12 +45,12 @@ outputTags = []
 #files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_EXOT2_gridSamples.txt")
 #outputTags.append("Db_V1")
 files.append("MultijetBalance/scripts/sampleLists/Data2016_Main_EXOT2_gridSamples.txt")
-outputTags.append("Ex_V1")
+outputTags.append("Main2016_EXOT2_TileCorr")
 
 files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_EXOT2_207_gridSamples.txt")
-outputTags.append("QCDPE_V1")
+outputTags.append("QCDPythia8_EXOT2_TileCorr")
 files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_EXOT2_207_gridSamples.txt")
-outputTags.append("QCDSE_V1")
+outputTags.append("QCDSherpa_EXOT2_TileCorr")
 
 #files.append("MultijetBalance/scripts/sampleLists/2015/Data13TeV_Debug_EXOT2_207_gridSamples.txt")
 #outputTags.append("Db_R1")
@@ -79,7 +79,8 @@ for iFile, file_in in enumerate(files):
       driverCommand += 'group.'+production_name
     else:
       driverCommand += 'user.%nickname%'
-    driverCommand += '.%in:name[1]%.%in:name[2]%.%in:name[3]%.'+output_tag
+    driverCommand += '.%in:name[1]%.%in:name[2]%.'+output_tag
+    #driverCommand += '.%in:name[1]%.%in:name[2]%.%in:name[3]%.'+output_tag
   elif runType == 'condor':
     driverCommand = ' condor --optFilesPerWorker 10 --optBatchWait'
   elif runType == 'local':

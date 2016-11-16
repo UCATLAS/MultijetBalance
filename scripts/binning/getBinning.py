@@ -1,6 +1,6 @@
-import ROOT, array, os, sys
+import array, os, sys
 import math
-import time
+import time, glob
 import argparse
 
 sys.path.insert(0, '../plotting/')
@@ -13,74 +13,110 @@ parser.add_argument("--fineHist", dest='getFinePtHist', action='store_true', def
 parser.add_argument("--calcBin", dest='calcBinning', action='store_true', default=False, help="Create complete binning from relevant histogram")
 parser.add_argument("--iterHist", dest='getIterativeHist', action='store_true', default=False, help="Create iterative binning histograms with subleading pt cuts")
 parser.add_argument("--plotIter", dest='plotIter', action='store_true', default=False, help="Plot iterative binning plots")
-parser.add_argument("--file", dest='fileName', default="", required=True, help="Input file name")
+parser.add_argument("--file", dest='fileName', default="", help="Input file name")
 parser.add_argument("--treeName", dest='treeName', default="outTree_Nominal", help="Input TTree name")
+parser.add_argument("--dir", dest='dir', default="", help="Directory containing input files, used if --file is not set.")
+parser.add_argument("--outName", dest='outName', default="", help="Tag to append to output name.")
+parser.add_argument("--tag", dest='tag', default="", help="Tag for selecting input files.")
 args = parser.parse_args()
 
+if args.outName:
+  args.outName += '_'
+
+import ROOT
 
 ####################### User defined variables ###############################
-triggers = ["HLT_j380","HLT_j260","HLT_j175"]
-trigEffs = [500       ,350       ,300       ]
+triggers = ["HLT_j380","HLT_j260","HLT_j175", "HLT_j110"]
+trigEffs = [550       ,400       ,300       , 200]
 
 ## For calcBinning, the initial edges to use ##
-calcBinEdges = [300,1050,1100,1150,1200,1300,1500,1700,2000,2300]
-#calcBinEdges = [300]
-numRequiredBins = 25 #bins = GeV
+#calcBinEdges = [300,1050,1100,1150,1200,1300,1500,1700,2000,2300]
+calcBinEdges = [300, 1700]
+numRequiredBins = 300 #bins = GeV
 #The threshold nevents for accepting a bin threshold
 #Errors & numEvents : 1% = 10000, 2% = 2500, 3% = 1111, 4% = 625, 5% = 400
-eventThreshold = 10000
+eventThreshold = 100
 
 ## For getIterativeHist, the final binEdges and different subleading jet cutoffs to use ##
 iterativeCutoffs = [950, 1200,1300,1500,1700,2000,2300,5000]
 iterativeEdges = [300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300]
 
-### Get input file and connect branches ###
-inFile = ROOT.TFile.Open(args.fileName, "READ")
-tree = inFile.Get(args.treeName)
-
-numEntries = tree.GetEntries()
-tree.SetBranchStatus('*', 0)
-jet_pt =   ROOT.std.vector('float')()
-tree.SetBranchStatus( "jet_pt", 1)
-tree.SetBranchAddress( "jet_pt", jet_pt)
-recoil_pt = array.array('f',[0])
-tree.SetBranchStatus( "recoilPt", 1)
-tree.SetBranchAddress( "recoilPt", recoil_pt)
-#weight = array.array('f',[0])
-#tree.SetBranchStatus( "weight", 1)
-#tree.SetBranchAddress( "weight", weight)
-passedTriggers =   ROOT.std.vector('string')()
-tree.SetBranchStatus( "passedTriggers", 1)
-tree.SetBranchAddress( "passedTriggers", passedTriggers)
 
 ########################### getFinePtHist ##################################3
 if (args.getFinePtHist):
-
-  ### Get output file ###
-  outDir = os.path.dirname( args.fileName )+"/binningPlots/"
+  
+  
+  ### Make output file ###
+  if args.dir:
+    outDir = args.dir+'/binningPlots/'
+  else:
+    outDir = os.path.dirname( args.fileName )+"/binningPlots/"
   if not os.path.exists( outDir ):
     os.makedirs( outDir )
 
-  outFile = ROOT.TFile.Open(outDir+"fineBinningHist.root", "RECREATE")
+  outFile = ROOT.TFile.Open(outDir+args.outName+"fineBinningHist.root", "RECREATE")
   h_finept = ROOT.TH1F("finept","finept",5000,0,5000.)
 
-  ## Loop over input TTree ##
-  count = 0
-  print "Running on " , numEntries, "entries"
+  ### Find input files
+  if len(args.fileName) > 0:
+    fileNames = [args.file]
+  else:
+    fileNames = glob.glob( args.dir+'/*'+args.tag+'*.root' )
+
+
+  totalEntries = 0
+  totalCount = 0
+  for fileName in fileNames:
+
+    inFile = ROOT.TFile.Open(fileName, "READ")
+    tree = inFile.Get(args.treeName)
+    print fileName
+    totalEntries += tree.GetEntries()
+    inFile.Close()
+
+
+
+  ### Loop over input files and connect branches ###
   startTime = time.time()
-  while tree.GetEntry(count):
-    count += 1
-    if count%1e5 == 0:  print "Event ", count, ". It's been", (time.time() - startTime)/60. , "minutes.  Event rate is ", count/(time.time()-startTime), " events per second.  We need about ", (numEntries-count)*(time.time()-startTime)/count/60., " more minutes."
+  for fileName in fileNames:
+    inFile = ROOT.TFile.Open(fileName, "READ")
+    tree = inFile.Get(args.treeName)
+    
+    numEntries = tree.GetEntries()
+    tree.SetBranchStatus('*', 0)
+    #jet_pt =   ROOT.std.vector('float')()
+    #tree.SetBranchStatus( "jet_pt", 1)
+    #tree.SetBranchAddress( "jet_pt", jet_pt)
+    recoil_pt = array.array('f',[0])
+    tree.SetBranchStatus( "recoilPt", 1)
+    tree.SetBranchAddress( "recoilPt", recoil_pt)
+    #weight = array.array('f',[0])
+    #tree.SetBranchStatus( "weight", 1)
+    #tree.SetBranchAddress( "weight", weight)
+    passedTriggers =   ROOT.std.vector('string')()
+    tree.SetBranchStatus( "passedTriggers", 1)
+    tree.SetBranchAddress( "passedTriggers", passedTriggers)
 
 
-    # For each trigger we're using
-    for iT, trigEff in enumerate(trigEffs):
-      #If it passes the trigger efficiency cut
-      if recoil_pt[0] > trigEff*1e3:
-        #Check the one trigger for this pt range 
-        if triggers[iT] in passedTriggers:
-          finept.Fill( recoil_pt[0] / 1e3 )
-        break #only check triggers once
+    ## Loop over input TTree ##
+    count = 0
+    print "Running on " , numEntries, "entries"
+    while tree.GetEntry(count):
+      count += 1
+      totalCount += 1
+      if totalCount%1e5 == 0:  print "Event ", totalCount, ". It's been", (time.time() - startTime)/60. , "minutes.  Event rate is ", totalCount/(time.time()-startTime), " events per second.  We need about ", (totalEntries-totalCount)*(time.time()-startTime)/totalCount/60., " more minutes."
+
+
+      # For each trigger we're using
+      for iT, trigEff in enumerate(trigEffs):
+        #If it passes the trigger efficiency cut
+        if recoil_pt[0] > trigEff*1e3:
+          #Check the one trigger for this pt range 
+          if triggers[iT] in passedTriggers:
+            h_finept.Fill( recoil_pt[0] / 1e3 )
+          break #only check triggers once
+
+    inFile.Close()
 
   outFile.Write()
   outFile.Close()
@@ -129,9 +165,9 @@ if (args.calcBinning):
 
   ### Get saved fineBinningHist ###
   inDir = os.path.dirname( args.fileName )+"/"
-  if not "binningPlots" in inDir:
-    inDir += "binningPlots/"
-  inFile =  ROOT.TFile.Open( inDir+"fineBinningHist.root", "READ" )
+#  if not "binningPlots" in inDir:
+#    inDir += "binningPlots/"
+  inFile =  ROOT.TFile.Open( args.fileName, "READ" )
   finept = inFile.Get("finept")
   finept.GetXaxis().SetTitle("Recoil p_{T} (GeV)")
   finept.GetYaxis().SetTitle("Events")

@@ -22,7 +22,8 @@ dict_pkg = {
             '2.4.7': [],
             '2.4.8': [],
             '2.4.17': [],
-            '2.4.20': []
+            '2.4.18': [],
+            '2.4.22': []
            }
 
 try:
@@ -36,6 +37,8 @@ except KeyError:
 packages_to_checkout.append("atlas-gulefebv/SystTool/tags/SystTool-00-01-06")
 packages_to_checkout.append("atlasphys-sm/Physics/StandardModel/Common/BootstrapGenerator/tags/BootstrapGenerator-01-10-00")
 packages_to_checkout.append("atlasperf/CombPerf/JetETMiss/JetCalibrationTools/JES_ResponseFitter/tags/JES_ResponseFitter-00-02-00")
+packages_to_checkout.append("atlasoff/Reconstruction/Jet/JetAnalysisTools/JetTileCorrection/tags/JetTileCorrection-00-00-05/")
+
 
 
 if len(packages_to_checkout) == 0:

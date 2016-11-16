@@ -25,25 +25,39 @@
 
 #include <sstream>
 
-#include "JetMomentTools/JetVertexTaggerTool.h"
-#include "AsgTools/AnaToolHandle.h"
-#include "JetJvtEfficiency/JetJvtEfficiency.h"
 
-#include "xAODBTaggingEfficiency/BTaggingSelectionTool.h"
-#include "xAODBTaggingEfficiency/BTaggingEfficiencyTool.h"
+//#include "JetTileCorrection/JetTileCorrectionTool.h"
+
+#include "AsgTools/AnaToolHandle.h"
+
+#include "JetInterface/IJetSelector.h" //JetCleaningTool
+#include "JetCalibTools/IJetCalibrationTool.h"
+#include "JetCPInterfaces/ICPJetUncertaintiesTool.h"
+#include "JetInterface/IJetUpdateJvt.h"
+#include "JetJvtEfficiency/IJetJvtEfficiency.h"
+
+#include "xAODBTaggingEfficiency/IBTaggingEfficiencyTool.h"
+#include "xAODBTaggingEfficiency/IBTaggingSelectionTool.h"
+
+#include "TrigConfInterfaces/ITrigConfigTool.h"
+#include "TrigDecisionTool/TrigDecisionTool.h"
 
 
 static float GeV = 1000.;
 
 class MultijetHists;
-class JetCalibrationTool;
-class JetCleaningTool;
-class JetUncertaintiesTool;
+class IJetCalibrationTool;
+class ICPJetUncertaintiesTool;
+class IJetSelector;
+class IJetUpdateJvt;
+class IBTaggingEfficiencyTool;
+class IBTaggingSelectionTool;
+
 namespace TrigConf {
-  class xAODConfigTool;
+  class ITrigConfigTool;
 }
 namespace Trig {
-class TrigDecisionTool;
+  class TrigDecisionTool;
 }
 
 class SystContainer;
@@ -231,32 +245,34 @@ class MultijetBalanceAlgo : public EL::Algorithm
 
 
 
-    #ifndef __CINT__
-    /** @brief JetCalibrationTool instance*/
-    JetCalibrationTool   * m_JetCalibrationTool;    //!
-    /** @brief JetCleaningTool instance*/
-    JetCleaningTool      * m_JetCleaningTool;       //!
+//    #ifndef __CINT__
+    /** @brief JetCalibrationTool handle*/
+    asg::AnaToolHandle<IJetCalibrationTool> m_JetCalibrationTool_handle; //!
     /** @brief JetUncertaintiesTool instance*/
-    JetUncertaintiesTool * m_JetUncertaintiesTool;  //!
-    #endif // not __CINT__
+    asg::AnaToolHandle<ICPJetUncertaintiesTool> m_JetUncertaintiesTool_handle; //!
+//    #endif // not __CINT__
 
-    /** @brief Vector of BTaggingSelectionTool instances*/
-    std::vector< BTaggingSelectionTool* >  m_BJetSelectTools; //!
-    /** @brief Vector of BTaggingEfficiencyTool instances*/
-    std::vector< BTaggingEfficiencyTool* > m_BJetEffSFTools; //!
+    /** @brief JetCleaningTool handle*/
+    asg::AnaToolHandle<IJetSelector> m_JetCleaningTool_handle; //!
 
-    /** @brief Vector of trigger TrigConf::xAODConfigTool instances*/
-    std::vector< TrigConf::xAODConfigTool* > m_trigConfTools; //!
-    /** @brief Vector of trigger Trig::TrigDecisionTool instances*/
-    std::vector< Trig::TrigDecisionTool* > m_trigDecTools;    //!
+    /** @brief JetUpdateJvt handle */
+    asg::AnaToolHandle<IJetUpdateJvt> m_JVTUpdateTool_handle; //!
+    /** @brief JetJvtEfficiency handle*/
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle; //!
 
-    //JVTUpdateTool
-    /** @brief JetVertexTaggerTool instance*/
-    JetVertexTaggerTool      * m_JVTTool;        //!
-    /** @brief ToolHandle<IJetUpdateJvt> instance */
-    ToolHandle<IJetUpdateJvt>  m_JVTUpdate_handle;  //!
-    //JVTEffTool
-    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JVTEff_handle; //!
+//!!    asg::AnaToolHandle<CP:IJetTileCorrectionTool>  m_JetTileCorrectionTool_handle; //!
+
+    /** @brief Vector of BTaggingSelectionTool handles*/
+    std::vector< asg::AnaToolHandle<IBTaggingSelectionTool> >  m_AllBTaggingSelectionTool_handles; //!
+    /** @brief Vector of BTaggingEfficiencyTool handles*/
+    std::vector< asg::AnaToolHandle<IBTaggingEfficiencyTool> > m_AllBTaggingEfficiencyTool_handles; //!
+
+
+    /** @brief Vector of trigger TrigConf::xAODConfigTool handles*/
+    std::vector< asg::AnaToolHandle<TrigConf::ITrigConfigTool> > m_AllTrigConfigTool_handles; //!
+    /** @brief Vector of trigger Trig::TrigDecisionTool handles*/
+    std::vector< asg::AnaToolHandle<Trig::TrigDecisionTool> > m_AllTrigDecisionTool_handles;    //!
+
 
     /** @brief Location of primary vertex within xAOD::VertexContainer*/
     int m_pvLocation; //!
