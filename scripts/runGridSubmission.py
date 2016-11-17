@@ -44,13 +44,13 @@ outputTags = []
 ##2016##
 #files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_EXOT2_gridSamples.txt")
 #outputTags.append("Db_V1")
-files.append("MultijetBalance/scripts/sampleLists/Data2016_Main_EXOT2_gridSamples.txt")
-outputTags.append("Main2016_EXOT2_TileCorr")
+#files.append("MultijetBalance/scripts/sampleLists/Data2016_Main_EXOT2_gridSamples.txt")
+#outputTags.append("Main2016_EXOT2_TileCorr")
 
 files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_EXOT2_207_gridSamples.txt")
-outputTags.append("QCDPythia8_EXOT2_TileCorr")
-files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_EXOT2_207_gridSamples.txt")
-outputTags.append("QCDSherpa_EXOT2_TileCorr")
+outputTags.append("QCDPythia8_EXOT2_NoBeta")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_EXOT2_207_gridSamples.txt")
+#outputTags.append("QCDSherpa_EXOT2_NoBeta")
 
 #files.append("MultijetBalance/scripts/sampleLists/2015/Data13TeV_Debug_EXOT2_207_gridSamples.txt")
 #outputTags.append("Db_R1")

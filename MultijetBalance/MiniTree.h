@@ -62,6 +62,8 @@ class MiniTree : public HelpTreeBase
 
     /** @brief Detector \f$\eta\f$ of each jet */
     std::vector<float> m_jet_detEta;
+    /** @brief TileCorrected \f$p_{T}\f$ of each jet */
+    std::vector<float> m_jet_TileCorrectedPt;
     /** @brief \f$\beta\f$ of each jet */
     std::vector<float> m_jet_beta;
     /** @brief Ratio of the final calibrated \f$p_{T}\f$ to the original input \f$p_{T}\f$ for each jet */

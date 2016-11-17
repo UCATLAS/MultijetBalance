@@ -26,8 +26,6 @@
 #include <sstream>
 
 
-//#include "JetTileCorrection/JetTileCorrectionTool.h"
-
 #include "AsgTools/AnaToolHandle.h"
 
 #include "JetInterface/IJetSelector.h" //JetCleaningTool
@@ -42,6 +40,7 @@
 #include "TrigConfInterfaces/ITrigConfigTool.h"
 #include "TrigDecisionTool/TrigDecisionTool.h"
 
+#include "JetCPInterfaces/IJetTileCorrectionTool.h"
 
 static float GeV = 1000.;
 
@@ -61,6 +60,7 @@ namespace Trig {
 }
 
 class SystContainer;
+class IJetTileCorrectionTool;
 
 /**
     @brief Event selection of the Multijet Balance
@@ -180,6 +180,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     bool m_useCutFlow;
     /** @brief File containing the MC sample cross-section values */
     std::string m_XSFile;
+    /** @brief Apply the Tile Correction to data */
+    bool m_TileCorrection;
 
     /** @brief Number of toys used by the bootstrapping procedure.  Recommendation is 100*/
     int m_systTool_nToys;
@@ -260,7 +262,6 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief JetJvtEfficiency handle*/
     asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle; //!
 
-//!!    asg::AnaToolHandle<CP:IJetTileCorrectionTool>  m_JetTileCorrectionTool_handle; //!
 
     /** @brief Vector of BTaggingSelectionTool handles*/
     std::vector< asg::AnaToolHandle<IBTaggingSelectionTool> >  m_AllBTaggingSelectionTool_handles; //!
@@ -273,6 +274,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Vector of trigger Trig::TrigDecisionTool handles*/
     std::vector< asg::AnaToolHandle<Trig::TrigDecisionTool> > m_AllTrigDecisionTool_handles;    //!
 
+    asg::AnaToolHandle<CP::IJetTileCorrectionTool>  m_JetTileCorrectionTool_handle; //!
 
     /** @brief Location of primary vertex within xAOD::VertexContainer*/
     int m_pvLocation; //!
@@ -377,6 +379,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     EL::StatusCode loadJetCleaningTool();
     /** @brief Load the JetUncertainties*/
     EL::StatusCode loadJetUncertaintyTool();
+    /** @brief Load the JetTileCorrectionTool*/
+    EL::StatusCode loadJetTileCorrectionTool();
     /** @brief Load the intermediate V+jet \a in-situ calibration from  MultijetBalanceAlgo#m_VjetCalibFile*/
     EL::StatusCode loadVjetCalibration();
     /** @brief Load the previous MJB calibrations from MultijetBalanceAlgo#m_MJBCorrectionFile*/
@@ -387,6 +391,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     #ifndef __MAKECINT__
     /** @brief Apply the JetCalibTool*/
      EL::StatusCode applyJetCalibrationTool( xAOD::Jet* jet);
+    /** @brief Apply the JetTileCorrectionTool*/
+     EL::StatusCode applyJetTileCorrectionTool( xAOD::Jet* jet);
     /** @brief Apply the JetCleaningTool*/
      EL::StatusCode applyJetCleaningTool();
     /** @brief Apply the JetUncertainties*/

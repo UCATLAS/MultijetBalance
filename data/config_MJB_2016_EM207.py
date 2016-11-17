@@ -24,7 +24,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
   "m_inContainerName"     : "AntiKt4EMTopoJets",
 #  "m_triggerAndPt" : "", #Leave this empty for efficiency studies!
-  "m_triggerAndPt" : "HLT_j380:550,HLT_j260:3400,HLT_j175:300,HLT_j110:200",
+  "m_triggerAndPt" : "HLT_j380:550,HLT_j260:400,HLT_j175:300,HLT_j110:200",
 #  min binning 2016 from study on tight beta cut: "HLT_j380:466,HLT_j260:320, HLT_j175:180",
 #  min binning 2016 from study on loose beta cut: ,
   #"m_triggerAndPt" : "HLT_j380:500,HLT_j260:350,HLT_j175:250,HLT_j110:200",  #Used for validation
@@ -51,9 +51,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-#  "m_sysVariations" : "Nominal",
+  "m_sysVariations" : "Nominal",
 #  "m_sysVariations" : "AllSystematics",
-  "m_sysVariations" : "Nominal-localMJB",
+#  "m_sysVariations" : "Nominal-localMJB",
 
   ## (Deprecated Option) Add statistical systematic for MJB:
 #  "m_MJBStatsOn" : True,
@@ -62,7 +62,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_numJets"  : 3,
   "m_ptAsym" : 0.8,
 #  "m_alpha" : 0.3,
-  "m_beta" : 0.6,
+  "m_beta" : 0.01,
 #  "m_ptThresh" : 25,  #in GeV
   ## Looser beta cut to improve statistics
   "m_looseBetaCut" : True,

@@ -69,6 +69,7 @@ void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetNam
 
   // jet things
   m_tree->Branch("jet_detEta", &m_jet_detEta);
+  m_tree->Branch("jet_TileCorrectedPt", &m_jet_TileCorrectedPt);
   m_tree->Branch("jet_beta", &m_jet_beta);
   m_tree->Branch("jet_corr", &m_jet_corr);
 
@@ -118,6 +119,11 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
     m_jet_detEta.push_back( jet->auxdata< float >("detEta") );
   } else {
     m_jet_detEta.push_back( -999 );
+  }
+  if( jet->isAvailable< float >( "detEta" ) ) {
+    m_jet_TileCorrectedPt.push_back( jet->auxdata< float >("TileCorrectedPt")/1e3 );
+  } else {
+    m_jet_TileCorrectedPt.push_back( -999 );
   }
 
   if (jet->isAvailable< float >( "beta" ) ){
@@ -180,6 +186,7 @@ void MiniTree::ClearEventUser() {
 
 void MiniTree::ClearJetsUser(const std::string jetName ) {
   m_jet_detEta.clear();
+  m_jet_TileCorrectedPt.clear();
   m_jet_beta.clear();
   m_jet_corr.clear();
 //  m_jet_EMFrac.clear();

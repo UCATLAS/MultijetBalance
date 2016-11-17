@@ -46,6 +46,8 @@
 
 #include "SystTool/SystContainer.h"
 
+#include "JetTileCorrection/JetTileCorrectionTool.h"
+
 
 using namespace std;
 
@@ -60,7 +62,8 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
   m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
   m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
-  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JBTEfficiencyTool_"+name)
+  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JBTEfficiencyTool_"+name),
+  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
 {
   // Here you put any code for the base initialization of variables,
   // e.g. initialize all pointers to 0.  Note that you should only put
@@ -74,6 +77,7 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_closureTest = false;
   m_bootstrap = false;
 
+  m_TileCorrection = false;
 
   m_inContainerName = "";
   m_triggerAndPt = "";
@@ -323,7 +327,9 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
   EL_RETURN_CHECK("init", loadJetCleaningTool());
   EL_RETURN_CHECK("init", loadJVTTool());
   EL_RETURN_CHECK("init", loadBTagTools());
-  if (m_VjetCalib)
+  if( m_TileCorrection )
+    EL_RETURN_CHECK("init", loadJetTileCorrectionTool());
+  if( m_VjetCalib )
     EL_RETURN_CHECK("init", loadVjetCalibration());
 
   EL_RETURN_CHECK("init", loadMJBCalibration());
@@ -512,18 +518,17 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   ////////////////////////////////// Apply Calibrations, store jetCorr ////////////////////////////////////////
   if(m_debug) Info("execute()", "Get Raw Kinematics ");
-  vector<TLorentzVector> rawJetKinematics;
+  std::vector<xAOD::JetFourMom_t> rawJetKinematics;
   for (unsigned int iJet = 0; iJet < originalSignalJets->size(); ++iJet){
-    TLorentzVector thisJet;
-    thisJet.SetPtEtaPhiE(originalSignalJets->at(iJet)->pt(), originalSignalJets->at(iJet)->eta(), originalSignalJets->at(iJet)->phi(), originalSignalJets->at(iJet)->e());
+    xAOD::JetFourMom_t thisJet;
+    thisJet.SetCoordinates(originalSignalJets->at(iJet)->pt(), originalSignalJets->at(iJet)->eta(), originalSignalJets->at(iJet)->phi(), originalSignalJets->at(iJet)->m());
     rawJetKinematics.push_back(thisJet);
   }
 
   if(m_debug) Info("execute()", "Apply Jet Calibration Tool ");
   for(unsigned int iJet=0; iJet < originalSignalJets->size(); ++iJet){
-//    EL_RETURN_CHECK("execute", applyJetCalibrationTool( originalSignalJets->at(iJet) ) );
-    m_JetCalibrationTool_handle->applyCorrection( *(originalSignalJets->at(iJet)) );
-    originalSignalJets->at(iJet)->auxdecor< float >( "jetCorr") = originalSignalJets->at(iJet)->pt() / rawJetKinematics.at(iJet).Pt() ;
+    ANA_CHECK( applyJetCalibrationTool( originalSignalJets->at(iJet) ) );
+    originalSignalJets->at(iJet)->auxdecor< float >( "jetCorr") = originalSignalJets->at(iJet)->pt() / rawJetKinematics.at(iJet).pt() ;
   }
   reorderJets( originalSignalJets );
 
@@ -583,10 +588,11 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   // The following code will manually edit jet 4-vectors in various ways.
   // Save the original kinematics of all jets to be reapplied after each loop
-  vector<TLorentzVector> originalJetKinematics;
+  std::vector<xAOD::JetFourMom_t> originalJetKinematics;
   for (unsigned int iJet = 0; iJet < originalSignalJets->size(); ++iJet){
-    TLorentzVector thisJet;
-    thisJet.SetPtEtaPhiE(originalSignalJets->at(iJet)->pt(), originalSignalJets->at(iJet)->eta(), originalSignalJets->at(iJet)->phi(), originalSignalJets->at(iJet)->e());
+    xAOD::JetFourMom_t thisJet;
+//    thisJet.SetPtEtaPhiE(originalSignalJets->at(iJet)->pt(), originalSignalJets->at(iJet)->eta(), originalSignalJets->at(iJet)->phi(), originalSignalJets->at(iJet)->e());
+    thisJet.SetCoordinates(originalSignalJets->at(iJet)->pt(), originalSignalJets->at(iJet)->eta(), originalSignalJets->at(iJet)->phi(), originalSignalJets->at(iJet)->m());
     originalJetKinematics.push_back(thisJet);
   }
   passCutAll(); //ptSub
@@ -629,25 +635,28 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
         // A systematic variation that lets us use any jet calibration stage for all jets
         int iCalibStage = m_sysToolIndex.at(iVar);
         xAOD::JetFourMom_t jetCalibStageCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>( m_JCSStrings.at(iCalibStage).c_str() );
-        signalJets->at(iJet)->auxdata< float >("pt") = jetCalibStageCopy.Pt();
-        signalJets->at(iJet)->auxdata< float >("eta") = jetCalibStageCopy.Eta();
-        signalJets->at(iJet)->auxdata< float >("phi") = jetCalibStageCopy.Phi();
-        signalJets->at(iJet)->auxdata< float >("e") = jetCalibStageCopy.E();
+        //signalJets->at(iJet)->auxdata< float >("pt") = jetCalibStageCopy.Pt();
+        //signalJets->at(iJet)->auxdata< float >("eta") = jetCalibStageCopy.Eta();
+        //signalJets->at(iJet)->auxdata< float >("phi") = jetCalibStageCopy.Phi();
+        //signalJets->at(iJet)->auxdata< float >("e") = jetCalibStageCopy.E();
+        signalJets->at(iJet)->setJetP4( jetCalibStageCopy );
         continue; //Don't apply any further calibrations or uncertainties for this jet, skip to the next jet
       } else {
 
         //Use final insitu correction if not leading jet or we want to fully calibrate leading jet 
         if ( m_leadingGSC && iJet == 0){ // Set GSC-stage for leading jet
           xAOD::JetFourMom_t jetCalibGSCCopy = signalJets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetGSCScaleMomentum");
-          signalJets->at(iJet)->auxdata< float >("pt") = jetCalibGSCCopy.Pt();
-          signalJets->at(iJet)->auxdata< float >("eta") = jetCalibGSCCopy.Eta();
-          signalJets->at(iJet)->auxdata< float >("phi") = jetCalibGSCCopy.Phi();
-          signalJets->at(iJet)->auxdata< float >("e") = jetCalibGSCCopy.E();
+          //signalJets->at(iJet)->auxdata< float >("pt") = jetCalibGSCCopy.Pt();
+          //signalJets->at(iJet)->auxdata< float >("eta") = jetCalibGSCCopy.Eta();
+          //signalJets->at(iJet)->auxdata< float >("phi") = jetCalibGSCCopy.Phi();
+          //signalJets->at(iJet)->auxdata< float >("e") = jetCalibGSCCopy.E();
+          signalJets->at(iJet)->setJetP4( jetCalibGSCCopy );
         } else { // Use in-situ correction. (This should be after eta-intercalibration if using V+jets
-          signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
-          signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
-          signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
-          signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
+          //signalJets->at(iJet)->auxdata< float >("pt") = originalJetKinematics.at(iJet).Pt();
+          //signalJets->at(iJet)->auxdata< float >("eta") = originalJetKinematics.at(iJet).Eta();
+          //signalJets->at(iJet)->auxdata< float >("phi") = originalJetKinematics.at(iJet).Phi();
+          //signalJets->at(iJet)->auxdata< float >("e") = originalJetKinematics.at(iJet).E();
+          signalJets->at(iJet)->setJetP4( originalJetKinematics.at(iJet) );
         }
       }
 
@@ -673,6 +682,26 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
           }
         }
       }
+
+      //New Tile Correction
+      //
+      //Get correctedCopy does not work
+      //xAOD::Jet* TileCorrectedJet = nullptr;
+      //ANA_CHECK( m_JetTileCorrectionTool_handle->correctedCopy( *(signalJets->at(iJet)), TileCorrectedJet ) );
+      //signalJets->at(iJet)->auxdata< float >("TileCorrectedPt") = TileCorrectedJet->pt();
+
+      if( m_TileCorrection && !m_isMC ){
+        float noTile_pt = signalJets->at(iJet)->pt();
+        float noTile_m = signalJets->at(iJet)->m();
+        ANA_CHECK( applyJetTileCorrectionTool(signalJets->at(iJet)) );
+
+        signalJets->at(iJet)->auxdata< float >("TileCorrectedPt") = signalJets->at(iJet)->pt();
+        // reset 
+        xAOD::JetFourMom_t previous_P4;
+        previous_P4.SetCoordinates(noTile_pt, signalJets->at(iJet)->eta(), signalJets->at(iJet)->phi(), noTile_m);
+        signalJets->at(iJet)->setJetP4( previous_P4 );
+      }
+
 
     }//for jets
     reorderJets( signalJets );
@@ -1475,6 +1504,19 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
   return EL::StatusCode::SUCCESS;
 }
 
+EL::StatusCode MultijetBalanceAlgo :: loadJetTileCorrectionTool(){
+  if(m_debug) Info("loadJetTileCorrectionTool()", "loadJetTileCorrectionTool");
+
+  if( !m_JetTileCorrectionTool_handle.isUserConfigured() ){
+    ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetTileCorrectionTool_handle, CP::JetTileCorrectionTool) );
+    //m_JetTileCorrectionTool_handle.setProperty("CorrectionFileName","JetTileCorrection/JetTile_pFile_010216.root");
+
+    ANA_CHECK( m_JetTileCorrectionTool_handle.retrieve() );
+  }
+
+  return EL::StatusCode::SUCCESS;
+}
+
 //Setup V+jet calibration and systematics files
 EL::StatusCode MultijetBalanceAlgo :: loadVjetCalibration(){
   if(m_debug) Info("loadVjetCalibration()", "loadVjetCalibration");
@@ -1614,15 +1656,27 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
 return EL::StatusCode::SUCCESS;
 }
 
-//EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( xAOD::Jet* jet){
-//  if(m_debug) Info("applyJetCalibrationTool()", "applyJetCalibrationTool");
-//  if ( m_JetCalibrationTool_handle->applyCorrection( *jet ) == CP::CorrectionCode::Error ) {
-//    Error("execute()", "JetCalibrationTool reported a CP::CorrectionCode::Error");
-//    Error("execute()", "%s", m_name.c_str());
-//    return StatusCode::FAILURE;
-//  }
-//  return EL::StatusCode::SUCCESS;
-//}
+EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( xAOD::Jet* jet){
+  if(m_debug) Info("applyJetCalibrationTool()", "applyJetCalibrationTool");
+  if ( m_JetCalibrationTool_handle->applyCorrection( *jet ) == CP::CorrectionCode::Error ) {
+    Error("execute()", "JetCalibrationTool reported a CP::CorrectionCode::Error");
+    Error("execute()", "%s", m_name.c_str());
+    return StatusCode::FAILURE;
+  }
+  return EL::StatusCode::SUCCESS;
+}
+
+EL::StatusCode MultijetBalanceAlgo :: applyJetTileCorrectionTool( xAOD::Jet* jet){
+  if(m_debug) Info("applyJetTileCorrectionTool()", "applyJetTileCorrectionTool");
+  if( !m_isMC ){ 
+    if ( m_JetTileCorrectionTool_handle->applyCorrection( *jet ) == CP::CorrectionCode::Error ) {
+      Error("execute()", "JetTileCorrectionTool reported a CP::CorrectionCode::Error");
+      Error("execute()", "%s", m_name.c_str());
+      return StatusCode::FAILURE;
+    }
+  }
+  return EL::StatusCode::SUCCESS;
+}
 
 EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , int iVar ){
   if(m_debug) Info("applyJetUncertaintyTool()", "applyJetUncertaintyTool");
@@ -1638,14 +1692,16 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , 
   else
     thisUncertainty -= m_JetUncertaintiesTool_handle->getUncertainty(m_sysToolIndex.at(iVar), *jet);
 
-  //Apply the calibration to the TLorentzVector
-  TLorentzVector thisJet;
-  thisJet.SetPtEtaPhiE( jet->pt(), jet->eta(), jet->phi(), jet->e() );
+  //Apply the calibration to the JetFourMom_t
+  xAOD::JetFourMom_t thisJet;
+  thisJet.SetCoordinates( jet->pt(), jet->eta(), jet->phi(), jet->m() );
   thisJet *= thisUncertainty;
-  jet->auxdata< float >("pt") = thisJet.Pt();
-  jet->auxdata< float >("eta") = thisJet.Eta();
-  jet->auxdata< float >("phi") = thisJet.Phi();
-  jet->auxdata< float >("e") = thisJet.E();
+  jet->setJetP4( thisJet );
+//  thisJet.SetPtEtaPhiE( jet->pt(), jet->eta(), jet->phi(), jet->e() );
+  //jet->auxdata< float >("pt") = thisJet.Pt();
+  //jet->auxdata< float >("eta") = thisJet.Eta();
+  //jet->auxdata< float >("phi") = thisJet.Phi();
+  //jet->auxdata< float >("e") = thisJet.E();
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1665,14 +1721,18 @@ EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( xAOD::Jet* jet , int
   thisCalibration = m_VjetHist->GetBinContent( m_VjetHist->FindBin(jet->pt()/GeV) );
 
 
-  //Modify the TLorentzVector
-  TLorentzVector thisJet;
-  thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
+  ////Modify the JerFourMom_t
+  //TLorentzVector thisJet;
+  //thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
+  //thisJet *= (1./thisCalibration);
+  //jet->auxdata< float >("pt") = thisJet.Pt();
+  //jet->auxdata< float >("eta") = thisJet.Eta();
+  //jet->auxdata< float >("phi") = thisJet.Phi();
+  //jet->auxdata< float >("e") = thisJet.E();
+  xAOD::JetFourMom_t thisJet;
+  thisJet.SetCoordinates( jet->pt(), jet->eta(), jet->phi(), jet->m() );
   thisJet *= (1./thisCalibration);
-  jet->auxdata< float >("pt") = thisJet.Pt();
-  jet->auxdata< float >("eta") = thisJet.Eta();
-  jet->auxdata< float >("phi") = thisJet.Phi();
-  jet->auxdata< float >("e") = thisJet.E();
+  jet->setJetP4( thisJet );
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1700,14 +1760,18 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int 
 
   }
 
-  // Apply calibration to TLorentzVector
-  TLorentzVector thisJet;
-  thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
-  thisJet *= thisCalibration; //modify TLV
-  jet->auxdata< float >("pt") = thisJet.Pt();
-  jet->auxdata< float >("eta") = thisJet.Eta();
-  jet->auxdata< float >("phi") = thisJet.Phi();
-  jet->auxdata< float >("e") = thisJet.E();
+  //// Apply calibration to JetFourMom_t
+  //TLorentzVector thisJet;
+  //thisJet.SetPtEtaPhiE(jet->pt(), jet->eta(), jet->phi(), jet->e());
+  //thisJet *= thisCalibration; //modify TLV
+  //jet->auxdata< float >("pt") = thisJet.Pt();
+  //jet->auxdata< float >("eta") = thisJet.Eta();
+  //jet->auxdata< float >("phi") = thisJet.Phi();
+  //jet->auxdata< float >("e") = thisJet.E();
+  xAOD::JetFourMom_t thisJet;
+  thisJet.SetCoordinates( jet->pt(), jet->eta(), jet->phi(), jet->m() );
+  thisJet *= thisCalibration;
+  jet->setJetP4( thisJet );
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1716,7 +1780,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int 
 EL::StatusCode MultijetBalanceAlgo :: reorderJets( std::vector< xAOD::Jet*>* theseJets ){
 
   if(m_debug) Info("reorderJets()", "reorderJets ");
-  xAOD::Jet* tmpJet;
+  xAOD::Jet* tmpJet = nullptr;
   for(unsigned int iJet = 0; iJet < theseJets->size(); ++iJet){
     for(unsigned int jJet = iJet+1; jJet < theseJets->size(); ++jJet){
       if( theseJets->at(iJet)->pt() < theseJets->at(jJet)->pt() ){
