@@ -37,7 +37,7 @@ except KeyError:
 packages_to_checkout.append("atlas-gulefebv/SystTool/tags/SystTool-00-01-06")
 packages_to_checkout.append("atlasphys-sm/Physics/StandardModel/Common/BootstrapGenerator/tags/BootstrapGenerator-01-10-00")
 packages_to_checkout.append("atlasperf/CombPerf/JetETMiss/JetCalibrationTools/JES_ResponseFitter/tags/JES_ResponseFitter-00-02-00")
-packages_to_checkout.append("atlasoff/Reconstruction/Jet/JetAnalysisTools/JetTileCorrection/tags/JetTileCorrection-00-00-05/")
+#packages_to_checkout.append("atlasoff/Reconstruction/Jet/JetAnalysisTools/JetTileCorrection/tags/JetTileCorrection-00-00-05/")
 
 
 
