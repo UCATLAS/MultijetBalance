@@ -1,5 +1,5 @@
 env:
-  - ABV=2.4.20
+  - ABV=2.4.22
 
 before_install:
   - ls
@@ -11,7 +11,7 @@ install:
   - source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh --quiet
   - rcSetup Base,${ABV}
   - git clone https://github.com/UCATLAS/xAODAnaHelpers
-#  - cd xAODAnaHelpers && git checkout 2d502e1ecc4 && cd ../
+  - cd xAODAnaHelpers && git checkout 3d2a40eca4f2d110 && cd ../
   - python xAODAnaHelpers/scripts/checkoutASGtags.py ${ABV}
   - python MultijetBalance/scripts/checkoutASGtags.py ${ABV}
   - rc clean
