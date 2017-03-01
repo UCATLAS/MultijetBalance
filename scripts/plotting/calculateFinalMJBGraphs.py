@@ -53,11 +53,11 @@ def calculateFinalMJBGraphs(file):
     nomDir = inFile.Get( nomDir[0] )
 
 #This gets the x-axis from the original histogram
-#!!  tmpMJBHist = nomDir.Get(histTag)
+  tmpMJBHist = nomDir.Get(histTag)
 
-  xBinsList = [300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1140, 1260, 1480, 2000]
-  xBins = array('d', xBinsList)
-  tmpMJBHist = TH1F("tmpHist", "tmpHist", len(xBinsList)-1, xBins)
+#!  xBinsList = [300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1140, 1260, 1480, 2000]
+#!  xBins = array('d', xBinsList)
+#!  tmpMJBHist = TH1F("tmpHist", "tmpHist", len(xBinsList)-1, xBins)
 
   ptBinFile = os.path.dirname(file)+'/'
 #  if 'mc' in file:
@@ -68,8 +68,8 @@ def calculateFinalMJBGraphs(file):
 #    ptBinFile += 'ptBinTree_data15.root'
 
   ## Only look for data tree
-  print "Looking for ptBinTree_data15.root in ",os.path.dirname(file)
-  ptBinFile += 'ptBinTree_data15.root'
+  print "Looking for ptBinTree_data.root in ",os.path.dirname(file)
+  ptBinFile += 'ptBinTree_data.root'
 
 
   if os.path.isfile(ptBinFile):

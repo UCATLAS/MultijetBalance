@@ -24,12 +24,13 @@ void MiniTree::AddEventUser(std::string detailStringMJB)
 //  m_tree->Branch("lumiBlock", &m_lumiBlock, "lumiBlock/I");
 
  // m_tree->Branch("actualInteractionsPerCrossing", &m_actualInteractionsPerCrossing, "actualInteractionsPerCrossing/F");
- // m_tree->Branch("averageInteractionsPerCrossing", &m_averageInteractionsPerCrossing, "averageInteractionsPerCrossing/F");
+  m_tree->Branch("corrected_averageInteractionsPerCrossing", &m_corrected_averageInteractionsPerCrossing, "corrected_averageInteractionsPerCrossing/F");
 
   m_tree->Branch("weight", &m_weight, "weight/F");
   m_tree->Branch("weight_xs", &m_weight_xs, "weight_xs/F");
   m_tree->Branch("weight_mcEventWeight", &m_weight_mcEventWeight, "weight_mcEventWeight/F");
   m_tree->Branch("weight_prescale", &m_weight_prescale, "weight_prescale/F");
+  m_tree->Branch("weight_pileup", &m_weight_pileup, "weight_pileup/F");
 
   m_tree->Branch("ptAsym", &m_ptAsym, "ptAsym/F");
   m_tree->Branch("alpha", &m_alpha, "alpha/F");
@@ -76,6 +77,7 @@ void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetNam
 //  m_tree->Branch("jet_EMFrac", &m_jet_EMFrac);
 //  m_tree->Branch("jet_HECFrac", &m_jet_HECFrac);
   m_tree->Branch("jet_TileFrac", &m_jet_TileFrac);
+  m_tree->Branch("jet_Jvt", &m_jet_Jvt);
 
 
 //  m_tree->Branch("jet_EnergyPerSampling", &m_jet_EnergyPerSampling);
@@ -89,11 +91,17 @@ void MiniTree::FillEventUser( const xAOD::EventInfo* eventInfo ) {
 //  m_lumiBlock = eventInfo->lumiBlock();
 //  m_actualInteractionsPerCrossing = eventInfo->actualInteractionsPerCrossing();
 //  m_averageInteractionsPerCrossing = eventInfo->averageInteractionsPerCrossing();
+  m_corrected_averageInteractionsPerCrossing = eventInfo->auxdecor< float >( "corrected_averageInteractionsPerCrossing" );
 
   m_weight = eventInfo->auxdecor< float >( "weight" );
   m_weight_xs = eventInfo->auxdecor< float >( "weight_xs" );
   m_weight_mcEventWeight = eventInfo->auxdecor< float >( "weight_mcEventWeight" );
   m_weight_prescale = eventInfo->auxdecor< float >( "weight_prescale" );
+  if(eventInfo->isAvailable< float >("PileupWeight") ){
+    m_weight_pileup = eventInfo->auxdecor< float >("PileupWeight");
+  }else{
+    m_weight_pileup = -999;
+  }
 
   m_ptAsym = eventInfo->auxdecor< float >( "ptAsym" );
   m_alpha = eventInfo->auxdecor< float >( "alpha" );
@@ -120,7 +128,7 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
   } else {
     m_jet_detEta.push_back( -999 );
   }
-  if( jet->isAvailable< float >( "detEta" ) ) {
+  if( jet->isAvailable< float >( "TileCorrectedPt" ) ) {
     m_jet_TileCorrectedPt.push_back( jet->auxdata< float >("TileCorrectedPt")/1e3 );
   } else {
     m_jet_TileCorrectedPt.push_back( -999 );
@@ -150,6 +158,11 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
     m_jet_TileFrac.push_back( jet->auxdata< float >("TileFrac") );
   }else{
     m_jet_TileFrac.push_back( -999 );
+  }
+  if (jet->isAvailable< float >( "Jvt" ) ){
+    m_jet_Jvt.push_back( jet->auxdata< float >("Jvt") );
+  }else{
+    m_jet_Jvt.push_back( -999 );
   }
 
 
@@ -192,6 +205,7 @@ void MiniTree::ClearJetsUser(const std::string jetName ) {
 //  m_jet_EMFrac.clear();
 //  m_jet_HECFrac.clear();
   m_jet_TileFrac.clear();
+  m_jet_Jvt.clear();
 //  m_jet_EnergyPerSampling.clear();
   for(unsigned int iB=0; iB < m_jet_BTagNames.size(); ++iB){
     m_jet_BTagBranches.at(iB).clear();

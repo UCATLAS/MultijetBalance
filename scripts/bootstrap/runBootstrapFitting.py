@@ -44,12 +44,12 @@ def runBootstrapFitting(inFile, f_rebin, f_fit, sysType):
 
     if (f_rebin):
       command = "runBootstrapRebin --file "+inFile+" --sysType "+sys
-      command += " --upperEdge 2000 --threshold 9"
+      command += " --upperEdge 2300 --threshold 9" # sigma significance
       if( f_fit ):
         command += ' --fit'
     else:
       command = "runFit --file "+inFile+" --sysType "+sys
-      command += " --upperEdge 2000"
+      command += " --upperEdge 2300"
       if( f_fit ):
         command += ' --fit'
 

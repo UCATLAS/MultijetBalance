@@ -32,12 +32,14 @@ f_printOnly = False
 ## Choose the MC types to run on
 ## The first MC type will be the nominal, while the second will be a systematic variation
 #mcTypes = ["Pythia", "Herwig", "Data207"]
-#mcTypes = ["Pythia","CombineLast2","DropLast1","DropLast2"]
 mcTypes = ["Pythia","Sherpa"]
+#mcTypes = ["Pythia"]
+#mcTypes = ["Pythia","Period_ABCD", "Period_EFG", "Period_I", "Period_K", "Period_L"]
+#mcTypes = ["Pythia","L1", "L2", "L3", "L4", "Run310015"]
 
 
 isValidation = False
-is2016 = False
+is2016 = True
 
 ## Order of steps to perform.  All are turned to False by default
 f_getPtHist = False
@@ -53,14 +55,14 @@ f_plotSL = False
 #f_combine = True #Combine MC files
 #f_calculateMJB = True # Calculate new histograms to be added to root file
 f_plotRelevant = True # Most important Plots
-f_plotAll = True # All plots
+#f_plotAll = True # All plots
 ###f_plotSL = True  # Plot Sampling Layers
 
 ################# Running Options ########################3
 
 ## lastPt to use for MJB result
 if (is2016):
-  endPt = 3500
+  endPt = 2300
 else:
   endPt = 2000
 
@@ -70,7 +72,7 @@ doFinal = True
 
 #doBootstrap will combine bins based on previously derived bootstrap binnings
 doBootstrap = True
-rebinFile = "gridOutput/workarea_LC207_Aug15/B1/workarea/hist.data.all.significant.root"
+rebinFile = "gridOutput/workarea_2016_LC/BS1/workarea/hist.data.all.significant.root"
 
 #doFit will perform a gaussian fit on each bin rather than get the mean
 doFit = True
@@ -103,7 +105,7 @@ if(f_getPtHist and doFinal):
     print 'python MultijetBalance/scripts/plotting/getRecoilPtTree.py --pathToTrees '+treeDir
     getRecoilPtTree.getRecoilPtTree(treeDir, "outTree_Nominal")
     if (doData):   #Only pt distribution for data
-      command = 'hadd '+args.workDir+'/ptBinTree_data15.root '+treeDir+'/ptBinTree_*data15*.root'
+      command = 'hadd '+args.workDir+'/ptBinTree_data.root '+treeDir+'/ptBinTree_*data16*.root'
       print command
       os.system(command)
 
@@ -355,6 +357,12 @@ if(f_plotRelevant):
         os.system(command)
       #plotSysRatios.plotSysRatios(file)
 
+      command = 'python MultijetBalance/scripts/plotting/plotSysRatios.py -b --MJBOnly --file '+file
+      print command
+      if (not f_printOnly):
+        os.system(command)
+      #plotSysRatios.plotSysRatios(file)
+
     ## plotActualSysRatios.py ##
     files = glob.glob(args.workDir+'/*.Fit_DoubleMJB_sys_initial.root')
     for file in files:
@@ -365,14 +373,14 @@ if(f_plotRelevant):
 
 
 if(f_plotAll):
-  ## plotAll.py ##
-  files = glob.glob(args.workDir+'/*.scaled.root') #+glob.glob(args.workDir+'/*MJB*.root')
-  for file in files:
-    command = 'python MultijetBalance/scripts/plotting/plotAll.py -b --file '+file
-    print command
-    if (not f_printOnly):
-      os.system(command)
-    ##plotAll.plotAll(file)
+#!!  ## plotAll.py ##
+#!!  files = glob.glob(args.workDir+'/*.scaled.root') #+glob.glob(args.workDir+'/*MJB*.root')
+#!!  for file in files:
+#!!    command = 'python MultijetBalance/scripts/plotting/plotAll.py -b --file '+file
+#!!    print command
+#!!    if (not f_printOnly):
+#!!      os.system(command)
+#!!    ##plotAll.plotAll(file)
 
   files = glob.glob(args.workDir+'/*.scaled.root') #+glob.glob(args.workDir+'/*MJB*.root')
   if len(files) > 0:

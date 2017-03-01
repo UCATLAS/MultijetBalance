@@ -16,12 +16,15 @@ import os, argparse, math, time
 from ROOT import *
 import AtlasStyle
 
-def plotSysRatios(file):
+def plotSysRatios(file, f_MJBOnly):
 
   outDir = file[:-5]+'/'
   if not os.path.exists(outDir):
     os.mkdir(outDir)
-  outDir += "plotSysRatios/"
+  if (f_MJBOnly):
+    outDir += "plotSysRatios_MJB/"
+  else:
+    outDir += "plotSysRatios/"
   if not os.path.exists(outDir):
     os.mkdir(outDir)
   AtlasStyle.SetAtlasStyle()
@@ -54,11 +57,17 @@ def plotSysRatios(file):
   MJBsToUse = ["a40","a20","b15","b05","pta90","pta70","ptt30","ptt20"]
   sysDirList = [sysDir for sysDir in sysDirList if (not "MJB" in sysDir.GetName() or any(MJBtouse in sysDir.GetName() for MJBtouse in MJBsToUse) )]
 
-
   ## Combine systematics in types ##
-#  sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
+  if (f_MJBOnly):
+    #sysTypesToUse = ["MJB_a40_pos", "MJB_b15_pos", "MJB_ptt30_pos", "MJB_pta90_pos"]
+    sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta"]
+  else:
+    sysTypesToUse = ["Zjet", "Gjet", "LAr", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
+    #sysTypesToUse = ["Gjet_Stat1_pos", "Gjet_Stat2_pos", "Gjet_Stat3_pos", "Gjet_Stat4_pos", "Gjet_Stat5_pos"]
+    #sysTypesToUse = ["Gjet_GamESZee_pos","Gjet_GamEsmear_pos","Gjet_Generator_pos","Gjet_Jvt_pos","Gjet_OOC_pos","Gjet_Purity_pos","Gjet_Veto_pos","Gjet_dPhi_pos","Gjet_Stat1_pos"]
 #  sysTypesToUse = ["MJB_ptt23", "MJB_ptt27", "MJB_ptt30", "MJB_ptt20"]
-  sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta"]
+
+
 
   sysTypes = []
   for sysType in sysTypesToUse:
@@ -116,7 +125,7 @@ def plotSysRatios(file):
     settingsHist.SetMarkerColor(kWhite)
     settingsHist.GetYaxis().SetRangeUser(-1., 2.)
     if("MJB" in histName):
-      settingsHist.GetXaxis().SetRangeUser( 300, 4000 )
+      settingsHist.GetXaxis().SetRangeUser( 200, 3000 )
       settingsHist.GetXaxis().SetMoreLogLabels(True)
       settingsHist.GetYaxis().SetRangeUser(-0.03, 0.03)
 
@@ -213,8 +222,9 @@ def getCombinedSysHist(nomHist, sysHistList, sysName = "tempSysHist"):
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="%prog [options]", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("-b", dest='batchMode', action='store_true', default=False, help="Batch mode for PyRoot")
+  parser.add_argument("--MJBOnly", dest='MJBOnly', action='store_true', default=False, help="Plot only MJB uncertainties")
   parser.add_argument("--file", dest='file', default="submitDir/hist-data12_8TeV.root",
            help="Input file name")
   args = parser.parse_args()
 
-  plotSysRatios(args.file)
+  plotSysRatios(args.file, args.MJBOnly)

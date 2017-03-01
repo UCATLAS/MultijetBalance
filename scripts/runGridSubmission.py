@@ -12,8 +12,9 @@ from time import strftime
 
 ### User Options ###
 test = False # does not run the jobs
-config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_EM207.py"
-#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2015_LC207.py"
+#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_EM207.py"
+#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2015_Validation.py"
+config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_LC207.py"
 extraTag = "" # Extra output tag for all files
 
 
@@ -31,8 +32,8 @@ runType = 'grid'   #CERN grid
 #runType = 'condor' #Uchicago Condor
 
 ## Set this only for group production submissions ##
-#production_name = ""
-production_name = "phys-exotics"
+production_name = ""
+#production_name = "phys-exotics"
 
 
 
@@ -42,15 +43,14 @@ outputTags = []
 ## File lists and specific output Tags
 
 ##2016##
-#files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_EXOT2_gridSamples.txt")
-#outputTags.append("Db_V1")
-#files.append("MultijetBalance/scripts/sampleLists/Data2016_Main_EXOT2_gridSamples.txt")
-#outputTags.append("Main2016_EXOT2_TileCorr")
-
-files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_EXOT2_207_gridSamples.txt")
-outputTags.append("QCDPythia8_EXOT2_NoBeta")
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_EXOT2_207_gridSamples.txt")
-#outputTags.append("QCDSherpa_EXOT2_NoBeta")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
+#outputTags.append("QCDPythia8_JETM1_LCIt1")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
+#outputTags.append("QCDSherpa_JETM1_LCIt1")
+files.append("MultijetBalance/scripts/sampleLists/Data2016_Main_JETM1_gridSamples.txt")
+outputTags.append("Main2016_JETM1_LCBS2")
+#files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_JETM1_gridSamples.txt")
+#outputTags.append("Debug2016_JETM1_It0")
 
 #files.append("MultijetBalance/scripts/sampleLists/2015/Data13TeV_Debug_EXOT2_207_gridSamples.txt")
 #outputTags.append("Db_R1")
@@ -73,9 +73,12 @@ for iFile, file_in in enumerate(files):
   ## Configure submission driver ##
   driverCommand = ''
   if runType == 'grid':
-    driverCommand = 'prun --optGridOutputSampleName='
+    driverCommand = 'prun --optSubmitFlags="--skipScout" --optGridOutputSampleName='
+    #driverCommand = 'prun --optSubmitFlags="--skipScout --excludedSite=ANALY_CERN_SHORT,ANALY_BNL_SHORT" --optGridOutputSampleName='
     if len(production_name) > 0:
-      driverCommand = ' prun --optSubmitFlags="--official" --optGridOutputSampleName='
+      #driverCommand = ' prun --optSubmitFlags="--memory=5120 --official --skipScout" --optGridOutputSampleName='
+      driverCommand = ' prun --optSubmitFlags="--official --skipScout" --optGridOutputSampleName='
+      #driverCommand = ' prun --optSubmitFlags="--official" --optGridOutputSampleName='
       driverCommand += 'group.'+production_name
     else:
       driverCommand += 'user.%nickname%'
@@ -89,7 +92,7 @@ for iFile, file_in in enumerate(files):
 
   command = './xAODAnaHelpers/scripts/xAH_run.py'
   if runType == 'grid':
-    command += ' --inputRucio'
+    command += ' --inputRucio '
   command += ' --inputList --files '+file_in
   command += ' --config '+config_name
   command += ' --force --submitDir '+submit_dir
