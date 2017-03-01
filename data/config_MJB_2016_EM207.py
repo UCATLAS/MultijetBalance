@@ -4,7 +4,7 @@ from xAH_config import xAH_config
 c = xAH_config()
 
 c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
-                                     "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v83-pro20-14_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
+                                     "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
                                      "m_derivationName"              : "EXOT2",
                                      "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
@@ -14,13 +14,18 @@ c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
                                      #"m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110|HLT_j85",
                                      "m_checkDuplicatesData"         : False,
                                      "m_applyEventCleaningCut"       : True,
-                                     "m_applyPrimaryVertexCut"       : True
+                                     "m_applyPrimaryVertexCut"       : True,
+                                     #"m_doPUreweighting"       : True,
+                                     #"m_PRWFileNames"          : "$ROOTCOREBIN/data/MultijetBalance/PRW_QCD.root",
+                                     #"m_lumiCalcFileNames"     : "$ROOTCOREBIN/data/MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
                                      } )
 #prescales in run 307861
 #15 - 301, 25 - 124, 35 - 18.3, 45 - 88,  55 - 40.7, 60 - 20, 85 - 14, 110 - 5.7, 150 - 11.8, 175 - 4.1, 260 - 1.2, 
 
 ### MJB Configuration  ###
 c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
+
+  "m_TileCorrection"      : False,
 
   "m_inContainerName"     : "AntiKt4EMTopoJets",
 #  "m_triggerAndPt" : "", #Leave this empty for efficiency studies!
@@ -32,38 +37,39 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_MJBIteration" : 0,
   ## The pt thresholds on the subleading jets for event inclusion. -1 gets taken from the V+jet file.
   ## This is set automatically in m_validation to a large number!
-  #"m_MJBIterationThreshold" : "999999",
-  "m_MJBIterationThreshold" : "-1,1700",
+  #"m_MJBIterationThreshold" : "9999999999",
+  "m_MJBIterationThreshold" : "-1,2000",
   ## For higher iterations:
-#  "m_MJBCorrectionFile" : "Iteration0_EM_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
+  #"m_MJBCorrectionFile" : "Bootstrap_Iteration0_EM_hist.combined.Pythia.DoubleMJB_initial.root",
+  #"m_MJBCorrectionFile" : "Iteration0_2016EM_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
 
 ## 2016 initial validation binning
-  "m_binning"   : "200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #23bins
+  "m_binning"   : "200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300,2600", #23bins
 #  "m_binning"   : "300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #37 bins
 #  "m_binning"  : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2500,3000,3500",
 
 
  ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibration! ##
-# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/PreviousConfigs/2015_207_EM/Vjet_2015_207/Vjet_Nominal.root",
- "m_VjetCalibFile"  : "",
+ "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/PreviousConfigs/2016_EM/Vjet_Nominal.root",
+# "m_VjetCalibFile"  : "",
 
  ## Use GSC value, not insitu, for leading jet.
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal",
-#  "m_sysVariations" : "AllSystematics",
+#  "m_sysVariations" : "Nominal",
+  "m_sysVariations" : "AllSystematics",
 #  "m_sysVariations" : "Nominal-localMJB",
 
   ## (Deprecated Option) Add statistical systematic for MJB:
 #  "m_MJBStatsOn" : True,
 
 #------ Event Selections ------#
-  "m_numJets"  : 3,
-  "m_ptAsym" : 0.8,
+#  "m_numJets"  : 3,
+#  "m_ptAsym" : 0.8,
 #  "m_alpha" : 0.3,
-  "m_beta" : 0.01,
-#  "m_ptThresh" : 25,  #in GeV
+  "m_beta" : 1.0,
+#  "m_ptThresh" : 60,  #in GeV
   ## Looser beta cut to improve statistics
   "m_looseBetaCut" : True,
 
@@ -74,7 +80,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #------ Validation Mode ------#
   #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-  "m_validation" : True,
+#  "m_validation" : True,
 #  ## Dijet validation mode: ##
 #  "m_numJets"  : 2,
 #  "m_ptAsym" : 1.0,
@@ -118,19 +124,21 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_jetDef"            : "AntiKt4EMTopo",
   "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
 ## ICHEP 2016 20.7 calibration for validation
-  "m_jetCalibConfig"    : "JES_MC15cRecommendation_May2016.config",
+  "m_jetCalibConfig"    : "JES_2016data_Oct2016_EtaIntercalOnly.config",
+  #"m_jetCalibConfig"    : "JES_MC15cRecommendation_May2016.config",
 
   #-- JetCleaning --#
   "m_jetCleanCutLevel"  : "LooseBad",
 #  "m_jetCleanUgly"      : True,
 
   #-- JVT --#
-  #"m_JVTWP" : "Medium", # 2016
+  "m_JVTWP" : "Medium", # 2016
 
   #-- JetUncertaintiesTool --#
   #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
   ### 2016 ICHEP offical Systematics
-  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/ICHEP2016/JES2015_AllNuisanceParameters.config"
+  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JESNuisanceParametersForMJB.config"
+  #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/ICHEP2016/JES2015_AllNuisanceParameters.config"
   #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/ICHEP2016/JES2015_SR_Scenario1.config"
 
 

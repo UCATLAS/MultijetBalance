@@ -34,11 +34,11 @@ def renameMJB(sysFileName):
   for dirName in dirList:
     if "_JCS_" in dirName:
       continue
-    if "MJB_a25_" in dirName or "MJB_a35_" in dirName or \
-       "MJB_b12_" in dirName or "MJB_b08_" in dirName or \
-       "MJB_pta75_" in dirName or "MJB_pta85_" in dirName or \
-       "MJB_ptt27_" in dirName or "MJB_ptt23_" in dirName:
-      continue
+#    if "MJB_a25_" in dirName or "MJB_a35_" in dirName or \
+#       "MJB_b12_" in dirName or "MJB_b08_" in dirName or \
+#       "MJB_pta75_" in dirName or "MJB_pta85_" in dirName or \
+#       "MJB_ptt27_" in dirName or "MJB_ptt23_" in dirName:
+#      continue
 
 
     outHistName = dirName
@@ -51,7 +51,7 @@ def renameMJB(sysFileName):
     outHistName = outHistName.replace('MJB_a40_','MJB_Alpha_').replace('MJB_ptt30_','MJB_Threshold_')
     outHistName = outHistName.replace('MJB_a20_','MJB_Alpha_').replace('MJB_ptt20_','MJB_Threshold_')
     outHistName = outHistName.replace('MCType','MJB_Fragmentation')
-#    outHistName = outHistName.replace('Comupition','Composition')
+    outHistName = outHistName.replace('Comupition','Composition')
 #    outHistName = outHistName.replace('LAr_Esmear','Gjet_GamEsmear')
     outHistName += jetType
 
@@ -102,6 +102,6 @@ if __name__ == "__main__":
 #  sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
 ##  nominalFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_final.root"
 
-  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea_LC207_Aug15/L1_Final/workarea/"
+  thisDir = "/home/jdandoy/Documents/Dijet/MultijetBalanceFW/gridOutput/workarea_2016_LC/LC1/workarea/"
   sysFile = thisDir+"hist.combined.Pythia.Fit_DoubleMJB_sys_final.root"
   renameMJB(sysFile)

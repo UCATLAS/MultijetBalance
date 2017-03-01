@@ -99,7 +99,7 @@ def plotNominal(file, f_plotSys, f_addGagik):
     nomHist.SetMaximum(1.5*nomHist.GetMaximum())
     nomHist.SetMinimum(0.0001)
     if( "MJB" in histName) :
-      nomHist.GetXaxis().SetRangeUser( 300, 2500 )
+      nomHist.GetXaxis().SetRangeUser( 200, 2600 )
       nomHist.SetMaximum(1.1)
       nomHist.SetMinimum(0.9)
       nomHist.GetXaxis().SetMoreLogLabels(True)
@@ -217,7 +217,7 @@ def plotNominal(file, f_plotSys, f_addGagik):
     c1.cd()
     leg.Draw()
     AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Internal")
-    AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.2 fb^{-1}")
+    AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 33 fb^{-1}")
 
     if "Pt" in histName or "alpha" in histName:
       pad1.SetLogy()

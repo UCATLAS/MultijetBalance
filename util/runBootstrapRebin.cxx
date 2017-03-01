@@ -37,7 +37,7 @@ int SaveCanvas(int startBin, int endBin, string cName, JES_BalanceFitter* m_BalF
   thisHisto->Draw();
   thisFit->Draw("same");
 
-  float thisMean = 0., thisError = 0., thisRedChi = 0., thisMedian = 0., thisWidth = 0., thisMedianHist = 0.;
+  double thisMean = 0., thisError = 0., thisRedChi = 0., thisMedian = 0., thisWidth = 0., thisMedianHist = 0.;
 
   thisMean = m_BalFit->GetMean();
   thisError = m_BalFit->GetMeanError();
@@ -102,26 +102,28 @@ inline bool isInteger(const std::string & s){
   return (*p == 0) ;
 }
 
+//// This is for when the nominal was rebinned.  No longer needed
 TH2F* initialRebin( TH2F* inputHist ){
 
 
   std::string histName = inputHist->GetName();
   inputHist->SetName( ("tmp_"+histName).c_str() );
-  double binArray[] = {300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1140, 1260, 1480, 2000};
-  int nBins = 16;
-  Double_t ptBalBins[501];
-  int numPtBalBins = 500;
-  for(int i=0; i < numPtBalBins+1; ++i){
-    ptBalBins[i] = i/100.;
-  }
-
-  TH2F* newHist = new TH2F( histName.c_str(), inputHist->GetTitle(), nBins, binArray, numPtBalBins, ptBalBins);
-  newHist->Sumw2();
-  for(int iBinX=1; iBinX < inputHist->GetNbinsX()+1; ++iBinX){
-    for(int iBinY=1; iBinY < inputHist->GetNbinsY()+1; ++iBinY){
-      newHist->Fill( inputHist->GetXaxis()->GetBinLowEdge(iBinX)+0.0001, inputHist->GetYaxis()->GetBinLowEdge(iBinY)+0.0001, inputHist->GetBinContent(iBinX, iBinY) );
-    }
-  }
+//  double binArray[] = {300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900, 960, 1020, 1140, 1260, 1480, 2000};
+//  int nBins = 16;
+//  Double_t ptBalBins[501];
+//  int numPtBalBins = 500;
+//  for(int i=0; i < numPtBalBins+1; ++i){
+//    ptBalBins[i] = i/100.;
+//  }
+//
+//  TH2F* newHist = new TH2F( histName.c_str(), inputHist->GetTitle(), nBins, binArray, numPtBalBins, ptBalBins);
+//  newHist->Sumw2();
+//  for(int iBinX=1; iBinX < inputHist->GetNbinsX()+1; ++iBinX){
+//    for(int iBinY=1; iBinY < inputHist->GetNbinsY()+1; ++iBinY){
+//      newHist->Fill( inputHist->GetXaxis()->GetBinLowEdge(iBinX)+0.0001, inputHist->GetYaxis()->GetBinLowEdge(iBinY)+0.0001, inputHist->GetBinContent(iBinX, iBinY) );
+//    }
+//  }
+  TH2F* newHist = (TH2F*) inputHist->Clone( histName.c_str() );
   return newHist;
 }
 
@@ -277,7 +279,7 @@ int main(int argc, char *argv[])
     }
 
   }
-  cout << "numToys is " << h_2D_sys.size() << " and " << h_2D_nominal.size() << endl;
+  cout << "numToys in sys is " << h_2D_sys.size() << " and in nominal is " << h_2D_nominal.size() << endl;
 
   if(  h_2D_sys.size() < 1 || !(h_full_recoilPt_PtBal) || !(h_full_recoilPt_PtBal_nominal) ||
       h_full_recoilPt_PtBal->IsZombie() || h_full_recoilPt_PtBal_nominal->IsZombie() ){
@@ -298,7 +300,7 @@ int main(int argc, char *argv[])
 
   vector<int> reverseBinEdges; //we start from upper end
   reverseBinEdges.push_back( largestBin );
-  vector<float> values_significant;
+  vector<double> values_significant;
 
 
   // Loop over all bins //
@@ -309,7 +311,7 @@ int main(int argc, char *argv[])
     //Get fits of this iBin projection for full (non-bootstrap)
     TH1D* h_full_proj_sys = h_full_recoilPt_PtBal->ProjectionY("h_full_proj_sys", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
     TH1D* h_full_proj_nominal = h_full_recoilPt_PtBal_nominal->ProjectionY("h_full_proj_nominal", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
-    float full_sysVal = -1., full_nominalVal = -1.;
+    double full_sysVal = -1., full_nominalVal = -1.;
 
     if(f_fit){
       m_BalFit->Fit(h_full_proj_nominal, 0); // Rebin histogram and fit
@@ -321,12 +323,12 @@ int main(int argc, char *argv[])
       full_sysVal = h_full_proj_sys->GetMean();
     }
 
-    vector<float> meanValues;
+    vector<double> meanValues;
     // Loop over all toys //
     for(unsigned int iH = 0; iH < h_2D_sys.size(); ++iH){
       TH1D* h_proj_sys = h_2D_sys.at(iH)->ProjectionY("h_proj_sys", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
       TH1D* h_proj_nominal = h_2D_nominal.at(iH)->ProjectionY("h_proj_nominal", iBin, reverseBinEdges.at(reverseBinEdges.size()-1), "ed" );
-      float sysVal = -1., nominalVal = -1.;
+      double sysVal = -1., nominalVal = -1.;
 
       if(f_fit){
         m_BalFit->Fit(h_proj_nominal, 0); // Rebin histogram and fit
@@ -339,7 +341,8 @@ int main(int argc, char *argv[])
       }
       //!! Need to check here if fit failed, and otherwise give the projection?
       meanValues.push_back(   nominalVal == 0 ? 0 : ((sysVal/nominalVal)-1.)  );
-      //cout << (sysVal-nominalVal)/nominalVal << " sys: " << sysVal << " nominalVal: " << nominalVal << endl;
+      
+      //cout << std::setprecision(20) << (sysVal-nominalVal)/nominalVal << " sys: " << sysVal << " nominalVal: " << nominalVal << endl;
 
       // Draw this fit for the first toy //
       if( f_fit && iH == 0){
@@ -349,10 +352,10 @@ int main(int argc, char *argv[])
     }
 
     // Get mean value from full (non-bootstrap) results //
-    float mean = (full_nominalVal == 0 ? 0 : ((full_sysVal/full_nominalVal)-1.)  );
+    double mean = (full_nominalVal == 0 ? 0 : ((full_sysVal/full_nominalVal)-1.)  );
 
     // Get RMS value from toys //
-    float RMS =  TMath::RMS(meanValues.size(), &meanValues[0]);
+    double RMS =  TMath::RMS(meanValues.size(), &meanValues[0]);
 
     double mu = mean / RMS / RMS;
     double sig = 1.0/ RMS / RMS;

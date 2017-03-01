@@ -16,7 +16,8 @@ def addNominalToBootstrap(nomFileName, bsFileName):
   bsFile = TFile.Open( bsFileName, "UPDATE")
 
   keyList = [key.GetName() for key in nomFile.GetListOfKeys()] #List of top level objects
-  histList = [key for key in keyList if "recoilPt_PtBal" in key]
+  histList = [key for key in keyList if key.endswith("recoilPt_PtBal") ]
+  #histList = [key for key in keyList if "recoilPt_PtBal" in key]
 
   print histList
 

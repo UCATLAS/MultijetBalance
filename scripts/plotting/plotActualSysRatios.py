@@ -51,20 +51,23 @@ def plotActualSysRatios(file):
     sysDirList.append( inFile.Get(sysDirName) )
 
   ## This removes extra MJB systematics
-  MJBsToUse = ["a40","a20","b15","b05","pta90","pta70","ptt30","ptt20"]
-  sysDirList = [sysDir for sysDir in sysDirList if (not "MJB" in sysDir.GetName() or any(MJBtouse in sysDir.GetName() for MJBtouse in MJBsToUse) )]
+#  MJBsToUse = ["a40","a20","b15","b05","pta90","pta70","ptt30","ptt20"]
+#  sysDirList = [sysDir for sysDir in sysDirList if (not "MJB" in sysDir.GetName() or any(MJBtouse in sysDir.GetName() for MJBtouse in MJBsToUse) )]
   sysDirList = [sysDir for sysDir in sysDirList if not "Nominal" in sysDir.GetName()]
 
   ## Combine systematics in types ##
 
   #sysTypesToUse = ["Zjet_dPhi","Zjet_MC","Zjet_MuScale","Zjet_MuSmearID","Zjet_MuSmearMS","Zjet_KTerm","Zjet_Veto","Zjet_Stat1","Zjet_Stat2","Zjet_Stat3","Zjet_Stat4","Zjet_Stat5","Zjet_Stat6","Zjet_Stat7","Zjet_Stat8","Zjet_Stat9","Zjet_Stat10","Zjet_Stat11","Zjet_Stat12","Zjet_Stat13"]
-  #sysTypesToUse = ["Gjet_dPhi","Gjet_Generator","Gjet_OOC","Gjet_Purity","Gjet_Veto","Gjet_Stat1","Gjet_Stat2","Gjet_Stat3","Gjet_Stat4","Gjet_Stat5","Gjet_Stat6","Gjet_Stat7","Gjet_Stat8","Gjet_Stat9","Gjet_Stat10","Gjet_Stat11","Gjet_Stat12","Gjet_Stat13","Gjet_Stat14","Gjet_Stat15"]
+  #sysTypesToUse = ["Gjet_dPhi_","Gjet_Generator_","Gjet_OOC_","Gjet_Purity_","Gjet_Veto_","Gjet_Stat1_","Gjet_Stat2_","Gjet_Stat3_","Gjet_Stat4_","Gjet_Stat5_","Gjet_Stat6_","Gjet_Stat7_","Gjet_Stat8_","Gjet_Stat9_","Gjet_Stat10_","Gjet_Stat11_","Gjet_Stat12_","Gjet_Stat13_","Gjet_Stat14_","Gjet_Stat15_"]
+  #sysTypesToUse = ["Gjet_dPhi","Gjet_Generator","Gjet_Stat14_","Gjet_Stat15_"]
 
 
   sysTypesToUse = ["Zjet", "Gjet", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
-  #sysTypesToUse = ["Zjet_Jvt", "Zjet_ElecESZee", "Zjet_ElecEsmear", "Gjet_Jvt", "Gjet_GamESZee", "LAr_Esmear"]
-#  sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "MCType"]
-# SingleParticle, RelativeNonClosure, Pileup, BJES, PunchThrough
+  #sysTypesToUse = ["Zjet", "Gjet", "Flavor", "EtaIntercalibration", "PunchThrough", "Pileup", "MCType", "MJB"]
+####sysTypesToUse = ["EtaIntercalibration_Modelling", "EtaIntercalibration_TotalStat", "EtaIntercalibration_NonClosure", "EtaIntercalibration_OFCs"]
+###  #sysTypesToUse = ["Zjet_Jvt", "Zjet_ElecESZee", "Zjet_ElecEsmear", "Gjet_Jvt", "Gjet_GamESZee", "LAr_Esmear"]
+####  sysTypesToUse = ["MJB_a", "MJB_b", "MJB_ptt", "MJB_pta", "MCType"]
+#### SingleParticle, RelativeNonClosure, Pileup, BJES, PunchThrough
 
   sysTypes = []
   for sysType in sysTypesToUse:
@@ -122,7 +125,7 @@ def plotActualSysRatios(file):
     settingsHist.SetMarkerColor(kWhite)
     settingsHist.GetYaxis().SetRangeUser(-1., 2.)
     if("MJB" in histName):
-      settingsHist.GetXaxis().SetRangeUser( 300, 4000 )
+      settingsHist.GetXaxis().SetRangeUser( 200, 4000 )
       settingsHist.GetXaxis().SetMoreLogLabels(True)
       settingsHist.GetYaxis().SetRangeUser(-0.03, 0.03)
 
@@ -153,8 +156,11 @@ def plotActualSysRatios(file):
 
       sysHistUp.Draw("same hist lp")
       sysHistDn.Draw("same hist lp")
-      if( topSysName == "EtaIntercalibration"):
-        leg.AddEntry( sysHistUp, "#eta-inter", "lp")
+      #if( topSysName == "EtaIntercalibration"):
+      #  leg.AddEntry( sysHistUp, "#eta-inter", "lp")
+      if( "EtaIntercalibration" in topSysName ):
+        leg.AddEntry( sysHistUp, topSysName.replace('EtaIntercalibration','#eta-inter'), "lp")
+        #leg.AddEntry( sysHistUp, topSysName.replace('EtaIntercalibration_',''), "lp")
       elif( topSysName == "PunchThrough"):
         leg.AddEntry( sysHistUp, "PunchTh", "lp")
       else:

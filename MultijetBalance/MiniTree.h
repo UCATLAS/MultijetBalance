@@ -23,9 +23,9 @@ class MiniTree : public HelpTreeBase
     int m_lumiBlock;
 
     /** @brief Number of actual interactions per crossing*/
-    float m_actualInteractionsPerCrossing;
+    //float m_actualInteractionsPerCrossing;
     /** @brief Average number of interactions per crossing*/
-    float m_averageInteractionsPerCrossing;
+    float m_corrected_averageInteractionsPerCrossing;
 
     /** @brief Total weight of the event, a multiplication of other event weights*/
     float m_weight;
@@ -35,6 +35,8 @@ class MiniTree : public HelpTreeBase
     float m_weight_mcEventWeight;
     /** @brief Prescale weight of the event in data */
     float m_weight_prescale;
+    /** @brief Pileup weight of the event in MC */
+    float m_weight_pileup;
 
     /** @brief \f$p_{T}\f$ asymmetry variable*/
     float m_ptAsym;
@@ -74,6 +76,8 @@ class MiniTree : public HelpTreeBase
     std::vector<float> m_jet_HECFrac;
     /** @brief Fraction of energy deposited in the Tile calorimeter for each jet */
     std::vector<float> m_jet_TileFrac;
+    /** @brief Jvt for each jet */
+    std::vector<float> m_jet_Jvt;
     /** @brief Fraction of energy deposited in each calorimeter sampling layer for each jet */
     std::vector< std::vector<float> > m_jet_EnergyPerSampling;
 

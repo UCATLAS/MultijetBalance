@@ -10,11 +10,11 @@ parser.add_argument("--firstIter", dest='firstIter', action='store_true', defaul
     help="Inputs are for the first iteration: bootstrap objects which will be transformed into MJB correction histograms")
 parser.add_argument("--lastIter",  dest='lastIter',  action='store_true', default=False,
     help="Inputs are for the last iteration: Output histograms which must be combined to determine the final rebinning")
-parser.add_argument("--fit",  dest='fit',  action='store_true', default=False,
-    help="Systematic histograms will be fit, rather than using the average balance value.  This is not recommended and "\
-    "will take a substantial amount of time.")
-parser.add_argument("--rebin",  dest='rebin',  action='store_true', default=False,
-    help="Perform rebinning at the last iteration")
+#parser.add_argument("--fit",  dest='fit',  action='store_true', default=False,
+#    help="Systematic histograms will be fit, rather than using the average balance value.  This is not recommended and "\
+#    "will take a substantial amount of time.")
+#parser.add_argument("--rebin",  dest='rebin',  action='store_true', default=False,
+#    help="Perform rebinning at the last iteration")
 parser.add_argument("--dir", dest='workDir', default='', help="Typically gridOutput")
 args = parser.parse_args()
 
@@ -27,14 +27,16 @@ if not args.firstIter and not args.lastIter:
 f_printOnly = False
 ##First Iteration
 #f_combine = False
-#f_calculate = False
+#f_calculate = True
 #f_doubleRatio = True
 #f_Data = True
 #f_MC = True
 
-##Last Iteration
-f_combine = True
-f_reformat = True
+mcType = "Pythia"
+
+###Last Iteration
+f_combine = False
+f_reformat = False
 f_calculateRebin = True
 
 
@@ -64,7 +66,7 @@ if (args.firstIter):
 
 
       ## Grab all nominal histograms ##
-      ##  !! This file can be directly copied from the nominal plotting results ##
+      ##  !! This file is the hadd of the "hist" output files ##
       # ~ 6  minutes
       command = 'hadd '+args.workDir+'/hist.data.nominal.initial.root '+args.workDir+'/../hist/*.data*_hist.root'
       print command
@@ -88,7 +90,7 @@ if (args.firstIter):
 
     if( f_MC ):
       ## input -> scaled ##
-      files = glob.glob(args.workDir+'/../hist/*mc15*Pythia*_hist.root')
+      files = glob.glob(args.workDir+'/../hist/*'+mcType+'*_hist.root')
       for file in files:
         command = 'python MultijetBalance/scripts/plotting/scaleHist.py --file '+file
         print command
@@ -103,7 +105,7 @@ if (args.firstIter):
 
 
       ## Hadd MC slices together into scaled ##
-      command = 'hadd '+args.workDir+'/hist.mc.Pythia.scaled.root '+args.workDir+'/initialFiles/*.mc*Pythia*_hist.scaled.root'
+      command = 'hadd '+args.workDir+'/hist.mc.'+mcType+'.scaled.root '+args.workDir+'/initialFiles/*'+mcType+'*_hist.scaled.root'
       print command
       if not f_printOnly:
         os.system(command)
@@ -113,19 +115,19 @@ if (args.firstIter):
 
     if( f_Data ):
       command = 'python MultijetBalance/scripts/bootstrap/runBootstrapFitting.py --file '+args.workDir+'/hist.data.all.scaled.root'
-      if args.fit:
-        command += ' --fit'
+      #if args.fit:
+      #  command += ' --fit'
       print command
       if not f_printOnly:
         os.system(command)
 
     if( f_MC ):
-      endPt = 2000
+      endPt = 2300
       file = args.workDir+"/hist.mc.Pythia.scaled.root"
       command = 'runFit --file '+file
       command += ' --upperEdge '+str(endPt)
-      if args.fit:
-        command += ' --fit'
+      #if args.fit:
+      #  command += ' --fit'
       print command
       if (not f_printOnly):
         os.system(command)
@@ -162,10 +164,11 @@ elif (args.lastIter):
 
   if( f_calculateRebin ):
       command = 'python MultijetBalance/scripts/bootstrap/runBootstrapFitting.py --file '+args.workDir+'/hist.data.all.scaled.root'
-      if (args.fit):
-        command += ' -fit'
-      if (args.rebin):
-        command += ' -rebin'
+#      if (args.fit):
+#        command += ' -fit'
+#      if (args.rebin):
+#        command += ' -rebin'
+      command += ' -rebin'
       print command
       if not f_printOnly:
         os.system(command)

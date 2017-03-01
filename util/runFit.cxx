@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
     }
   }//while arguments
 
+  std::string histName = "recoilPt_PtBal";
 
   if ( inFileName.size() == 0){
     cout << "No input file given " << endl;
@@ -182,7 +183,7 @@ int main(int argc, char *argv[])
     fitPlotsOutName.erase(0, fitPlotsOutName.find_last_of("/"));
     fitPlotsOutName += "_"+sysName;
 
-    TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/recoilPt_PtBal").c_str());
+    TH2F* h_recoilPt_PtBal = (TH2F*) inFile->Get((sysName+"/"+histName).c_str());
 
     keyCount++;
     cout << "Systematic " << sysName << " (" << keyCount << "/" << nKeys << ")" << endl;

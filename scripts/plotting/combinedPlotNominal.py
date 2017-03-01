@@ -37,17 +37,17 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
 
   files = files.split(',')
   dataFile = [file for file in files if ".data." in file][0]
-  files.remove(dataFile)
-  files.insert(0, dataFile)
-  if any("Pythia" in file for file in files):
-    pythiaFile = [file for file in files if "Pythia" in file][0]
-    files.remove(pythiaFile)
-    files.insert(1, pythiaFile)
-
-  if any("Sherpa" in file for file in files):
-    sherpaFile = [file for file in files if "Sherpa" in file][0]
-    files.remove(sherpaFile)
-    files.insert(2, sherpaFile)
+#  files.remove(dataFile)
+#  files.insert(0, dataFile)
+#  if any("Pythia" in file for file in files):
+#    pythiaFile = [file for file in files if "Pythia" in file][0]
+#    files.remove(pythiaFile)
+#    files.insert(1, pythiaFile)
+#
+#  if any("Sherpa" in file for file in files):
+#    sherpaFile = [file for file in files if "Sherpa" in file][0]
+#    files.remove(sherpaFile)
+#    files.insert(2, sherpaFile)
   # Save output to directory of first file
   outDir = dataFile[:-5]+'/'
   if not os.path.exists(outDir):
@@ -70,7 +70,8 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
 
     inFiles.append( TFile.Open(file, "READ") )
     keyList = [key.GetName() for key in inFiles[-1].GetListOfKeys()] #List of top level objects
-    dirList = [key for key in keyList if "Iteration" in key] #List of all directories
+    dirList = [key for key in keyList] #List of all directories
+    #dirList = [key for key in keyList if "Iteration" in key] #List of all directories
 
     nomDir = [dir for dir in dirList if "Nominal" in dir]
     if( not len(nomDir) == 1):
@@ -173,7 +174,8 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
       nomHist.SetLineColor(colors[iDir])
       nomHist.SetMarkerColor(colors[iDir])
       nomHist.SetMarkerStyle(markers[iDir])
-      thisEntry = leg.AddEntry( nomHist, thisFileStr.replace('d','D').replace('Sherpa', 'Sherpa 2.1').replace('Herwig','Herwig++'), "lp" )
+      thisEntry = leg.AddEntry( nomHist, thisFileStr.replace('Sherpa', 'Sherpa 2.1').replace('Herwig','Herwig++'), "lp" )
+      #thisEntry = leg.AddEntry( nomHist, thisFileStr.replace('d','D').replace('Sherpa', 'Sherpa 2.1').replace('Herwig','Herwig++'), "lp" )
       thisEntry.SetTextColor( colors[iDir] )
       #nomHist.SetMinimum(0.9)
 #      if( "jetPt" in histName or "jetEnergy" in histName):
@@ -188,9 +190,10 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
         #nomHist.GetXaxis().SetRangeUser( 500, 2800 ) #!!public
         #nomHist.SetMaximum(1.06) #!!public
         #nomHist.SetMinimum(0.9701) #!!public
-        nomHist.GetXaxis().SetRangeUser( 300, endPt )
+        nomHist.GetXaxis().SetRangeUser( 200, endPt )
         if(isValidation):
           nomHist.SetMaximum(1.1)
+          #nomHist.SetMinimum(0.93001)
           nomHist.SetMinimum(0.95001)
         else:
           nomHist.SetMaximum(1.2)
@@ -214,7 +217,7 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
         nomHist.GetYaxis().SetTitle("AU")
       if( "recoilPt" in histName):
         nomHist.GetYaxis().SetTitle("1/N dp_{T}^{recoil}/dN")
-        nomHist.GetXaxis().SetRangeUser( 300, endPt )
+        nomHist.GetXaxis().SetRangeUser( 200, endPt )
       if not type(nomHist) == TGraphErrors:
         #drawString = "histsamep"
         drawString = "psame e"
@@ -228,6 +231,8 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
       maxVal.append( nomHist.GetMaximum() )
 
     maxDir = maxVal.index( max(maxVal) )
+    if( not "MJB" in histName) :
+      nomHists[maxDir]
     nomHists[maxDir].Draw( drawString )
     if maxBinX:
       maxBinX = max( maxBinX )
@@ -279,9 +284,10 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
             else:
               ratioHists[iDir-1].GetXaxis().SetRangeUser( 0, endJetPt-500 )
           if( "MJB" in histName) :
-            #ratioHists[iDir-1].GetXaxis().SetRangeUser( 500, 2800 ) #!!public
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, endPt )
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 200, endPt )
             if( isValidation):
+              #ratioHists[iDir-1].SetMaximum(1.03)
+              #ratioHists[iDir-1].SetMinimum(0.97)
               ratioHists[iDir-1].SetMaximum(1.02)
               ratioHists[iDir-1].SetMinimum(0.98)
             else:
@@ -290,7 +296,7 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
             
             ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
           if( "recoilPt" in histName):
-            ratioHists[iDir-1].GetXaxis().SetRangeUser( 300, endPt )
+            ratioHists[iDir-1].GetXaxis().SetRangeUser( 200, endPt )
             ratioHists[iDir-1].GetXaxis().SetTitle("p_{T}^{recoil} [GeV]");
 
      #     if( "jetBeta" in histName):
@@ -305,24 +311,30 @@ def combinedPlotNominal(files, normalize, ratio, isValidation, is2016):
 
     c1.cd()
     leg.Draw()
-    AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Preliminary")
-    if (is2016):
-      AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 15 fb^{-1}")
+    if( "MJB" in histName) :
+      AtlasStyle.ATLAS_LABEL(0.2,0.88, 1,"    Preliminary")
+      if (is2016):
+        AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 33 fb^{-1}")
+      else:
+        AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 33 fb^{-1}")
+      if (isValidation):
+        #AtlasStyle.myText(0.2, 0.76, 1, "Dijet Events, Validation")
+        AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events, Validation")
+      else:
+        AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events")
+      typeText = "anti-k_{t} R = 0.4"
+      if "LC" in dataFile:
+        typeText += ", LC+JES (in-situ)"
+      else:
+        typeText += ", EM+JES (in-situ)"
+      AtlasStyle.myText(0.2,0.7,1, typeText)
+      AtlasStyle.myText(0.2,0.64,1, "#left|#eta^{lead jet}#right| < 1.2")
     else:
-      AtlasStyle.myText(0.2,0.82,1, "#sqrt{s} = 13 TeV, 3.2 fb^{-1}")
-    if (isValidation):
-      #AtlasStyle.myText(0.2, 0.76, 1, "Dijet Events, Validation")
-      AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events, Validation")
-    else:
-      AtlasStyle.myText(0.2, 0.76, 1, "Multijet Events")
-    typeText = "anti-k_{t} R = 0.4"
-    if "LC" in dataFile:
-      typeText += ", LC+JES (in-situ)"
-    else:
-      typeText += ", EM+JES (in-situ)"
-    AtlasStyle.myText(0.2,0.7,1, typeText)
-    AtlasStyle.myText(0.2,0.64,1, "#left|#eta^{lead jet}#right| < 1.2")
-#    AtlasStyle.myText(0.1,0.75,1, "m_{jj} Correction")
+      AtlasStyle.ATLAS_LABEL(0.35,0.88, 1,"    Preliminary")
+      if (is2016):
+        AtlasStyle.myText(0.35,0.82,1, "#sqrt{s} = 13 TeV, 33 fb^{-1}")
+      else:
+        AtlasStyle.myText(0.35,0.82,1, "#sqrt{s} = 13 TeV, 33 fb^{-1}")
 
     if "MJB" in histName:
       pad1.SetLogx()

@@ -3,9 +3,6 @@ import math
 import time, glob
 import argparse
 
-sys.path.insert(0, '../plotting/')
-import AtlasStyle
-AtlasStyle.SetAtlasStyle()
 
 parser = argparse.ArgumentParser(description="%prog [options]", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-b", dest='batchMode', action='store_true', default=False, help="Batch mode for PyRoot")
@@ -24,14 +21,18 @@ if args.outName:
   args.outName += '_'
 
 import ROOT
+sys.path.insert(0, '../plotting/')
+import AtlasStyle
+AtlasStyle.SetAtlasStyle()
 
 ####################### User defined variables ###############################
 triggers = ["HLT_j380","HLT_j260","HLT_j175", "HLT_j110"]
 trigEffs = [550       ,400       ,300       , 200]
 
 ## For calcBinning, the initial edges to use ##
+calcBinEdges = [200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300,2800]
 #calcBinEdges = [300,1050,1100,1150,1200,1300,1500,1700,2000,2300]
-calcBinEdges = [300, 1700]
+#calcBinEdges = [300, 1700]
 numRequiredBins = 300 #bins = GeV
 #The threshold nevents for accepting a bin threshold
 #Errors & numEvents : 1% = 10000, 2% = 2500, 3% = 1111, 4% = 625, 5% = 400
@@ -59,7 +60,7 @@ if (args.getFinePtHist):
 
   ### Find input files
   if len(args.fileName) > 0:
-    fileNames = [args.file]
+    fileNames = [args.fileName]
   else:
     fileNames = glob.glob( args.dir+'/*'+args.tag+'*.root' )
 
@@ -235,12 +236,17 @@ if (args.calcBinning):
   print ""
 
   hist.GetXaxis().SetRangeUser(200, 2800)
+  hist.SetMinimum(1)
   hist.SetBinContent(0, 0)
   hist.SetBinError(0, 0)
+  hist.GetXaxis().SetTitle("Recoil p_{T}")
+  hist.GetYaxis().SetTitle("Events")
 
   c1 = ROOT.TCanvas()
   hist.Draw()
   c1.SetLogy()
+  AtlasStyle.ATLAS_LABEL(0.6,0.9, 1,"    Internal ")
+  AtlasStyle.myText(0.6,0.84,1, "#sqrt{s} = 13 TeV, ~33 fb^{-1}")
   c1.SaveAs(inDir+"BinningCalculation.png")
 
 ######################## plotIter ##################################
