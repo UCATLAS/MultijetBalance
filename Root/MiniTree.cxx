@@ -78,7 +78,8 @@ void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetNam
 //  m_tree->Branch("jet_HECFrac", &m_jet_HECFrac);
   m_tree->Branch("jet_TileFrac", &m_jet_TileFrac);
   m_tree->Branch("jet_Jvt", &m_jet_Jvt);
-
+  
+  m_tree->Branch("jet_PartonTruthLabelID", &m_jet_PartonTruthLabelID);
 
 //  m_tree->Branch("jet_EnergyPerSampling", &m_jet_EnergyPerSampling);
     //just do this for first jet?
@@ -164,7 +165,11 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
   }else{
     m_jet_Jvt.push_back( -999 );
   }
-
+  if (jet->isAvailable< int >( "PartonTruthLabelID" ) ){
+    m_jet_PartonTruthLabelID.push_back( jet->auxdata< int >("PartonTruthLabelID") );
+  }else{
+    m_jet_PartonTruthLabelID.push_back( -999 );
+  }
 
 
   for(unsigned int iB=0; iB < m_jet_BTagNames.size(); ++iB){
@@ -206,6 +211,8 @@ void MiniTree::ClearJetsUser(const std::string jetName ) {
 //  m_jet_HECFrac.clear();
   m_jet_TileFrac.clear();
   m_jet_Jvt.clear();
+  m_jet_PartonTruthLabelID.clear();
+
 //  m_jet_EnergyPerSampling.clear();
   for(unsigned int iB=0; iB < m_jet_BTagNames.size(); ++iB){
     m_jet_BTagBranches.at(iB).clear();

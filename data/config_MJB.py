@@ -4,67 +4,98 @@ from xAH_config import xAH_config
 c = xAH_config()
 
 c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
-                                     "m_GRLxml"                      : "$ROOTCOREBIN/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml",
-                                     "m_derivationName"              : "EXOT2",
+                                     "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
+                                     "m_derivationName"              : "JETM1",
                                      "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
+                                     "m_storeTrigDecisions"          : True,
                                      "m_applyTriggerCut"             : True,
-                                     "m_triggerSelection"            : "HLT_j360|HLT_j260|HLT_j200",
+                                     "m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110",
+                                     #"m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110|HLT_j85",
                                      "m_checkDuplicatesData"         : False,
                                      "m_applyEventCleaningCut"       : True,
-                                     "m_applyPrimaryVertexCut"       : True
-#                                     "m_MCPileupCheckRecoContainer"  : "AntiKt4EMTopoJets",
-#                                     "m_MCPileupCheckTruthContainer" : "AntiKt4TruthJets"
+                                     "m_applyPrimaryVertexCut"       : True,
+                                     "m_doPUreweighting"       : False,
+                                     "m_PRWFileNames"          : "$ROOTCOREBIN/data/MultijetBalance/PRW_QCD.root",
+                                     "m_lumiCalcFileNames"     : "$ROOTCOREBIN/data/MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
                                      } )
-
-c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
+#prescales in run 307861
+#15 - 301, 25 - 124, 35 - 18.3, 45 - 88,  55 - 40.7, 60 - 20, 85 - 14, 110 - 5.7, 150 - 11.8, 175 - 4.1, 260 - 1.2, 
 
 ### MJB Configuration  ###
+c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
+
+#---------------------------------------------------------------------------------------------
+#### Jet collection and associated observables ####
   "m_inContainerName"     : "AntiKt4EMTopoJets",
-  "m_triggerAndPt" : "HLT_j360:480,HLT_j260:360,HLT_j200:300",
-#  "m_triggerAndPt" : "HLT_j360:420,HLT_j260:325,HLT_j200:250,HLT_j175:225,HLT_j150:200,HLT_j110:175,HLT_j85:125",
+  "m_jetDef"              : "AntiKt4EMTopo",
+#  "m_inContainerName"     : "AntiKt4LCTopoJets",
+#  "m_jetDef"              : "AntiKt4LCTopo",
+
+  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
+# ICHEP 2016 20.7 calibration for validation
+  "m_jetCalibConfig"    : "JES_2016data_Oct2016_EtaIntercalOnly.config",
+  #"m_jetCalibConfig"    : "JES_MC15cRecommendation_May2016.config",
+
+#  "m_inContainerName"     : "AntiKt4EMPFlowJets",
+#  "m_jetDef"              : "AntiKt4EMPFlow",
+#  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
+#  "m_jetCalibConfig"    : "JES_MC15cRecommendation_PFlow_Aug2016.config",
+
+#---------------------------------------------------------------------------------------------
+#### MJB iteration ####
+
+#  "m_triggerAndPt" : "", #Leave this empty for efficiency studies!
+  "m_triggerAndPt" : "HLT_j380:550,HLT_j260:400,HLT_j175:300,HLT_j110:200",
+#  min binning 2016 from study on tight beta cut: "HLT_j380:466,HLT_j260:320, HLT_j175:180",
+#  min binning 2016 from study on loose beta cut: ,
+  #"m_triggerAndPt" : "HLT_j380:500,HLT_j260:350,HLT_j175:250,HLT_j110:200",  #Used for validation
+#  "m_triggerAndPt" : "HLT_j360:420,HLT_j260:325,HLT_j200:250,HLT_j175:225,HLT_j150:200,HLT_j110:175,HLT_j85:125", #original
+
   "m_MJBIteration" : 0,
-  ## The pt thresholds on the subleading jets for event inclusion:
-  "m_MJBIterationThreshold" : "935,1480",
-  #"m_MJBIterationThreshold" : "944,1380",  #2015 20.1
+  ## The pt thresholds on the subleading jets for event inclusion. -1 gets taken from the V+jet file.
+  ## This is set automatically in m_validation to a large number!
+  "m_MJBIterationThreshold" : "9999999999",
+  #"m_MJBIterationThreshold" : "-1,2000",
   ## For higher iterations:
-  "m_MJBCorrectionFile" : "Iteration0_EM_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
-#  "m_MJBCorrectionFile" : "Bootstrap0_EM_hist.combined.Pythia.DoubleMJB_initial.root",
-  #old"m_MJBCorrectionFile" : "Bootstrap_Iteration0_EM_hist.combined.Pythia.DoubleMJB_initial.root",
+  "m_MJBCorrectionFile" : "Bootstrap_Iteration0_LC_hist.combined.Pythia.DoubleMJB_initial.root",
+  #"m_MJBCorrectionFile" : "Iteration0_2016LC_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
 
-  "m_binning"  : "300,360,420,480,540,600,660,720,780,840,900,960,1020,1140,1260,1480,2000",
-#!!  "m_MJBCorrectionBinning" : "Fine",
+## 2016 initial validation binning
+  "m_binning"   : "200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300,2600", #23bins
+#  "m_binning"   : "300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #37 bins
+#  "m_binning"  : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2500,3000,3500",
 
 
- ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibratino! ##
- "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Vjet_2015_207/Vjet_Systematics.root",
+ ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibration! ##
+# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Configs/Vjet_Nominal.root",
+ "m_VjetCalibFile"  : "",
+
+ ## Use GSC value, not insitu, for leading jet.
+#"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal",
-#  "m_sysVariations" : "AllSystematics",
-#  "m_sysVariations" : "Nominal-MJB",
-
-  ## (Deprecated Option) Add statistical systematic for MJB:
-#  "m_MJBStatsOn" : True,
+  "m_sysVariations" : "All",
+#  "m_sysVariations" : "Nominal-localMJB",
 
 #------ Event Selections ------#
 #  "m_numJets"  : 3,
 #  "m_ptAsym" : 0.8,
 #  "m_alpha" : 0.3,
-#  "m_beta" : 1.0,
-#  "m_ptThresh" : 25,  #in GeV
-  ## Force removal of all jets within beta:
-#  "m_allJetBeta" : True,
+  "m_beta" : 1.0,
+#  "m_ptThresh" : 60,  #in GeV
+  ## Looser beta cut to improve statistics
+  "m_looseBetaCut" : True,
 
 #------ Bootstrap Mode ------#
-#  "m_bootstrap" : True,
-#  "m_systTool_nToys" : 100,
+  "m_bootstrap" : False,
+  "m_systTool_nToys" : 50,  #100
 
 #------ Validation Mode ------#
+  #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-#  "m_leadingInsitu" : True,
-  # Allow calibrations of subleading jets beyond JetCalibTool limit:
-#  "m_noLimitJESPt" : True,
+#  "m_validation" : True,
+#  ## Dijet validation mode: ##
 #  "m_numJets"  : 2,
 #  "m_ptAsym" : 1.0,
 
@@ -76,16 +107,9 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_leadingInsitu" : True,
 #  "m_noLimitJESPt" :  True,
 
-#------ Not Used ------#
+#------ Closure Test Mode ------#
   ##Apply MJB correction to the leading jet:
 #  "m_closureTest" : True,
-
-  ## (Deprecated Option) Bin corrections against leading jet pt, not against reference jet pt:
-#!!  "m_leadJetMJBCorrection" : True,
-
-  ## Deprecated Option) Force subleading jet to be greater than
-#!!  "m_reverseSubleading" : True,
-
 
 ### Plotting Options ###
 #  "m_writeTree" : True,
@@ -93,13 +117,12 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_MJBDetailStr" : "bTag85 bTag77",
 #  "m_MJBDetailStr" : "extraMJB",
   "m_eventDetailStr" : "pileup",
-  "m_jetDetailStr" : "kinematic flavorTag",# truth",#truth_details",
-#  "m_jetDetailStr" : "kinematic truth truth_details sfFTagVL sfFTagL sfFTagM sfFTagT",
+  "m_jetDetailStr" : "kinematic", 
+#  "m_jetDetailStr" : "kinematic truth truth_details flavorTag sfFTagVL sfFTagL sfFTagM sfFTagT",
   "m_trigDetailStr" : "basic passTriggers",
 
 ### Extra Options ###
-#  "m_debug"      :  True,
-#  "m_maxEvent" : 2000,
+  "m_debug"      :  False,
   ## Remove problematic Pileup events from low pt MC slices:
   "m_MCPileupCheckContainer" : "AntiKt4TruthJets",
 
@@ -107,31 +130,30 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #!!  "m_isDAOD" : True,
 #!!  "m_useCutFlow" : False,
 
+  "m_XSFile"  : "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt", 
 
-### Tool Configurations ###
-
-  #-- JetCalibTool --#
-  "m_jetDef"            : "AntiKt4EMTopo",
-  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
-## Final 20.1 calibration for validation
-  "m_jetCalibConfig"    : "JES_2015dataset_recommendation_Feb2016.config",
-## Initial 20.1 eta-intercalibration for results
-  #"m_jetCalibConfig"    : "JES_MC15Prerecommendation_December2015_EtaIntercalOnly.config",
-## Initial 20.7 eta-intercalibration for results
-  #"m_jetCalibConfig"    : "JES_20_7_Recommendation_May2016_EtaIntercalOnly.config",
+#---------------------------------------------------------------------------------------------
+#### Tool Configurations ####
 
   #-- JetCleaning --#
   "m_jetCleanCutLevel"  : "LooseBad",
 #  "m_jetCleanUgly"      : True,
 
   #-- JVT --#
-#  "m_JVTCut" : 0.64, # 2015, need to change to 50 GeV
-  "m_JVTCut" : 0.59, # 2016
+  "m_JVTWP" : "Medium", # 2016
 
   #-- JetUncertaintiesTool --#
-  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JES2015_AllNuisanceParameters.config"
-  ### 2015 MJB Systematics
-  #"m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2015/Moriond2016/JESNuisanceParametersForMJB.config"
+  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JESNuisanceParametersForMJB.config",
+
+  #-- JetResolutionTool --#
+  "m_JERUncertaintyConfig" : "JetResolution/Prerec2015_xCalib_2012JER_ReducedTo9NP_Plots_v2.root", 
+  "m_JERApplySmearing"     : False,
+  #"m_JERSystematicMode"    : "Full",
+  "m_JERSystematicMode"    : "Simple",
+  
+  #-- TileCorrectionTool --#
+  "m_TileCorrection"      : False
+
 
 
   } )

@@ -31,14 +31,13 @@
 #include "JetInterface/IJetSelector.h" //JetCleaningTool
 #include "JetCalibTools/IJetCalibrationTool.h"
 #include "JetCPInterfaces/ICPJetUncertaintiesTool.h"
+#include "JetResolution/IJERTool.h"
+#include "JetResolution/IJERSmearingTool.h"
 #include "JetInterface/IJetUpdateJvt.h"
 #include "JetJvtEfficiency/IJetJvtEfficiency.h"
 
 #include "xAODBTaggingEfficiency/IBTaggingEfficiencyTool.h"
 #include "xAODBTaggingEfficiency/IBTaggingSelectionTool.h"
-
-#include "TrigConfInterfaces/ITrigConfigTool.h"
-#include "TrigDecisionTool/TrigDecisionTool.h"
 
 #include "JetCPInterfaces/IJetTileCorrectionTool.h"
 
@@ -47,17 +46,12 @@ static float GeV = 1000.;
 class MultijetHists;
 class IJetCalibrationTool;
 class ICPJetUncertaintiesTool;
+class IJERTool;
+class IJERSmearingTool;
 class IJetSelector;
 class IJetUpdateJvt;
 class IBTaggingEfficiencyTool;
 class IBTaggingSelectionTool;
-
-namespace TrigConf {
-  class ITrigConfigTool;
-}
-namespace Trig {
-  class TrigDecisionTool;
-}
 
 class SystContainer;
 class IJetTileCorrectionTool;
@@ -238,21 +232,30 @@ class MultijetBalanceAlgo : public EL::Algorithm
     std::string m_JVTWP;
     /** @brief Configuration file for JetUncertainties */
     std::string m_jetUncertaintyConfig;
+    /** @brief Configuration file for Jet Resolution Tool */
+    std::string m_JERUncertaintyConfig;
+    /** @brief Apply JER smearing */
+    bool m_JERApplySmearing;
+    /** @brief JER Systematic mode (Full or Simple)*/
+    std::string m_JERSystematicMode;
 
-////// for SystTool //////
     /** @brief SystTool object for Boostrap mode*/
     SystContainer  * systTool; //!
+
 
   private:
 
 
 
-//    #ifndef __CINT__
     /** @brief JetCalibrationTool handle*/
     asg::AnaToolHandle<IJetCalibrationTool> m_JetCalibrationTool_handle; //!
     /** @brief JetUncertaintiesTool instance*/
     asg::AnaToolHandle<ICPJetUncertaintiesTool> m_JetUncertaintiesTool_handle; //!
-//    #endif // not __CINT__
+
+    /** @brief JERTool handle */
+    asg::AnaToolHandle<IJERTool> m_JERTool_handle;    //!
+    /** @brief JER Smearing Tool handle */
+    asg::AnaToolHandle<IJERSmearingTool> m_JERSmearingTool_handle;    //!
 
     /** @brief JetCleaningTool handle*/
     asg::AnaToolHandle<IJetSelector> m_JetCleaningTool_handle; //!
@@ -268,11 +271,6 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Vector of BTaggingEfficiencyTool handles*/
     std::vector< asg::AnaToolHandle<IBTaggingEfficiencyTool> > m_AllBTaggingEfficiencyTool_handles; //!
 
-
-    /** @brief Vector of trigger TrigConf::xAODConfigTool handles*/
-    std::vector< asg::AnaToolHandle<TrigConf::ITrigConfigTool> > m_AllTrigConfigTool_handles; //!
-    /** @brief Vector of trigger Trig::TrigDecisionTool handles*/
-    std::vector< asg::AnaToolHandle<Trig::TrigDecisionTool> > m_AllTrigDecisionTool_handles;    //!
 
     asg::AnaToolHandle<CP::IJetTileCorrectionTool>  m_JetTileCorrectionTool_handle; //!
 
@@ -294,18 +292,18 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief A stringstream object for various uses*/
     std::stringstream m_ss; //!
 
-    /** @brief Vector of each individual systematic variation*/
-    std::vector<std::string> m_sysVar; //!
+    /** @brief Vector of each individual systematic variation name*/
+    std::vector<std::string> m_sysName; //!
     /** @brief Integer corresponding to the type of systematic used.
      * @note Value is  -1 for Nominal, 
-     * 0 for JetUncertainties, 1 for JetCalibSequence, 2 for MJB alpha, 3 for MJB beta, 4 for MJB \f$p_{T}\f$ asymmetry,
+     * 0 for JetUncertainties, 1 for JER, 10 for JetCalibSequence, 2 for MJB alpha, 3 for MJB beta, 4 for MJB \f$p_{T}\f$ asymmetry,
      * 5 for MJB \f$p_{T}\f$ threshold, 6 for MJB statistical uncertainty. */
     std::vector<int> m_sysTool; //!
-    /** @brief Integer corresponding to the position of a uncertainty in it's tool
-     * @note For example, this would be the number assigned to a JES systematic uncertainty in the JetUncertainties tool*/
-    std::vector<int> m_sysToolIndex; //!
-    /** @brief Sign of the systematic uncertainty. 0 for negative, 1 for positive*/
-    std::vector<int> m_sysSign; //!
+    /** @brief Detail related to the systematic uncertainty.
+     * @note For example, this would be the selection value for MJB systematics, or the index of a JES systematic uncertainty in the JetUncertainties tool*/
+    std::vector<int> m_sysDetail; //!
+    /** @brief CP::SystematicSet for each systematic */ 
+    std::vector<CP::SystematicSet> m_sysSet; //!
     /** @brief Position of the Nominal result within m_sysVar */
     int m_NominalIndex; //!
 
@@ -367,12 +365,12 @@ class MultijetBalanceAlgo : public EL::Algorithm
 
     /** @brief Load all the systematic variations from MultijetBalanceAlgo#m_sysVariations */
     EL::StatusCode loadVariations();
-    /** @brief Load the trigger tools*/
-    EL::StatusCode loadTriggerTool();
     /** @brief Load the JVT correction Tool*/
     EL::StatusCode loadJVTTool();
     /** @brief Load the JetCalibTool*/
     EL::StatusCode loadJetCalibrationTool();
+    /** @brief Load the Jet Resolution Tool*/
+    EL::StatusCode loadJetResolutionTool();
     /** @brief Find and connect the jet calibration stages for MultijetBalanceAlgo#m_JCSTokens and MultijetBalanceAlgo#m_JCSStrings*/
     EL::StatusCode setupJetCalibrationStages();
     /** @brief Load the JetCleaningTool*/
@@ -395,8 +393,10 @@ class MultijetBalanceAlgo : public EL::Algorithm
      EL::StatusCode applyJetTileCorrectionTool( xAOD::Jet* jet);
     /** @brief Apply the JetCleaningTool*/
      EL::StatusCode applyJetCleaningTool();
-    /** @brief Apply the JetUncertainties*/
+    /** @brief Apply the Jet Uncertainty Tool*/
      EL::StatusCode applyJetUncertaintyTool( xAOD::Jet* jet , int iVar );
+    /** @brief Apply the Jet Resolution Tool*/
+     EL::StatusCode applyJetResolutionTool( xAOD::Jet* jet , int iVar );
     /** @brief Apply the intermediate V+jet \a in-situ calibrations*/
      EL::StatusCode applyVjetCalibration( xAOD::Jet* jet , int iVar );
     /** @brief Apply the MJB calibration from previous iterations */

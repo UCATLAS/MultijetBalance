@@ -258,7 +258,7 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
 
   //Fill Nominal Jet Info
   for(unsigned int iJet=0; iJet < jets->size(); ++iJet){
-    JetHists::execute( jets->at(iJet), eventWeight);
+    JetHists::execute( jets->at(iJet), eventWeight, eventInfo);
   }
 
   //For Sampling Layer Plots //

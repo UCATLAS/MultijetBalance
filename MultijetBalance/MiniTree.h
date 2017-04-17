@@ -78,6 +78,8 @@ class MiniTree : public HelpTreeBase
     std::vector<float> m_jet_TileFrac;
     /** @brief Jvt for each jet */
     std::vector<float> m_jet_Jvt;
+    /** @brief PartonTruthLabelID for each jet */
+    std::vector<float> m_jet_PartonTruthLabelID;
     /** @brief Fraction of energy deposited in each calorimeter sampling layer for each jet */
     std::vector< std::vector<float> > m_jet_EnergyPerSampling;
 
