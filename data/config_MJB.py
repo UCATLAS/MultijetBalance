@@ -55,8 +55,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_MJBIteration" : 0,
   ## The pt thresholds on the subleading jets for event inclusion. -1 gets taken from the V+jet file.
   ## This is set automatically in m_validation to a large number!
-  #"m_MJBIterationThreshold" : "9999999999",
-  "m_MJBIterationThreshold" : "-1,2000",
+  "m_MJBIterationThreshold" : "9999999999",
+  #"m_MJBIterationThreshold" : "-1,2000",
   ## For higher iterations:
   "m_MJBCorrectionFile" : "",
   #"m_MJBCorrectionFile" : "Bootstrap_Iteration0_LC_hist.combined.Pythia.DoubleMJB_initial.root",
@@ -69,14 +69,15 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 
  ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibration! ##
- "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Configs/Vjet_Nominal.root",
-# "m_VjetCalibFile"  : "",
+# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Configs/Vjet_Nominal.root",
+ "m_VjetCalibFile"  : "",
 
  ## Use GSC value, not insitu, for leading jet.
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "All",
+  "m_sysVariations" : "Nominal",
+#  "m_sysVariations" : "All",
 #  "m_sysVariations" : "Nominal-localMJB",
 
 #------ Event Selections ------#
@@ -89,7 +90,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_looseBetaCut" : True,
 
 #------ Bootstrap Mode ------#
-  "m_bootstrap" : True,
+  "m_bootstrap" : False,
   "m_systTool_nToys" : 50,  #100
 
 #------ Validation Mode ------#

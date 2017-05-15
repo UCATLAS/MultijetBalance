@@ -40,15 +40,20 @@ production_name = ""
 files = []
 outputTags = []
 
+files.append("MultijetBalance/scripts/sampleLists/data16_r207_JETM1_p2950.txt")
+outputTags.append("Rel207")
+#files.append("MultijetBalance/scripts/sampleLists/data16_r21_JETM1_p3142.txt")
+#outputTags.append("Rel21")
+
 ## File lists and specific output Tags
 
 ##2016##
-files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
-outputTags.append("QCDPythia8_JETM1_BS0")
-files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
-outputTags.append("QCDSherpa_JETM1_BS0")
-files.append("MultijetBalance/scripts/sampleLists/2016/Data2016_Main_JETM1_gridSamples.txt")
-outputTags.append("Main2016_JETM1_BS0")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
+#outputTags.append("QCDPythia8_JETM1_BS0")
+#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
+#outputTags.append("QCDSherpa_JETM1_BS0")
+#files.append("MultijetBalance/scripts/sampleLists/2016/Data2016_Main_JETM1_gridSamples.txt")
+#outputTags.append("Main2016_JETM1_BS0")
 #files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_JETM1_gridSamples.txt")
 #outputTags.append("Debug2016_JETM1_It0")
 

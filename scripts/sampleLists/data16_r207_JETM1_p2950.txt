@@ -1,0 +1,6 @@
+data16_13TeV.00311071.physics_Main.merge.DAOD_JETM1.f758_m1710_p2950
+data16_13TeV.00297730.physics_Main.merge.DAOD_JETM1.f694_m1583_p2950
+data16_13TeV.00307126.physics_Main.merge.DAOD_JETM1.f731_m1659_p2950
+data16_13TeV.00311287.physics_Main.merge.DAOD_JETM1.f758_m1710_p2950
+data16_13TeV.00304008.physics_Main.merge.DAOD_JETM1.f716_m1620_p2950
+data16_13TeV.00311321.physics_Main.merge.DAOD_JETM1.f758_m1710_p2950
