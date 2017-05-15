@@ -6,7 +6,7 @@
 import ROOT
 from array import array
 
-containerNames = ["AntiKt4LCTopo"]
+containerNames = ["AntiKt4EMTopo"]
 #containerNames = ["AntiKt4EMTopo", "AntiKt6EMTopo", "AntiKt4LCTopo", "AntiKt6LCTopo"]
 
 

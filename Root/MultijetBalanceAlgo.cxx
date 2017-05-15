@@ -493,24 +493,24 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   const xAOD::JetContainer* inJets = 0;
   RETURN_CHECK("exec", HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store), "Failed to retrieve JetContainer");
 
-  for( auto jet_itr : *inJets ){
-    static SG::AuxElement::ConstAccessor<int> HadronConeExclTruthLabelID ("HadronConeExclTruthLabelID");
-    std::cout << "HadronConeExclTruthLabelID: " << HadronConeExclTruthLabelID(*jet_itr) << std::endl;
-      std::cout << "PartonTruthLabelID: " << jet_itr->auxdata< int >("PartonTruthLabelID") << std::endl;
-      std::cout << "ConeTruthLabelID: " << jet_itr->auxdata< int >("ConeTruthLabelID") << std::endl;
-  }
+//  for( auto jet_itr : *inJets ){
+//    static SG::AuxElement::ConstAccessor<int> HadronConeExclTruthLabelID ("HadronConeExclTruthLabelID");
+//    std::cout << "HadronConeExclTruthLabelID: " << HadronConeExclTruthLabelID(*jet_itr) << std::endl;
+//      std::cout << "PartonTruthLabelID: " << jet_itr->auxdata< int >("PartonTruthLabelID") << std::endl;
+//      std::cout << "ConeTruthLabelID: " << jet_itr->auxdata< int >("ConeTruthLabelID") << std::endl;
+//  }
 
   const xAOD::JetContainer* truthJets = 0;
   if(m_useMCPileupCheck && m_isMC){
     //truthJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_MCPileupCheckContainer, m_event, m_store);
     RETURN_CHECK("exec", HelperFunctions::retrieve(truthJets, m_MCPileupCheckContainer, m_event, m_store), "Failed to retrieve truthJets");
   }
-  for( auto jet_itr : *truthJets ){
-    static SG::AuxElement::ConstAccessor<int> HadronConeExclTruthLabelID ("HadronConeExclTruthLabelID");
-    std::cout << "Truth HadronConeExclTruthLabelID: " << HadronConeExclTruthLabelID(*jet_itr) << std::endl;
-    std::cout << "Truth PartonTruthLabelID: " << jet_itr->auxdata< int >("PartonTruthLabelID") << std::endl;
-    std::cout << "Truth ConeTruthLabelID: " << jet_itr->auxdata< int >("ConeTruthLabelID") << std::endl;
-  }
+//  for( auto jet_itr : *truthJets ){
+//    static SG::AuxElement::ConstAccessor<int> HadronConeExclTruthLabelID ("HadronConeExclTruthLabelID");
+//    std::cout << "Truth HadronConeExclTruthLabelID: " << HadronConeExclTruthLabelID(*jet_itr) << std::endl;
+//    std::cout << "Truth PartonTruthLabelID: " << jet_itr->auxdata< int >("PartonTruthLabelID") << std::endl;
+//    std::cout << "Truth ConeTruthLabelID: " << jet_itr->auxdata< int >("ConeTruthLabelID") << std::endl;
+//  }
 
   //// Pass njets ////
   if(inJets->size() < m_numJets){

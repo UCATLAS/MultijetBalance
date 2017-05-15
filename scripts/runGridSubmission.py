@@ -14,11 +14,11 @@ from time import strftime
 test = False # does not run the jobs
 #config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_EM207.py"
 #config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2015_Validation.py"
-config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_LC207.py"
+config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB.py"
 extraTag = "" # Extra output tag for all files
 
 
-timestamp = strftime("_%m%d")
+timestamp = strftime("_%d%m%y")
 if not test:
   if not os.path.exists("gridOutput"):
     os.system("mkdir gridOutput")
@@ -43,12 +43,12 @@ outputTags = []
 ## File lists and specific output Tags
 
 ##2016##
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
-#outputTags.append("QCDPythia8_JETM1_LCIt1")
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
-#outputTags.append("QCDSherpa_JETM1_LCIt1")
-files.append("MultijetBalance/scripts/sampleLists/Data2016_Main_JETM1_gridSamples.txt")
-outputTags.append("Main2016_JETM1_LCBS2")
+files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
+outputTags.append("QCDPythia8_JETM1_BS0")
+files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
+outputTags.append("QCDSherpa_JETM1_BS0")
+files.append("MultijetBalance/scripts/sampleLists/2016/Data2016_Main_JETM1_gridSamples.txt")
+outputTags.append("Main2016_JETM1_BS0")
 #files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_JETM1_gridSamples.txt")
 #outputTags.append("Debug2016_JETM1_It0")
 
