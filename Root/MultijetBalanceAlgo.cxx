@@ -25,8 +25,8 @@
 #include <fstream>
 
 // package include(s):
-#include <xAODAnaHelpers/tools/ReturnCheck.h>
-#include <xAODAnaHelpers/tools/ReturnCheckConfig.h>
+//#include <xAODAnaHelpers/tools/ReturnCheck.h>
+//#include <xAODAnaHelpers/tools/ReturnCheckConfig.h>
 #include <MultijetBalance/MultijetBalanceAlgo.h>
 #include <xAODAnaHelpers/HelperFunctions.h>
 #include <MultijetBalance/MultijetHists.h>
@@ -320,30 +320,53 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
   m_eventCounter = -1;
 
   const xAOD::EventInfo* eventInfo = 0;
-  RETURN_CHECK("init", HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store), "Failed to retrieve EventInfo");
+  ANA_CHECK( HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store, msg()) );
+  //RETURN_CHECK("init", HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store), "Failed to retrieve EventInfo");
   m_isMC = ( eventInfo->eventType( xAOD::EventInfo::IS_SIMULATION ) ) ? true : false;
 
-  EL_RETURN_CHECK("init:configure", this->configure() );
+  ANA_CHECK( this->configure() );
 
-  EL_RETURN_CHECK("init", getLumiWeights(eventInfo) );
+  ANA_CHECK(getLumiWeights(eventInfo) );
 
   // load all variations
   setupJetCalibrationStages();
-  EL_RETURN_CHECK("init", loadJetUncertaintyTool());
-  EL_RETURN_CHECK("init", loadJetResolutionTool());
-  EL_RETURN_CHECK("init", loadVariations());
+  ANA_CHECK(loadJetUncertaintyTool());
+  ANA_CHECK(loadJetResolutionTool());
+  ANA_CHECK(loadVariations());
 
   //load Calibration and systematics files
-  EL_RETURN_CHECK("init", loadJetCalibrationTool());
-  EL_RETURN_CHECK("init", loadJetCleaningTool());
-  EL_RETURN_CHECK("init", loadJVTTool());
-  EL_RETURN_CHECK("init", loadBTagTools());
+  ANA_CHECK(loadJetCalibrationTool());
+  ANA_CHECK(loadJetCleaningTool());
+  ANA_CHECK(loadJVTTool());
+  ANA_CHECK(loadBTagTools());
   if( m_TileCorrection )
-    EL_RETURN_CHECK("init", loadJetTileCorrectionTool());
+    ANA_CHECK(loadJetTileCorrectionTool());
   if( m_VjetCalib )
-    EL_RETURN_CHECK("init", loadVjetCalibration());
+    ANA_CHECK(loadVjetCalibration());
 
-  EL_RETURN_CHECK("init", loadMJBCalibration());
+  ANA_CHECK(loadMJBCalibration());
+
+//  EL_RETURN_CHECK("init:configure", this->configure() );
+//
+//  EL_RETURN_CHECK("init", getLumiWeights(eventInfo) );
+//
+//  // load all variations
+//  setupJetCalibrationStages();
+//  EL_RETURN_CHECK("init", loadJetUncertaintyTool());
+//  EL_RETURN_CHECK("init", loadJetResolutionTool());
+//  EL_RETURN_CHECK("init", loadVariations());
+//
+//  //load Calibration and systematics files
+//  EL_RETURN_CHECK("init", loadJetCalibrationTool());
+//  EL_RETURN_CHECK("init", loadJetCleaningTool());
+//  EL_RETURN_CHECK("init", loadJVTTool());
+//  EL_RETURN_CHECK("init", loadBTagTools());
+//  if( m_TileCorrection )
+//    EL_RETURN_CHECK("init", loadJetTileCorrectionTool());
+//  if( m_VjetCalib )
+//    EL_RETURN_CHECK("init", loadVjetCalibration());
+//
+//  EL_RETURN_CHECK("init", loadMJBCalibration());
 
   if( m_bootstrap ){
     systTool = new SystContainer(m_sysName, m_bins, m_systTool_nToys);
@@ -481,17 +504,19 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   //const xAOD::EventInfo* eventInfo = HelperFunctions::getContainer<xAOD::EventInfo>("EventInfo", m_event, m_store);
   const xAOD::EventInfo* eventInfo = 0;
-  RETURN_CHECK("exec", HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store), "Failed to retrieve EventInfo");
+  ANA_CHECK( HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store, msg()) );
   m_mcEventWeight = (m_isMC ? eventInfo->mcEventWeight() : 1.) ;
 
   //const xAOD::VertexContainer* vertices = HelperFunctions::getContainer<xAOD::VertexContainer>("PrimaryVertices", m_event, m_store);;
   const xAOD::VertexContainer* vertices = 0;
-  RETURN_CHECK("exec", HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store), "Failed to retrieve PrimaryVertices");
+  ANA_CHECK( HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store, msg()) );
+  //RETURN_CHECK("exec", HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store), "Failed to retrieve PrimaryVertices");
   m_pvLocation = HelperFunctions::getPrimaryVertexLocation( vertices );  //Get primary vertex for JVF cut
 
   //const xAOD::JetContainer* inJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_inContainerName, m_event, m_store);
   const xAOD::JetContainer* inJets = 0;
-  RETURN_CHECK("exec", HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store), "Failed to retrieve JetContainer");
+  ANA_CHECK( HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store, msg()) );
+  //RETURN_CHECK("exec", HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store), "Failed to retrieve JetContainer");
 
 //  for( auto jet_itr : *inJets ){
 //    static SG::AuxElement::ConstAccessor<int> HadronConeExclTruthLabelID ("HadronConeExclTruthLabelID");
@@ -503,7 +528,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   const xAOD::JetContainer* truthJets = 0;
   if(m_useMCPileupCheck && m_isMC){
     //truthJets = HelperFunctions::getContainer<xAOD::JetContainer>(m_MCPileupCheckContainer, m_event, m_store);
-    RETURN_CHECK("exec", HelperFunctions::retrieve(truthJets, m_MCPileupCheckContainer, m_event, m_store), "Failed to retrieve truthJets");
+    ANA_CHECK( HelperFunctions::retrieve(truthJets, m_MCPileupCheckContainer, m_event, m_store, msg()) );
+    //RETURN_CHECK("exec", HelperFunctions::retrieve(truthJets, m_MCPileupCheckContainer, m_event, m_store), "Failed to retrieve truthJets");
   }
 //  for( auto jet_itr : *truthJets ){
 //    static SG::AuxElement::ConstAccessor<int> HadronConeExclTruthLabelID ("HadronConeExclTruthLabelID");
@@ -1206,7 +1232,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
     ////////////////////////////////// JES Uncertainties /////////////////////////////////////////
     } else if( varVector.at(iVar).find("JES") != std::string::npos ){
       const CP::SystematicSet recSysts = m_JetUncertaintiesTool_handle->recommendedSystematics();
-      std::vector<CP::SystematicSet> JESSysList = HelperFunctions::getListofSystematics( recSysts, "All", 1, m_debug ); //All sys at +-1 sigma
+      std::vector<CP::SystematicSet> JESSysList = HelperFunctions::getListofSystematics( recSysts, "All", 1, msg() ); //All sys at +-1 sigma
       for(unsigned int i=1; i < JESSysList.size(); ++i){
         m_sysName.push_back( JESSysList.at(i).name() );   m_sysTool.push_back( 0 ); m_sysDetail.push_back( i ); m_sysSet.push_back( JESSysList.at(i) );
       }
@@ -1214,7 +1240,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadVariations (){
     //////////////////////////////////////// JER  /////////////////////////////////////////
     } else if( varVector.at(iVar).find("JER") != std::string::npos ){
       const CP::SystematicSet recSysts = m_JERSmearingTool_handle->recommendedSystematics();
-      std::vector<CP::SystematicSet> JERSysList = HelperFunctions::getListofSystematics( recSysts, "All", 1, m_debug ); //All sys at +-1 sigma
+      std::vector<CP::SystematicSet> JERSysList = HelperFunctions::getListofSystematics( recSysts, "All", 1, msg() ); //All sys at +-1 sigma
       for(unsigned int i=1; i < JERSysList.size(); ++i){
         m_sysName.push_back( JERSysList.at(i).name() );   m_sysTool.push_back( 1 ); m_sysDetail.push_back( i ); m_sysSet.push_back( JERSysList.at(i) );
       }

@@ -3,7 +3,9 @@ from xAH_config import xAH_config
 
 c = xAH_config()
 
-c.setalg("BasicEventSelection",    { "m_applyGRLCut"                 : True,
+c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
+"m_applyGRLCut"                 : True,
+"m_msgLevel"      : "info",
                                      "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
                                      "m_derivationName"              : "JETM1",
                                      "m_useMetaData"                 : False,
@@ -124,7 +126,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_trigDetailStr" : "basic passTriggers",
 
 ### Extra Options ###
-  "m_debug"      :  False,
+#!  "m_debug"      :  False,
   ## Remove problematic Pileup events from low pt MC slices:
   "m_MCPileupCheckContainer" : "AntiKt4TruthJets",
 
@@ -154,7 +156,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_JERSystematicMode"    : "Simple",
   
   #-- TileCorrectionTool --#
-  "m_TileCorrection"      : False
+#  "m_TileCorrection"      : False
 
 
 
