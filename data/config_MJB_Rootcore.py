@@ -6,7 +6,7 @@ c = xAH_config()
 c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
 "m_applyGRLCut"                 : True,
 "m_msgLevel"      : "info",
-                                     "m_GRLxml"                      : "MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
+                                     "m_GRLxml"                      : "$ROOTCOREBIN/data/MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
                                      "m_derivationName"              : "JETM1",
                                      "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
@@ -18,8 +18,8 @@ c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True,
                                      "m_doPUreweighting"       : False,
-                                     "m_PRWFileNames"          : "MultijetBalance/PRW_QCD.root",
-                                     "m_lumiCalcFileNames"     : "MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
+                                     "m_PRWFileNames"          : "$ROOTCOREBIN/data/MultijetBalance/PRW_QCD.root",
+                                     "m_lumiCalcFileNames"     : "$ROOTCOREBIN/data/MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
                                      } )
 #prescales in run 307861
 #15 - 301, 25 - 124, 35 - 18.3, 45 - 88,  55 - 40.7, 60 - 20, 85 - 14, 110 - 5.7, 150 - 11.8, 175 - 4.1, 260 - 1.2, 
@@ -34,11 +34,10 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_inContainerName"     : "AntiKt4LCTopoJets",
 #  "m_jetDef"              : "AntiKt4LCTopo",
 
-  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
-#  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
+  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
 # ICHEP 2016 20.7 calibration for validation
-  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016_rel21.config",
-  #"m_jetCalibConfig"    : "JES_2016data_Oct2016_EtaIntercalOnly.config",
+  "m_jetCalibConfig"    : "JES_2016data_Oct2016_EtaIntercalOnly.config",
+  #"m_jetCalibConfig"    : "JES_MC15cRecommendation_May2016.config",
 
 #  "m_inContainerName"     : "AntiKt4EMPFlowJets",
 #  "m_jetDef"              : "AntiKt4EMPFlow",
@@ -79,7 +78,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal-JetCalibSequence",
+  "m_sysVariations" : "Nominal",
 #  "m_sysVariations" : "All",
 #  "m_sysVariations" : "Nominal-localMJB",
 
@@ -99,10 +98,10 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #------ Validation Mode ------#
   #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-  "m_validation" : True,
+#  "m_validation" : True,
 #  ## Dijet validation mode: ##
-  "m_numJets"  : 2,
-  "m_ptAsym" : 1.0,
+#  "m_numJets"  : 2,
+#  "m_ptAsym" : 1.0,
 
 #------ B-tag Mode : Not yet implemented ------#
 #  "m_bTagWPsString" : "77,85",
@@ -117,8 +116,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_closureTest" : True,
 
 ### Plotting Options ###
-  "m_writeTree" : True,
-#  "m_writeNominalTree" : True,
+#  "m_writeTree" : True,
+  "m_writeNominalTree" : True,
 #  "m_MJBDetailStr" : "bTag85 bTag77",
 #  "m_MJBDetailStr" : "extraMJB",
   "m_eventDetailStr" : "pileup",
@@ -135,7 +134,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #!!  "m_isDAOD" : True,
 #!!  "m_useCutFlow" : False,
 
-  "m_XSFile"  : "XsAcc_13TeV.txt", 
+  "m_XSFile"  : "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt", 
 
 #---------------------------------------------------------------------------------------------
 #### Tool Configurations ####

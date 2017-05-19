@@ -44,7 +44,7 @@
 #include "xAODBTaggingEfficiency/BTaggingSelectionTool.h"
 #include "xAODBTaggingEfficiency/BTaggingEfficiencyTool.h"
 
-#include "SystTool/SystContainer.h"
+//!!#include "SystTool/SystContainer.h"
 
 #include "JetTileCorrection/JetTileCorrectionTool.h"
 
@@ -330,8 +330,8 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
   // load all variations
   setupJetCalibrationStages();
-  ANA_CHECK(loadJetUncertaintyTool());
-  ANA_CHECK(loadJetResolutionTool());
+//!!  ANA_CHECK(loadJetUncertaintyTool());
+//!!  ANA_CHECK(loadJetResolutionTool());
   ANA_CHECK(loadVariations());
 
   //load Calibration and systematics files
@@ -346,35 +346,13 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
   ANA_CHECK(loadMJBCalibration());
 
-//  EL_RETURN_CHECK("init:configure", this->configure() );
-//
-//  EL_RETURN_CHECK("init", getLumiWeights(eventInfo) );
-//
-//  // load all variations
-//  setupJetCalibrationStages();
-//  EL_RETURN_CHECK("init", loadJetUncertaintyTool());
-//  EL_RETURN_CHECK("init", loadJetResolutionTool());
-//  EL_RETURN_CHECK("init", loadVariations());
-//
-//  //load Calibration and systematics files
-//  EL_RETURN_CHECK("init", loadJetCalibrationTool());
-//  EL_RETURN_CHECK("init", loadJetCleaningTool());
-//  EL_RETURN_CHECK("init", loadJVTTool());
-//  EL_RETURN_CHECK("init", loadBTagTools());
-//  if( m_TileCorrection )
-//    EL_RETURN_CHECK("init", loadJetTileCorrectionTool());
-//  if( m_VjetCalib )
-//    EL_RETURN_CHECK("init", loadVjetCalibration());
-//
-//  EL_RETURN_CHECK("init", loadMJBCalibration());
-
-  if( m_bootstrap ){
-    systTool = new SystContainer(m_sysName, m_bins, m_systTool_nToys);
-  }
-
-//!!  for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
-//!!    Info("initialize", "Systematic var %i is %s at index %i", iVar, m_sysName.at(iVar).c_str(), m_sysDetail.at(iVar) );
+//!!  if( m_bootstrap ){
+//!!    systTool = new SystContainer(m_sysName, m_bins, m_systTool_nToys);
 //!!  }
+
+  for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
+    Info("initialize", "Systematic var %i is %s at index %i", iVar, m_sysName.at(iVar).c_str(), m_sysDetail.at(iVar) );
+  }
 
   if(m_useCutFlow) {
     Info("initialize", "Setting Cutflow");
@@ -946,9 +924,9 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 
     /////////////////////////////////////// SystTool ////////////////////////////////////////
-    if( m_bootstrap ){
-      systTool->fillSyst(m_sysName.at(iVar), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt()/GeV, (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
-    }
+//!!    if( m_bootstrap ){
+//!!      systTool->fillSyst(m_sysName.at(iVar), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt()/GeV, (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
+//!!    }
 
   }//For each iVar
 
@@ -1015,11 +993,12 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
     m_jetHists.at(iVar)->finalize();
   }
 
+  if(m_debug) Info("finalize()", "Done with jes hists");
 
-  if( m_bootstrap ){
-    systTool->writeToFile(wk()->getOutputFile("SystToolOutput"));
-    //delete systTool;  systTool = nullptr;
-  }
+//!!  if( m_bootstrap ){
+//!!    systTool->writeToFile(wk()->getOutputFile("SystToolOutput"));
+//!!    //delete systTool;  systTool = nullptr;
+//!!  }
 
 
   //Need to retroactively fill original bins of these histograms
@@ -1058,6 +1037,7 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
     wk()->addOutput(histCutflowW);
   }//m_useCutFlow
 
+  if(m_debug) Info("finalize()", "Done with cutflow hists");
   //Only if Nominal is available
   if( m_writeTree && m_NominalIndex >= 0) {
     TH1D *treeCutflow, *treeCutflowW;
@@ -1078,6 +1058,7 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
   }
 
   m_ss.str( std::string() );
+  if(m_debug) Info("finalize()", "Done finalize");
 
   return EL::StatusCode::SUCCESS;
 }
@@ -1459,7 +1440,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
   if( !m_JetUncertaintiesTool_handle.isUserConfigured() ){
     ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetUncertaintiesTool_handle, JetUncertaintiesTool) );
     ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("JetDefinition", m_jetDef) );
-    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", m_jetUncertaintyConfig) );
+//    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", m_jetUncertaintyConfig) );
     if( m_isAFII ){
       ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("MCType", "AFII") );
     }else{

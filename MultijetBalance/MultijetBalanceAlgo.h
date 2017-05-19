@@ -69,7 +69,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
   // that way they can be set directly from CINT and python.
   public:
 
-    bool m_debugLevel;
+    MSG::Level m_msgLevel = MSG::INFO;
 
     /** @brief TEvent object */
     xAOD::TEvent *m_event;  //!

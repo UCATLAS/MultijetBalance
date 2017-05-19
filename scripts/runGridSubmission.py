@@ -14,7 +14,8 @@ from time import strftime
 test = False # does not run the jobs
 #config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_EM207.py"
 #config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2015_Validation.py"
-config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB.py"
+#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB.py"
+config_name = "/home/jdandoy/Documents/Dijet/Rel21MJB/MultijetBalance/data/config_MJB.py"
 extraTag = "" # Extra output tag for all files
 
 
@@ -40,10 +41,10 @@ production_name = ""
 files = []
 outputTags = []
 
-files.append("MultijetBalance/scripts/sampleLists/data16_r207_JETM1_p2950.txt")
-outputTags.append("Rel207")
-#files.append("MultijetBalance/scripts/sampleLists/data16_r21_JETM1_p3142.txt")
-#outputTags.append("Rel21")
+#files.append("MultijetBalance/scripts/sampleLists/data16_r207_JETM1_p2950.txt")
+#outputTags.append("Rel207")
+files.append("MultijetBalance/scripts/sampleLists/data16_r21_JETM1_p3142.txt")
+outputTags.append("Rel21")
 
 ## File lists and specific output Tags
 
