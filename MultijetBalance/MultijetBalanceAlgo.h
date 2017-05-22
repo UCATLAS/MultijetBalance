@@ -41,6 +41,9 @@
 
 #include "JetCPInterfaces/IJetTileCorrectionTool.h"
 
+#include <functional>
+
+
 static float GeV = 1000.;
 
 class MultijetHists;
@@ -203,7 +206,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief If input is MC, as automatically determined from xAOD::EventInfo::IS_SIMULATION*/
     bool m_isMC;
     /** @brief Vector of subleading jet \f$p_{T}\f$ selection thresholds, filled automatically from MultijetBalanceAlgo#m_MJBIterationThreshold*/
-    std::vector<float> m_subleadingPtThreshold;
+    std::vector<float> m_subjetThreshold;
     /** @brief Vector of b-tag working point efficiency percentages, filled automatically from MultijetBalanceAlgo#m_bTag*/
     std::vector<std::string> m_bTagWPs;
     /** @brief Set to true automatically if MultijetBalanceAlgo#m_MCPileupCheckContainer is not "None"*/
@@ -325,12 +328,12 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Update every cutflow for this selection
         @note The current selection is determined by the variable m_iCutflow, which automatically updates with each use
     */
-    EL::StatusCode passCutAll();
+    EL::StatusCode fillCutflowAll(int iSel);
     /** @brief Update cutflow iVar for this selection
         @note The current selection is determined by the variable m_iCutflow, which automatically updates with each use
         @param iVar  The index of the current systematic variation whose cutflow is to be filled
     */
-    EL::StatusCode passCut(int iVar);
+    EL::StatusCode fillCutflow(int iSel, int iVar);
 
   public:
     /** @brief Vector of cutflows, for each systematic variation, showing the integer number of events passing each selection */
@@ -390,29 +393,37 @@ class MultijetBalanceAlgo : public EL::Algorithm
 
     #ifndef __MAKECINT__
     /** @brief Apply the JetCalibTool*/
-     EL::StatusCode applyJetCalibrationTool( xAOD::Jet* jet);
+     EL::StatusCode applyJetCalibrationTool( std::vector< xAOD::Jet*>* jets );
+    /** @brief Apply the intermediate V+jet \a in-situ calibrations*/
+     EL::StatusCode applyVjetCalibration( std::vector< xAOD::Jet*>* jets );
+    /** @brief For jets below subleading pt threshold, call (optionally) applyVjetCalibration and applyJetUncertaintyTool */ 
+    EL::StatusCode applyJetSysVariation(std::vector< xAOD::Jet*>* jets, int iSysVar );
     /** @brief Apply the JetTileCorrectionTool*/
-     EL::StatusCode applyJetTileCorrectionTool( xAOD::Jet* jet);
+     EL::StatusCode applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets );
+
     /** @brief Apply the JetCleaningTool*/
      EL::StatusCode applyJetCleaningTool();
     /** @brief Apply the Jet Uncertainty Tool*/
      EL::StatusCode applyJetUncertaintyTool( xAOD::Jet* jet , int iVar );
     /** @brief Apply the Jet Resolution Tool*/
      EL::StatusCode applyJetResolutionTool( xAOD::Jet* jet , int iVar );
-    /** @brief Apply the intermediate V+jet \a in-situ calibrations*/
-     EL::StatusCode applyVjetCalibration( xAOD::Jet* jet , int iVar );
     /** @brief Apply the MJB calibration from previous iterations */
-     EL::StatusCode applyMJBCalibration( xAOD::Jet* jet , int iVar, bool isLead = false );
+     EL::StatusCode applyMJBCalibration( xAOD::Jet* jet , int iVar );
     /** @brief Order the jets in a collection to descend in \f$p_{T}\f$*/
      EL::StatusCode reorderJets(std::vector< xAOD::Jet*>* signalJets);
-    /** @brief For jets below subleading pt threshold, call (optionally) applyVjetCalibration and applyJetUncertaintyTool */ 
-    EL::StatusCode calibrateBelowThreshold(xAOD::Jet* jet, int iSysVar );
+    
 
     #endif
 
 public:
 
+    bool MJBmode;
 
+    bool cut_JetThresh(std::vector< xAOD::Jet*>* jets) const; //!
+    bool cut_JVT(std::vector< xAOD::Jet*>* jets) const; //!
+
+    std::function<bool(std::vector< xAOD::Jet*>* jets)> * m_selections;  //!
+    unsigned int m_numSelections; //!
 
 
     /** @brief Standard constructor*/
@@ -427,8 +438,8 @@ public:
     virtual EL::StatusCode fileExecute ();
     /** @brief Initialize the output histograms before any input file is attached (inherits from Algorithm)*/
     virtual EL::StatusCode histInitialize ();
-    /** @brief Change to the next input file (inherits from Algorithm)*/
-    virtual EL::StatusCode changeInput (bool firstFile);
+//    /** @brief Change to the next input file (inherits from Algorithm)*/
+//    virtual EL::StatusCode changeInput (bool firstFile);
     /** @brief Initialize the input file (inherits from Algorithm)*/
     virtual EL::StatusCode initialize ();
     /** @brief Execute each event of the input file (inherits from Algorithm)*/

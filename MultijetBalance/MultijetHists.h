@@ -11,6 +11,7 @@
 #include <xAODJet/JetContainer.h>
 #include <xAODJet/Jet.h>
 
+
 /**
   @brief Define and fill the MJB histograms.  Inherits from xAODAnaHelpers::JetHists
 */
@@ -39,13 +40,16 @@ class MultijetHists : public JetHists
     MultijetHists(std::string name, std::string detailStr);
     /** @brief Standard destructor*/
     ~MultijetHists() {};
+    using JetHists::execute;
+    using JetHists::initialize;
 
     /** @brief Initialize all histograms
      * @param binning     The binning of the recoil system \f$p_{T}\f$*/
-    StatusCode initialize(std::string binning);
+    StatusCode initialize(std::string binning );
     /** @brief Execute function for only the MJB-defined histograms 
      * @param jets        A vector of xAOD::Jet pointers
      * @param eventInfo   The xAOD::EventInfo of the event*/
+//    using JetHists::execute;
     StatusCode execute( std::vector< xAOD::Jet* >* jets, const xAOD::EventInfo* eventInfo);
     /** @brief Execute function inherited from JetHists, filling non-MJB jet histograms
      * @param jets        An xAODLLJetContainer of the jets

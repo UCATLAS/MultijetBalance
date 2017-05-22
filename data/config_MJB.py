@@ -79,7 +79,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal-JetCalibSequence",
+  "m_sysVariations" : "Nominal",
+#  "m_sysVariations" : "Nominal-JetCalibSequence",
 #  "m_sysVariations" : "All",
 #  "m_sysVariations" : "Nominal-localMJB",
 
@@ -99,7 +100,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #------ Validation Mode ------#
   #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-  "m_validation" : True,
+  "m_validation" : False,
 #  ## Dijet validation mode: ##
   "m_numJets"  : 2,
   "m_ptAsym" : 1.0,
@@ -135,7 +136,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #!!  "m_isDAOD" : True,
 #!!  "m_useCutFlow" : False,
 
-  "m_XSFile"  : "XsAcc_13TeV.txt", 
+  "m_XSFile"  : "MultijetBalance/XsAcc_13TeV.txt", 
 
 #---------------------------------------------------------------------------------------------
 #### Tool Configurations ####
