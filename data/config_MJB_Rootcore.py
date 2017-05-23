@@ -61,8 +61,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #"m_MJBIterationThreshold" : "-1,2000",
   ## For higher iterations:
   "m_MJBCorrectionFile" : "",
-  #"m_MJBCorrectionFile" : "Bootstrap_Iteration0_LC_hist.combined.Pythia.DoubleMJB_initial.root",
-  #"m_MJBCorrectionFile" : "Iteration0_2016LC_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
+  #"m_MJBCorrectionFile" : "$ROOTCOREBIN/data/MultijetBalance/Bootstrap_Iteration0_LC_hist.combined.Pythia.DoubleMJB_initial.root",
+  #"m_MJBCorrectionFile" : "$ROOTCOREBIN/data/MultijetBalance/Iteration0_2016LC_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
 
 ## 2016 initial validation binning
   "m_binning"   : "200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300,2600", #23bins
@@ -78,7 +78,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal",
+  "m_sysVariations" : "Nominal-JES-JER",
 #  "m_sysVariations" : "All",
 #  "m_sysVariations" : "Nominal-localMJB",
 
@@ -126,7 +126,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_trigDetailStr" : "basic passTriggers",
 
 ### Extra Options ###
-#!  "m_debug"      :  False,
+  "m_debug"      :  True,
   ## Remove problematic Pileup events from low pt MC slices:
   "m_MCPileupCheckContainer" : "AntiKt4TruthJets",
 
@@ -147,8 +147,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_JVTWP" : "Medium", # 2016
 
   #-- JetUncertaintiesTool --#
-  "m_jetUncertaintyConfig" : "data/JES_2016/Moriond2017/JES2016_AllNuisanceParameters.config",
-#!!  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JESNuisanceParametersForMJB.config",
+  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JES2016_AllNuisanceParameters.config",
+#  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JESNuisanceParametersForMJB.config",
 
   #-- JetResolutionTool --#
   "m_JERUncertaintyConfig" : "JetResolution/Prerec2015_xCalib_2012JER_ReducedTo9NP_Plots_v2.root", 

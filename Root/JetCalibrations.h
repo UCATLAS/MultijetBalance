@@ -55,9 +55,12 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
   if(m_debug) Info("loadJetUncertaintyTool()", "loadJetUncertaintyTool");
 
   if( !m_JetUncertaintiesTool_handle.isUserConfigured() ){
+
+    std::cout << "config is " << m_jetUncertaintyConfig << std::endl;
+    std::cout << "config is " << PathResolverFindCalibFile(m_jetUncertaintyConfig) << std::endl;
     ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetUncertaintiesTool_handle, JetUncertaintiesTool) );
     ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("JetDefinition", m_jetDef) );
-//    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", m_jetUncertaintyConfig) );
+    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", PathResolverFindCalibFile(m_jetUncertaintyConfig) ) );
     if( m_isAFII ){
       ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("MCType", "AFII") );
     }else{
@@ -114,13 +117,13 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetTileCorrectionTool(){
 EL::StatusCode MultijetBalanceAlgo :: loadVjetCalibration(){
   if(m_debug) Info("loadVjetCalibration()", "loadVjetCalibration");
 
-  TFile *VjetFile = TFile::Open( gSystem->ExpandPathName(m_VjetCalibFile.c_str()) , "READ" );
+  TFile *VjetFile = TFile::Open( PathResolverFindCalibFile(m_VjetCalibFile).c_str() , "READ" );
 
   //Only retrieve Nominal container
   std::string VjetHistName = m_jetDef+"_correction";
   m_VjetHist = (TH1F*) VjetFile->Get( VjetHistName.c_str() );
   if(!m_VjetHist){
-    Error("loadVjetCalibration", "Could not load Vjet histogram %s for file %s", VjetHistName.c_str(), gSystem->ExpandPathName(m_VjetCalibFile.c_str()));
+    Error("loadVjetCalibration", "Could not load Vjet histogram %s for file %s", VjetHistName.c_str(), PathResolverFindCalibFile(m_VjetCalibFile).c_str() );
     return EL::StatusCode::FAILURE;
   }
 
@@ -149,7 +152,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
     return EL::StatusCode::SUCCESS;
 
   // Load the file.  If m_closureTest, then apply the current iteration
-  TFile* MJBFile = TFile::Open( gSystem->ExpandPathName( ("$ROOTCOREBIN/data/MultijetBalance/"+m_MJBCorrectionFile).c_str() ), "READ" );
+  TFile* MJBFile = TFile::Open( PathResolverFindCalibFile(m_MJBCorrectionFile).c_str() , "READ" );
   if(m_debug) Info("loadMJBCalibration", "Loaded MJB input file");
   if (m_closureTest)
     m_ss << m_MJBIteration;

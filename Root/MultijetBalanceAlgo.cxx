@@ -236,8 +236,6 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
 
   ///// Jet calib and uncertainty Tool Config parameters /////
 
-  m_jetUncertaintyConfig = gSystem->ExpandPathName( m_jetUncertaintyConfig.c_str() );
-
   if ( !m_isMC && m_jetCalibSequence.find("Insitu") == std::string::npos){
     m_jetCalibSequence += "_Insitu";
     Warning("configure()", "Adding _Insitu to data Jet Calibration");
@@ -330,7 +328,6 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
   const xAOD::EventInfo* eventInfo = 0;
   ANA_CHECK( HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store, msg()) );
-  //RETURN_CHECK("init", HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store), "Failed to retrieve EventInfo");
   m_isMC = ( eventInfo->eventType( xAOD::EventInfo::IS_SIMULATION ) ) ? true : false;
 
   ANA_CHECK( this->configure() );
@@ -339,8 +336,8 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
   // load all variations
   setupJetCalibrationStages();
-//!!  ANA_CHECK(loadJetUncertaintyTool());
-//!!  ANA_CHECK(loadJetResolutionTool());
+  ANA_CHECK(loadJetUncertaintyTool());
+  ANA_CHECK(loadJetResolutionTool());
   ANA_CHECK(loadSystematics());
 
   //load Calibration and systematics files
@@ -933,7 +930,7 @@ EL::StatusCode MultijetBalanceAlgo::getLumiWeights(const xAOD::EventInfo* eventI
     m_acceptance = 1;
   }else{
     m_mcChannelNumber = eventInfo->mcChannelNumber();
-    ifstream fileIn(  PathResolverFindDataFile( m_XSFile ) );
+    ifstream fileIn(  PathResolverFindCalibFile( m_XSFile ) );
     //ifstream fileIn(  gSystem->ExpandPathName( m_XSFile.c_str() ) );
     std::string runNumStr = std::to_string( m_mcChannelNumber );
 
@@ -1023,8 +1020,11 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
 
     ////////////////////////////////// JES Uncertainties /////////////////////////////////////////
     } else if( varVector.at(iVar).find("JES") != std::string::npos ){
+      std::cout << "!!!!!!!!!!!!!!!!!!! a " << std::endl;
       const CP::SystematicSet recSysts = m_JetUncertaintiesTool_handle->recommendedSystematics();
+      std::cout << "!!!!!!!!!!!!!!!!!!! b " << std::endl;
       std::vector<CP::SystematicSet> JESSysList = HelperFunctions::getListofSystematics( recSysts, "All", 1, msg() ); //All sys at +-1 sigma
+      std::cout << "!!!!!!!!!!!!!!!!!!! c " << std::endl;
       for(unsigned int i=1; i < JESSysList.size(); ++i){
         m_sysName.push_back( JESSysList.at(i).name() );   m_sysType.push_back( JES ); m_sysDetail.push_back( i ); m_sysSet.push_back( JESSysList.at(i) );
       }
