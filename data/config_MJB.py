@@ -100,7 +100,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #------ Validation Mode ------#
   #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-  "m_validation" : False,
+  "m_validation" : True,
 #  ## Dijet validation mode: ##
   "m_numJets"  : 2,
   "m_ptAsym" : 1.0,
@@ -128,7 +128,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_trigDetailStr" : "basic passTriggers",
 
 ### Extra Options ###
-#!  "m_debug"      :  False,
+  "m_debug"      :  False,
   ## Remove problematic Pileup events from low pt MC slices:
   "m_MCPileupCheckContainer" : "AntiKt4TruthJets",
 

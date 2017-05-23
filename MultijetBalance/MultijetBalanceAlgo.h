@@ -44,8 +44,6 @@
 #include <functional>
 
 
-static float GeV = 1000.;
-
 class MultijetHists;
 class IJetCalibrationTool;
 class ICPJetUncertaintiesTool;
@@ -416,14 +414,34 @@ class MultijetBalanceAlgo : public EL::Algorithm
     #endif
 
 public:
+    const xAOD::JetContainer* m_truthJets; //!
+    const xAOD::EventInfo* m_eventInfo; //!
+    TLorentzVector m_recoilTLV; //!
+    float m_prescale; //!
 
     bool MJBmode;
+    /** @brief enum defining selection */
+    enum SelType {PRE, SYST, RECOIL};
 
-    bool cut_JetThresh(std::vector< xAOD::Jet*>* jets) const; //!
-    bool cut_JVT(std::vector< xAOD::Jet*>* jets) const; //!
+    bool cut_LeadEta(); //!
+    bool cut_JetEta(); //!
+    bool cut_MCCleaning(); //!
+    bool cut_SubPt(); //!
+    bool cut_JetPtThresh(); //!
+    bool cut_JVT(); //!
+    bool cut_CleanJet(); //!
+    bool cut_TriggerEffRecoil(); //!
+    bool cut_PtAsym(); //!
+    bool cut_Alpha(); //!
+    bool cut_Beta(); //!
 
-    std::function<bool(std::vector< xAOD::Jet*>* jets)> * m_selections;  //!
-    unsigned int m_numSelections; //!
+    std::vector< xAOD::Jet*>* m_jets; //!
+    
+    std::vector< std::function<bool(void)> > m_preSelections;  //!
+    std::vector< std::function<bool(void)> > m_systSelections;  //!
+    
+    std::vector< SelType > m_selType;
+    std::vector< std::function<bool(void)> > m_selections;  //!
 
 
     /** @brief Standard constructor*/

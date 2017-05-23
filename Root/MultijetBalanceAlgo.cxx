@@ -176,13 +176,13 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
   std::stringstream ss(m_triggerAndPt);
   while (std::getline(ss, thisSubStr, ',')) {
     m_triggers.push_back( thisSubStr.substr(0, thisSubStr.find_first_of(':')) );
-    m_triggerThresholds.push_back( std::stof(thisSubStr.substr(thisSubStr.find_first_of(':')+1, thisSubStr.size()) , &sz) *GeV );
+    m_triggerThresholds.push_back( std::stof(thisSubStr.substr(thisSubStr.find_first_of(':')+1, thisSubStr.size()) , &sz) *1e3 );
   }
 
   // Save subleading pt thresholds to use
   std::stringstream ss2(m_MJBIterationThreshold);
   while( std::getline(ss2, thisSubStr, ',')) {
-    m_subjetThreshold.push_back( std::stof(thisSubStr, &sz) * GeV );
+    m_subjetThreshold.push_back( std::stof(thisSubStr, &sz) * 1e3 );
   }
 
   //If using MCPileupCheck
@@ -357,27 +357,67 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 //!!  }
 //
 
-//    m_selections = new std::function<bool(std::vector< xAOD::Jet*>* jets)>[10];
-//    std::vector< std::string > cutflowNames; 
-//    m_numSelections = 0;
-//    if( MJBmode ){
-//
-//      std::function<bool(std::vector< xAOD::Jet*>* jets)> func_JetThresh = std::bind(&MultijetBalanceAlgo::cut_JetThresh, this, _1);
-//      m_selections[0] = func_JetThresh;
-//      cutflowNames.push_back( "JetThresh" );
-//      m_numSelections++;
-//
-//      std::function<bool(std::vector< xAOD::Jet*>* jets)> func_JVT = std::bind(&MultijetBalanceAlgo::cut_JVT, this, _1);
-//      m_selections[0] = func_JVT;
-//      cutflowNames.push_back( "JVT" );
-//      m_numSelections++;
-//
-//    }
-
-
+    //// Add the defined selections, in correct order /////
+    std::vector< std::string > cutflowNames; 
     if( MJBmode ){
 
+      std::function<bool(void)> func_LeadEta = std::bind(&MultijetBalanceAlgo::cut_LeadEta, this);
+      m_selections.push_back(func_LeadEta);
+      cutflowNames.push_back( "LeadEta" );
+      m_selType.push_back( PRE );
+
+      std::function<bool(void)> func_JetEta = std::bind(&MultijetBalanceAlgo::cut_JetEta, this);
+      m_selections.push_back(func_JetEta);
+      cutflowNames.push_back( "JetEta" );
+      m_selType.push_back( PRE );
+
+      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
+      m_selections.push_back(func_MCCleaning);
+      cutflowNames.push_back( "MCCleaning" );
+      m_selType.push_back( PRE );
+
+      std::function<bool(void)> func_SubPt = std::bind(&MultijetBalanceAlgo::cut_SubPt, this);
+      m_selections.push_back(func_SubPt);
+      cutflowNames.push_back( "SubPt" );
+      m_selType.push_back( PRE );
+
+      std::function<bool(void)> func_JetPtThresh = std::bind(&MultijetBalanceAlgo::cut_JetPtThresh, this);
+      m_selections.push_back(func_JetPtThresh);
+      cutflowNames.push_back( "JetPtThresh" );
+      m_selType.push_back( SYST );
+
+      std::function<bool(void)> func_JVT = std::bind(&MultijetBalanceAlgo::cut_JVT, this);
+      m_selections.push_back(func_JVT);
+      cutflowNames.push_back( "JVT" );
+      m_selType.push_back( SYST );
+
+      std::function<bool(void)> func_CleanJet = std::bind(&MultijetBalanceAlgo::cut_CleanJet, this);
+      m_selections.push_back(func_CleanJet);
+      cutflowNames.push_back( "CleanJet" );
+      m_selType.push_back( RECOIL );
+
+      std::function<bool(void)> func_TriggerEffRecoil = std::bind(&MultijetBalanceAlgo::cut_TriggerEffRecoil, this);
+      m_selections.push_back(func_TriggerEffRecoil);
+      cutflowNames.push_back( "TriggerEffRecoil" );
+      m_selType.push_back( RECOIL );
+
+      std::function<bool(void)> func_PtAsym = std::bind(&MultijetBalanceAlgo::cut_PtAsym, this);
+      m_selections.push_back(func_PtAsym);
+      cutflowNames.push_back( "PtAsym" );
+      m_selType.push_back( RECOIL );
+
+      std::function<bool(void)> func_Alpha = std::bind(&MultijetBalanceAlgo::cut_Alpha, this);
+      m_selections.push_back(func_Alpha);
+      cutflowNames.push_back( "Alpha" );
+      m_selType.push_back( RECOIL );
+
+      std::function<bool(void)> func_Beta = std::bind(&MultijetBalanceAlgo::cut_Beta, this);
+      m_selections.push_back(func_Beta);
+      cutflowNames.push_back( "Beta" );
+      m_selType.push_back( RECOIL );
+
     }
+
 
 
   for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
@@ -510,9 +550,10 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   ///////////////////////////// Retrieve Containers /////////////////////////////////////////
   if(m_debug) Info("execute()", "Retrieve Containers ");
 
-  const xAOD::EventInfo* eventInfo = 0;
-  ANA_CHECK( HelperFunctions::retrieve(eventInfo, "EventInfo", m_event, m_store, msg()) );
-  m_mcEventWeight = (m_isMC ? eventInfo->mcEventWeight() : 1.) ;
+  m_eventInfo = 0;
+  //const xAOD::EventInfo* eventInfo = 0;
+  ANA_CHECK( HelperFunctions::retrieve(m_eventInfo, "EventInfo", m_event, m_store, msg()) );
+  m_mcEventWeight = (m_isMC ? m_eventInfo->mcEventWeight() : 1.) ;
 
   const xAOD::VertexContainer* vertices = 0;
   ANA_CHECK( HelperFunctions::retrieve(vertices, "PrimaryVertices", m_event, m_store, msg()) );
@@ -521,9 +562,10 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   const xAOD::JetContainer* inJets = 0;
   ANA_CHECK( HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store, msg()) );
 
-  const xAOD::JetContainer* truthJets = 0;
+  m_truthJets = 0;
+  //const xAOD::JetContainer* m_truthJets = 0;
   if(m_useMCPileupCheck && m_isMC){
-    ANA_CHECK( HelperFunctions::retrieve(truthJets, m_MCPileupCheckContainer, m_event, m_store, msg()) );
+    ANA_CHECK( HelperFunctions::retrieve(m_truthJets, m_MCPileupCheckContainer, m_event, m_store, msg()) );
   }
 
   
@@ -534,82 +576,204 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   ///// For jets, create an editable shallow copy container & vector where jets are removable //////
   std::pair< xAOD::JetContainer*, xAOD::ShallowAuxContainer* > jetsSC = xAOD::shallowCopyContainer( *inJets );
 
-  std::vector< xAOD::Jet*>* jets = new std::vector< xAOD::Jet* >();
+  m_jets = new std::vector< xAOD::Jet* >();
+  //std::vector< xAOD::Jet*>* jets = new std::vector< xAOD::Jet* >();
   for( auto thisJet : *(jetsSC.first) ) {
-     jets->push_back( thisJet );
+     m_jets->push_back( thisJet );
    }
 
 
   ////////////////////////////////// Apply jet calibrations ////////////////////////////////////////
   if(m_debug) Info("execute()", "Apply Jet Calibration Tool ");
-  ANA_CHECK( applyJetCalibrationTool( jets ) );
-  reorderJets( jets );
+  ANA_CHECK( applyJetCalibrationTool( m_jets ) );
+  reorderJets( m_jets );
 
 
   // Apply dedicated V+jet calibration on subleading jets if MJB mode //
   if( MJBmode && m_VjetCalib){ // Only apply if we're running MJB and Vjet Calibration is turned on
-    ANA_CHECK( applyVjetCalibration( jets ) );
+    ANA_CHECK( applyVjetCalibration( m_jets ) );
   }
   
   // MJB: A vector to save the calibrated P4 of jets
   std::vector<xAOD::JetFourMom_t> jets_calibratedP4;
-  for(unsigned int iJet=0; iJet < jets->size(); ++iJet){
+  for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
     xAOD::JetFourMom_t thisJet;
-    thisJet.SetCoordinates(jets->at(iJet)->pt(), jets->at(iJet)->eta(), jets->at(iJet)->phi(), jets->at(iJet)->m());
+    thisJet.SetCoordinates(m_jets->at(iJet)->pt(), m_jets->at(iJet)->eta(), m_jets->at(iJet)->phi(), m_jets->at(iJet)->m());
     jets_calibratedP4.push_back(thisJet);
   }
 
-  //If MJB and subleading jet is above the threshold, need to fail here!
+  ////// Do the event selections before looping over systematics  //////
+  for(unsigned int iS = 0; iS < m_selections.size(); ++iS){
+    if( m_selType.at(iS) != PRE )
+      continue;
+    
+    if( m_selections.at(iS)() ){
+      fillCutflowAll(iS);
+    }else{
+      // If it fails a preselection, exit to next event //
+      delete jetsSC.first; delete jetsSC.second; delete m_jets;
+      wk()->skipEvent();  return EL::StatusCode::SUCCESS;
+    }
+  }// for preselections
 
-
-  //// MJB: create new container of jets for each systematic, and whose elements can be removed ////
-  std::vector< xAOD::Jet*>* sysJets = new std::vector< xAOD::Jet* >();
+  //// MJB: create new container to save the good jets up to this point ////
+  std::vector< xAOD::Jet*>* savedJets = new std::vector< xAOD::Jet* >();
+  *savedJets = *m_jets;
 
   ////// Loop over systematic variations of recoil objects /////////////
   for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
 
-    *sysJets = *jets;  // Reset the vector of pointers
+    *m_jets = *savedJets;  // Reset the vector of pointers
     //// If MJB, need to reset 4-mom of jets and apply new systematic variations
     if( MJBmode ){
 
       //Reset each jet pt to calibrated copy (including V+jet if applicable)
-      for (unsigned int iJet = 0; iJet < sysJets->size(); ++iJet){
-        sysJets->at(iJet)->setJetP4( jets_calibratedP4.at(iJet) );
+      for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
+        m_jets->at(iJet)->setJetP4( jets_calibratedP4.at(iJet) );
       }
 
       // Apply additional jet corrections based on systematic variation.
       // Will apply iterative MJB calibration or JES / JER uncertainties. 
-      applyJetSysVariation(sysJets, iVar);
+      applyJetSysVariation(m_jets, iVar);
 
       // Apply tile correction tool last
-      applyJetTileCorrectionTool(sysJets);
+      applyJetTileCorrectionTool(m_jets);
 
-      reorderJets( sysJets );
+      reorderJets( m_jets );
     }//If MJB mode
 
 
-    ////// Do the event selections, these are defined in initalize //////
+    ////// Do the event selections for each systematic before the recoil object is built //////
+    bool hasFailedSyst = false;
+    for(unsigned int iS = 0; iS < m_selections.size(); ++iS){
+      if( m_selType.at(iS) != SYST )
+        continue;
+      if( m_selections.at(iS)() ){
+        fillCutflow(iS, iVar);
+      }else{
+        hasFailedSyst = true;
+        break;
+      }
+    }
+    /// If it failed a syst selection, continue to the next systematic variation without filling output ///
+    if( hasFailedSyst )
+      continue;
+
+    ////////// Build the recoil object //////////
+
+    if( MJBmode ){
+      //Create recoilJets object from all nonleading, passing jets
+      m_recoilTLV.SetPtEtaPhiM(0,0,0,0);
+      for (unsigned int iJet = 1; iJet < m_jets->size(); ++iJet){
+        TLorentzVector tmpJet;
+        tmpJet.SetPtEtaPhiE(m_jets->at(iJet)->pt(), m_jets->at(iJet)->eta(), m_jets->at(iJet)->phi(), m_jets->at(iJet)->e());
+        m_recoilTLV += tmpJet;
+      }
+    }
+
+    ////// Do the event selections for each systematic after the recoiling object is built //////
     bool hasFailed = false;
-    for(unsigned int iS; iS < m_numSelections; ++iS){
-      if( m_selections[iS](sysJets)){
+    for(unsigned int iS = 0; iS < m_selections.size(); ++iS){
+      if( m_selType.at(iS) != RECOIL )
+        continue;
+      if( m_selections.at(iS)() ){
         fillCutflow(iS, iVar);
       }else{
         hasFailed = true;
         break;
       }
     }
-
-    /// If it failed a selection, continue to the next systematic variation without filling output ///
+    /// If it failed a syst selection, continue to the next systematic variation without filling output ///
     if( hasFailed )
       continue;
 
-    //////// Fill the output histograms and trees ///////
 
+    //%%%%%%%%%%%%%%%%%%%%%%%%%%% End Selections %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+    ////////////////////// Add Extra Variables //////////////////////////////
+    m_eventInfo->auxdecor< int >("njet") = m_jets->size();
+    m_eventInfo->auxdecor< float >( "recoilPt" ) = m_recoilTLV.Pt();
+    m_eventInfo->auxdecor< float >( "recoilEta" ) = m_recoilTLV.Eta();
+    m_eventInfo->auxdecor< float >( "recoilPhi" ) = m_recoilTLV.Phi();
+    m_eventInfo->auxdecor< float >( "recoilM" ) = m_recoilTLV.M();
+    m_eventInfo->auxdecor< float >( "recoilE" ) = m_recoilTLV.E();
+    m_eventInfo->auxdecor< float >( "ptBal" ) = m_jets->at(0)->pt() / m_recoilTLV.Pt();
+
+    for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
+
+      vector<float> thisEPerSamp = m_jets->at(iJet)->auxdata< vector< float> >("EnergyPerSampling");
+      float TotalE = 0., TileE = 0.;
+      for( int iLayer=0; iLayer < 24; ++iLayer){
+        TotalE += thisEPerSamp.at(iLayer);
+      }
+
+      TileE += thisEPerSamp.at(12);
+      TileE += thisEPerSamp.at(13);
+      TileE += thisEPerSamp.at(14);
+
+      m_jets->at(iJet)->auxdecor< float >( "TileFrac" ) = TileE / TotalE;
+
+    }
+
+
+    m_eventInfo->auxdecor< float >("weight_mcEventWeight") = m_mcEventWeight;
+    m_eventInfo->auxdecor< float >("weight_prescale") = m_prescale;
+    m_eventInfo->auxdecor< float >("weight_xs") = m_xs * m_acceptance;
+    float weight_pileup = 1.;
+    if(m_eventInfo->isAvailable< float >("PileupWeight") ){
+      weight_pileup = m_eventInfo->auxdecor< float >("PileupWeight");
+    }
+
+
+
+    if(m_isMC)
+      m_eventInfo->auxdecor< float >("weight") = m_mcEventWeight*m_xs*m_acceptance*weight_pileup;
+    else
+      m_eventInfo->auxdecor< float >("weight") = m_prescale;
+
+    /////////////// Output Plots ////////////////////////////////
+    if(m_debug) Info("execute()", "Begin Hist output for %s", m_sysName.at(iVar).c_str() );
+    m_jetHists.at(iVar)->execute( m_jets, m_eventInfo);
+
+
+    if(m_debug) Info("execute()", "Begin TTree output for %s", m_sysName.at(iVar).c_str() );
+    ///////////////// Optional MiniTree Output for Nominal Only //////////////////////////
+    if( m_writeTree ) {
+      if(!m_writeNominalTree ||  m_NominalIndex == (int) iVar) {
+      //!! The following is a bit slow!
+//        std::pair< xAOD::JetContainer*, xAOD::ShallowAuxContainer* > originalSignalJetsSC = xAOD::shallowCopyContainer( *inJets );
+        xAOD::JetContainer* plottingJets = new xAOD::JetContainer();
+        xAOD::JetAuxContainer* plottingJetsAux = new xAOD::JetAuxContainer();
+        plottingJets->setStore( plottingJetsAux );
+        for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
+          xAOD::Jet* newJet = new xAOD::Jet();
+          newJet->makePrivateStore( *(m_jets->at(iJet)) );
+          plottingJets->push_back( newJet );
+        }
+
+        int iTree = iVar;
+        if( m_writeNominalTree)
+          iTree = 0;
+        if(m_eventInfo)   m_treeList.at(iTree)->FillEvent( m_eventInfo    );
+        if(m_jets)  m_treeList.at(iTree)->FillJets(  plottingJets);
+        m_treeList.at(iTree)->FillTrigger( m_eventInfo );
+        m_treeList.at(iTree)->Fill();
+
+        delete plottingJets;
+        delete plottingJetsAux;
+      }//If it's not m_writeNominalTree or else we're on the nominal sample
+    }//if m_writeTree
+
+
+    /////////////////////////////////////// SystTool ////////////////////////////////////////
+//!!    if( m_bootstrap ){
+//!!      systTool->fillSyst(m_sysName.at(iVar), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt()/GeV, (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
+//!!    }
 
   } // loop over systematic variations of recoil objects
 
 
-  delete jetsSC.first; delete jetsSC.second; delete jets;
+  delete jetsSC.first; delete jetsSC.second; delete m_jets; delete savedJets;
 
   return EL::StatusCode::SUCCESS;
 }
@@ -736,8 +900,8 @@ EL::StatusCode MultijetBalanceAlgo :: histFinalize ()
 EL::StatusCode MultijetBalanceAlgo::fillCutflow(int iSel, int iVar){
   if(m_useCutFlow) {
     if(m_debug) Info("fillCutflow()", "Passing Cut %i-%i", iSel, iVar);
-    m_cutflowHist.at(iVar)->Fill(iSel, 1);
-    m_cutflowHistW.at(iVar)->Fill(iSel, m_mcEventWeight);
+    m_cutflowHist.at(iVar)->Fill(iSel+m_cutflowFirst, 1);
+    m_cutflowHistW.at(iVar)->Fill(iSel+m_cutflowFirst, m_mcEventWeight);
   }
 
 return EL::StatusCode::SUCCESS;
@@ -748,8 +912,8 @@ EL::StatusCode MultijetBalanceAlgo::fillCutflowAll(int iSel){
   if(m_useCutFlow) {
     if(m_debug) Info("fillCutflowAll()", "Passing Cut");
     for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
-      m_cutflowHist.at(iVar)->Fill(iSel, 1);
-      m_cutflowHistW.at(iVar)->Fill(iSel, m_mcEventWeight);
+      m_cutflowHist.at(iVar)->Fill(iSel+m_cutflowFirst, 1);
+      m_cutflowHistW.at(iVar)->Fill(iSel+m_cutflowFirst, m_mcEventWeight);
     }
     m_iCutflow++;
   }
@@ -1160,7 +1324,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadVjetCalibration(){
 
   //// Find out the subleading jet pt cut for V+jets ////
   if( m_subjetThreshold.at(0) == -1000 ){
-    m_subjetThreshold.at(0) = m_VjetHist->GetXaxis()->GetBinUpEdge( m_VjetHist->GetNbinsX() ) * GeV;
+    m_subjetThreshold.at(0) = m_VjetHist->GetXaxis()->GetBinUpEdge( m_VjetHist->GetNbinsX() ) * 1e3;
     //float lastCalibFactor = m_VjetHist->GetBinContent( m_VjetHist->GetNbinsX() );
     //m_subjetThreshold.at(0) = floor( m_subjetThreshold.at(0)*(1./lastCalibFactor) );
     Info("loadVjetCalibration", "Setting first subleading jet pt threshold to %f, taken from the V+jet configuration file", m_subjetThreshold.at(0));
@@ -1356,7 +1520,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( std::vector< xAOD::J
  
     //Get nominal V+jet correction
     float thisCalibration = 1.;
-    thisCalibration = m_VjetHist->GetBinContent( m_VjetHist->FindBin(jet->pt()/GeV) );
+    thisCalibration = m_VjetHist->GetBinContent( m_VjetHist->FindBin(jet->pt()/1e3) );
     if( thisCalibration == 0){
       Error("applyVjetCalibration", "Vjet calibration factor is 0!");
       return EL::StatusCode::FAILURE;
@@ -1379,7 +1543,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int 
     return EL::StatusCode::SUCCESS;
 
   // Get calibration
-  float thisCalibration = 1. / m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/GeV) );
+  float thisCalibration = 1. / m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/1e3) );
 
   xAOD::JetFourMom_t thisJet;
   thisJet.SetCoordinates( jet->pt(), jet->eta(), jet->phi(), jet->m() );
@@ -1433,7 +1597,7 @@ EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*
   for(unsigned int iJet = 0; iJet < theseJets->size(); ++iJet){
     xAOD::Jet* jet = theseJets->at(iJet);
       
-    if( jet->pt() <= 16.*GeV)  // tool has issues below 16 GeV
+    if( jet->pt() <= 16.*1e3)  // tool has issues below 16 GeV
       continue;
 
     // If validation mode
@@ -1479,38 +1643,181 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetTileCorrectionTool( std::vector< x
 }
 
 //////////////////////////////// Selections //////////////////////////
-//bool MultijetBalanceAlgo:: cut_JetThresh(std::vector< xAOD::Jet*>* jets) const {
-//
-//  float ptThresholdCut = 25.*1e3;
-//  if(m_debug) Info("execute()", "Pt threshold ");
-//  for (unsigned int iJet = 0; iJet < jets->size(); ++iJet){
-//    if( jets->at(iJet)->pt() < ptThresholdCut ){ //Default 25 GeV
-//      jets->erase(jets->begin()+iJet);
-//      --iJet;
-//    }
-//  }
-//  
-//  if (jets->size() >= m_numJets)
-//    return true;
-//  else
-//    return false;
-//
-//}
-//
-//bool MultijetBalanceAlgo:: cut_JVT(std::vector< xAOD::Jet*>* jets) const {
-//
-//  if(m_debug) Info("execute()", "Apply JVT ");
-//  for(unsigned int iJet = 0; iJet < jets->size(); ++iJet){
-//    jets->at(iJet)->auxdata< float >("Jvt") = m_JVTUpdateTool_handle->updateJvt( *(jets->at(iJet)) );
-//    if( !m_JetJVTEfficiencyTool_handle->passesJvtCut( *(jets->at(iJet)) ) ){
-//      jets->erase(jets->begin()+iJet);  --iJet;
-//    }
-//  }
-//
-//  if (jets->size() >= m_numJets)
-//    return true;
-//  else
-//    return false;
-//
-//}
+bool MultijetBalanceAlgo:: cut_LeadEta(){
+  if(m_debug) Info("execute()", "Lead jet detector eta");
 
+
+  xAOD::JetFourMom_t jetConstituentP4 = m_jets->at(0)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum"); // or JetEMScaleMomentum
+  m_jets->at(0)->auxdecor< float >( "detEta") = jetConstituentP4.eta();
+  if( fabs(jetConstituentP4.eta()) > 1.2 )
+    return false;
+  else
+    return true;
+}
+
+bool MultijetBalanceAlgo:: cut_JetEta(){
+  
+  for (unsigned int iJet = 1; iJet < m_jets->size(); ++iJet){
+    xAOD::JetFourMom_t jetConstituentP4 = m_jets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum"); // or JetEMScaleMomentum
+    m_jets->at(iJet)->auxdecor< float >( "detEta") = jetConstituentP4.eta();
+    if( fabs(jetConstituentP4.eta() > 2.8 ) ){
+      m_jets->erase( m_jets->begin()+iJet );
+      --iJet;
+    }
+  }// for m_jets
+  
+  if (m_jets->size() >= m_numJets)
+    return true;
+  else
+    return false;
+
+}
+
+bool MultijetBalanceAlgo:: cut_MCCleaning(){
+  if(m_debug) Info("execute()", "MC Cleaning ");
+
+  if(m_useMCPileupCheck && m_isMC){
+    float pTAvg = ( m_jets->at(0)->pt() + m_jets->at(1)->pt() ) / 2.0;
+    if( m_truthJets->size() == 0 || (pTAvg / m_truthJets->at(0)->pt() > 1.4) ){
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool MultijetBalanceAlgo:: cut_SubPt(){
+
+  if( m_jets->at(1)->pt() > m_subjetThreshold.at(m_MJBIteration) )
+    return false;
+  else
+    return true;
+
+}
+
+bool MultijetBalanceAlgo:: cut_JetPtThresh() {
+//bool MultijetBalanceAlgo:: cut_JetPtThresh(std::vector< xAOD::Jet*>* m_jets) const {
+
+  if(m_debug) Info("execute()", "Pt threshold ");
+  for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
+    if( m_jets->at(iJet)->pt()/1e3 < m_ptThresh ){ //Default 25 GeV
+      m_jets->erase(m_jets->begin()+iJet);
+      --iJet;
+    }
+  }
+  
+  if (m_jets->size() < m_numJets)
+    std::cout << "Failing pt threshold!" << std::endl;
+  
+  if (m_jets->size() >= m_numJets)
+    return true;
+  else
+    return false;
+
+}
+
+bool MultijetBalanceAlgo:: cut_JVT() {
+
+  if(m_debug) Info("execute()", "Apply JVT ");
+  for(unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
+    m_jets->at(iJet)->auxdata< float >("Jvt") = m_JVTUpdateTool_handle->updateJvt( *(m_jets->at(iJet)) );
+    if( !m_JetJVTEfficiencyTool_handle->passesJvtCut( *(m_jets->at(iJet)) ) ){
+      m_jets->erase(m_jets->begin()+iJet);  --iJet;
+    }
+  }
+
+  if (m_jets->size() >= m_numJets)
+    return true;
+  else
+    return false;
+
+}
+
+//// Ignore event if any of the used jets are not clean ////
+bool MultijetBalanceAlgo:: cut_CleanJet(){
+  if(m_debug) Info("execute()", "Jet Cleaning ");
+  for(unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
+    if(! m_JetCleaningTool_handle->keep( *(m_jets->at(iJet))) ){
+      return false;
+    }//clean jet
+  }
+ 
+  return true; 
+
+}
+
+bool MultijetBalanceAlgo:: cut_TriggerEffRecoil(){
+  ///// Trigger Efficiency and prescale /////
+
+  m_prescale = 1.;
+  bool passedTriggers = false;
+  if (m_triggers.size() == 0)
+    passedTriggers = true;
+
+  static SG::AuxElement::Decorator< std::vector< std::string > >  passTrigs("passTriggers");
+  static SG::AuxElement::Decorator< std::vector< float > >        trigPrescales("triggerPrescales");
+  std::vector< std::string > passingTriggers = passTrigs( *m_eventInfo );
+
+  for( unsigned int iT=0; iT < m_triggers.size(); ++iT){
+    if( m_recoilTLV.Pt() > m_triggerThresholds.at(iT)){
+      auto trigIndex = std::find(passingTriggers.begin(), passingTriggers.end(), m_triggers.at(iT));
+      if( trigIndex !=  passingTriggers.end() ){ 
+        passedTriggers = true;
+        m_prescale = trigPrescales( *m_eventInfo ).at( trigIndex-passingTriggers.begin() );
+      }
+      break; // only check 1 trigger in correct pt range
+    }//recoil Pt
+  } // each Trigger
+
+  if( passedTriggers ){
+    return true;
+  } else{
+    return false;
+  }
+
+}
+bool MultijetBalanceAlgo:: cut_PtAsym(){
+  //Remove dijet events, i.e. events where subleading jet dominates the recoil jets
+  if(m_debug) Info("execute()", "Pt asym selection ");
+  double ptAsym = m_jets->at(1)->pt() / m_recoilTLV.Pt();
+  m_eventInfo->auxdecor< float >( "ptAsym" ) = ptAsym;
+  if( ptAsym > m_ptAsym ){ //Default 0.8
+    return false;
+  }
+
+  return true;
+}
+
+bool MultijetBalanceAlgo:: cut_Alpha(){
+  //Alpha is phi angle between leading jet and recoilJet system
+  if(m_debug) Info("execute()", "Alpha Selection ");
+  double alpha = fabs(DeltaPhi( m_jets->at(0)->phi(), m_recoilTLV.Phi() )) ;
+  m_eventInfo->auxdecor< float >( "alpha" ) = alpha;
+  if( (M_PI-alpha) > m_alpha ){  //0.3 by default
+    return false;
+  }
+  return true;
+}
+
+bool MultijetBalanceAlgo:: cut_Beta(){
+  //Beta is phi angle between leading jet and each other passing jet
+  if(m_debug) Info("execute()", "Beta Selection ");
+  double smallestBeta=10., avgBeta = 0., thisBeta=0.;
+  for(unsigned int iJet=1; iJet < m_jets->size(); ++iJet){
+    thisBeta = DeltaPhi(m_jets->at(iJet)->phi(), m_jets->at(0)->phi() );
+    if( !m_looseBetaCut && (thisBeta < smallestBeta) ) 
+      smallestBeta = thisBeta;
+    else if( m_looseBetaCut && (thisBeta < smallestBeta) && (m_jets->at(iJet)->pt() > m_jets->at(0)->pt()*0.1) )
+      smallestBeta = thisBeta;
+    avgBeta += thisBeta;
+    m_jets->at(iJet)->auxdecor< float >( "beta") = thisBeta;
+  }
+  avgBeta /= (m_jets->size()-1);
+  m_eventInfo->auxdecor< float >( "avgBeta" ) = avgBeta;
+
+  if( smallestBeta < m_beta ){ 
+    return false;
+  }
+
+  return true;
+}
