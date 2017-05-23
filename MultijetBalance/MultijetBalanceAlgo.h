@@ -119,7 +119,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
      * Short-cut strings are also accepted, including:
      *   - Nominal : Include the nominal result
      *   - AllSystematic : Include every defined systematic
-     *   - MJB : Include all MJB systematics (defined in MultijetBalanceAlgo#loadVariations)
+     *   - MJB : Include all MJB systematics (defined in MultijetBalanceAlgo#loadSystematics)
      *   - AllZjet : Include all Z+jet \a in-situ calibration systematics
      *   - AllGjet : Include all \f$\gamma\f$+jet \a in-situ calibration systematics
      *   - AllXXX  : Include all JetUncertainties systematics include the substring "XXX"
@@ -301,7 +301,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
      * @note Value is  -1 for Nominal, 
      * 0 for JetUncertainties, 1 for JER, 10 for JetCalibSequence, 2 for MJB alpha, 3 for MJB beta, 4 for MJB \f$p_{T}\f$ asymmetry,
      * 5 for MJB \f$p_{T}\f$ threshold, 6 for MJB statistical uncertainty. */
-    std::vector<int> m_sysTool; //!
+    std::vector<int> m_sysType; //!
     /** @brief Detail related to the systematic uncertainty.
      * @note For example, this would be the selection value for MJB systematics, or the index of a JES systematic uncertainty in the JetUncertainties tool*/
     std::vector<int> m_sysDetail; //!
@@ -367,7 +367,7 @@ class MultijetBalanceAlgo : public EL::Algorithm
     #endif
 
     /** @brief Load all the systematic variations from MultijetBalanceAlgo#m_sysVariations */
-    EL::StatusCode loadVariations();
+    EL::StatusCode loadSystematics();
     /** @brief Load the JVT correction Tool*/
     EL::StatusCode loadJVTTool();
     /** @brief Load the JetCalibTool*/
@@ -422,6 +422,9 @@ public:
     bool MJBmode;
     /** @brief enum defining selection */
     enum SelType {PRE, SYST, RECOIL};
+
+    /** @brief enum defining systematics */
+    enum SysType {NOMINAL, JES, JER, JVT, SCALERES, OOC, PHOTONPURITY, JETCALIB, CUTAsym, CUTAlpha, CUTBeta, CUTPt};
 
     bool cut_LeadEta(); //!
     bool cut_JetEta(); //!

@@ -79,7 +79,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal",
+  "m_sysVariations" : "Nominal-JES-JER",
 #  "m_sysVariations" : "Nominal-JetCalibSequence",
 #  "m_sysVariations" : "All",
 #  "m_sysVariations" : "Nominal-localMJB",
