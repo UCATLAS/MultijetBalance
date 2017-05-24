@@ -79,7 +79,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #"m_leadingGSC" : True,
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal-JES-JER",
+  "m_sysVariations" : "Nominal-JVT",
 #  "m_sysVariations" : "Nominal-JetCalibSequence",
 #  "m_sysVariations" : "All",
 #  "m_sysVariations" : "Nominal-localMJB",
@@ -149,7 +149,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_JVTWP" : "Medium", # 2016
 
   #-- JetUncertaintiesTool --#
-  "m_jetUncertaintyConfig" : "data/JES_2016/Moriond2017/JES2016_AllNuisanceParameters.config",
+  "m_jetUncertaintyConfig" : "JES2016_AllNuisanceParameters.config",
+#  "m_jetUncertaintyConfig" : "data/JES_2016/Moriond2017/JES2016_AllNuisanceParameters.config",
 #!!  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JESNuisanceParametersForMJB.config",
 
   #-- JetResolutionTool --#

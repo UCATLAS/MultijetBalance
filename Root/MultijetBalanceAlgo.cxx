@@ -69,7 +69,9 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_JERSmearingTool_handle("JERSmearingTool/JERSmearingTool_"+name),
   m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
   m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
-  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JBTEfficiencyTool_"+name),
+  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JVTEfficiencyTool_"+name),
+  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
+  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
   m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
 {
   // Here you put any code for the base initialization of variables,
@@ -621,6 +623,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   ////// Loop over systematic variations of recoil objects /////////////
   for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
 
+    m_iSys = iVar;
+
     *m_jets = *savedJets;  // Reset the vector of pointers
     //// If MJB, need to reset 4-mom of jets and apply new systematic variations
     if( MJBmode ){
@@ -1036,33 +1040,40 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
       for(unsigned int i=1; i < JERSysList.size(); ++i){
         m_sysName.push_back( JERSysList.at(i).name() );   m_sysType.push_back( JER ); m_sysDetail.push_back( i ); m_sysSet.push_back( JERSysList.at(i) );
       }
+    
+    } else if( varVector.at(iVar).find("JVT") != std::string::npos ){
+      m_sysName.push_back( "JVT__1down" );   m_sysType.push_back( JVT ); m_sysDetail.push_back( -1 ); 
+      m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
+      
+      m_sysName.push_back( "JVT__1up" );   m_sysType.push_back( JVT ); m_sysDetail.push_back( 1 ); 
+      m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
     //////////////////////////////////////// Event Selection  /////////////////////////////////////////
     } else if( varVector.at(iVar).compare("EvSel") == 0 ){
       //Name - MJB Variation - MJB Value - sign
 
       //Alpha systematics are +-.1  (*100)
-      m_sysName.push_back("MJB_a"+to_string(round(m_alpha*100)-10)+"__1down" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( -0.1 );
+      m_sysName.push_back("MJB_Alpha"+to_string(round(m_alpha*100)-10)+"__1down" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( -0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_a"+to_string(round(m_alpha*100)+10)+"__1up" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( 0.1 );
+      m_sysName.push_back("MJB_Alpha"+to_string(round(m_alpha*100)+10)+"__1up" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( 0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //Beta systematics are +-.5 (*10)
-      m_sysName.push_back("MJB_b"+to_string(round(m_beta*10)-5)+"__1down" );   m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( -0.5 );
+      m_sysName.push_back("MJB_Beta"+to_string(round(m_beta*10)-5)+"__1down" );   m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( -0.5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_b"+to_string(round(m_beta*10)+5)+"__1up" );     m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( 0.5 );
+      m_sysName.push_back("MJB_Beta"+to_string(round(m_beta*10)+5)+"__1up" );     m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( 0.5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //pt Asymmetry systematics are +-.1 (*100)
-      m_sysName.push_back("MJB_pta"+to_string(round(m_ptAsym*100)-10)+"__1down" );   m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( -0.1 );
+      m_sysName.push_back("MJB_Asym"+to_string(round(m_ptAsym*100)-10)+"__1down" );   m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( -0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_pta"+to_string(round(m_ptAsym*100)+10)+"__1up" );     m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( 0.1 );
+      m_sysName.push_back("MJB_Asym"+to_string(round(m_ptAsym*100)+10)+"__1up" );     m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( 0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //pt threshold systematics are +- 5
-      m_sysName.push_back("MJB_ptt"+to_string(round(m_ptThresh)-5)+"__1down" );   m_sysType.push_back( CUTPt ); m_sysDetail.push_back( -5 );
+      m_sysName.push_back("MJB_Threshold"+to_string(round(m_ptThresh)-5)+"__1down" );   m_sysType.push_back( CUTPt ); m_sysDetail.push_back( -5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_ptt"+to_string(round(m_ptThresh)+5)+"__1up" );     m_sysType.push_back( CUTPt ); m_sysDetail.push_back( 5 );
+      m_sysName.push_back("MJB_Threshold"+to_string(round(m_ptThresh)+5)+"__1up" );     m_sysType.push_back( CUTPt ); m_sysDetail.push_back( 5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //Jet 2 veto

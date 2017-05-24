@@ -76,8 +76,11 @@ bool MultijetBalanceAlgo:: cut_JVT() {
   if(m_debug) Info("execute()", "Apply JVT ");
   for(unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
     m_jets->at(iJet)->auxdata< float >("Jvt") = m_JVTUpdateTool_handle->updateJvt( *(m_jets->at(iJet)) );
-    if( !m_JetJVTEfficiencyTool_handle->passesJvtCut( *(m_jets->at(iJet)) ) ){
-      m_jets->erase(m_jets->begin()+iJet);  --iJet;
+
+    if(  (m_sysType.at(m_iSys) == JVT && m_sysDetail.at(m_iSys) == -1 && !m_JetJVTEfficiencyTool_handle_down->passesJvtCut(*(m_jets->at(iJet))) )
+      || (m_sysType.at(m_iSys) == JVT && m_sysDetail.at(m_iSys) == 1 && !m_JetJVTEfficiencyTool_handle_up->passesJvtCut(*(m_jets->at(iJet))) )
+      || (!m_JetJVTEfficiencyTool_handle->passesJvtCut( *(m_jets->at(iJet))) ) ){
+        m_jets->erase(m_jets->begin()+iJet);  --iJet;
     }
   }
 

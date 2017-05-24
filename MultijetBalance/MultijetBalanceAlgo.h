@@ -267,6 +267,10 @@ class MultijetBalanceAlgo : public EL::Algorithm
     asg::AnaToolHandle<IJetUpdateJvt> m_JVTUpdateTool_handle; //!
     /** @brief JetJvtEfficiency handle*/
     asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle; //!
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_up; //!
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_down; //!
+
+    unsigned int m_iSys;
 
 
     /** @brief Vector of BTaggingSelectionTool handles*/

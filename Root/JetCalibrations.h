@@ -15,6 +15,20 @@ EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
     ANA_CHECK( m_JetJVTEfficiencyTool_handle.setProperty("WorkingPoint", m_JVTWP) );
     ANA_CHECK( m_JetJVTEfficiencyTool_handle.retrieve() );
   }
+  
+  if(m_sysVariations.find("JVT") != std::string::npos){
+    if( !m_JetJVTEfficiencyTool_handle_up.isUserConfigured() ){
+      ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetJVTEfficiencyTool_handle_up, CP::JetJvtEfficiency) );
+      ANA_CHECK( m_JetJVTEfficiencyTool_handle_up.setProperty("WorkingPoint", "Tight") );
+      ANA_CHECK( m_JetJVTEfficiencyTool_handle_up.retrieve() );
+    }
+    if( !m_JetJVTEfficiencyTool_handle_down.isUserConfigured() ){
+      ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetJVTEfficiencyTool_handle_down, CP::JetJvtEfficiency) );
+      ANA_CHECK( m_JetJVTEfficiencyTool_handle_down.setProperty("WorkingPoint", "Loose") );
+      ANA_CHECK( m_JetJVTEfficiencyTool_handle_down.retrieve() );
+    }
+  }
+
 
   return EL::StatusCode::SUCCESS;
 }
@@ -55,12 +69,14 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
   if(m_debug) Info("loadJetUncertaintyTool()", "loadJetUncertaintyTool");
 
   if( !m_JetUncertaintiesTool_handle.isUserConfigured() ){
+    m_jetUncertaintyConfig = "/home/jdandoy/Documents/Dijet/Rel21MJB/JetUncertainties/share/JES_2016/Moriond2017/"+m_jetUncertaintyConfig;
 
     std::cout << "config is " << m_jetUncertaintyConfig << std::endl;
     std::cout << "config is " << PathResolverFindCalibFile(m_jetUncertaintyConfig) << std::endl;
     ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetUncertaintiesTool_handle, JetUncertaintiesTool) );
     ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("JetDefinition", m_jetDef) );
-    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", PathResolverFindCalibFile(m_jetUncertaintyConfig) ) );
+    ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", m_jetUncertaintyConfig ) );
+    //ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", PathResolverFindCalibFile(m_jetUncertaintyConfig) ) );
     if( m_isAFII ){
       ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("MCType", "AFII") );
     }else{
