@@ -87,7 +87,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
 
 ////// configuration variables set by user //////
     /** @brief Input container name for jet collection*/
-    std::string m_inContainerName;
+    std::string m_inContainerName_jets;
+    std::string m_inContainerName_photons;
     /** @brief String consisting of triggers and their recoil \f$p_{T}\f$ thresholds
      *  @note Each trigger / recoil \f$p_{T}\f$ combination is separated by a colon ":",
      *  and each combination is separated by a comma ",".
@@ -399,18 +400,18 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Apply the intermediate V+jet \a in-situ calibrations*/
      EL::StatusCode applyVjetCalibration( std::vector< xAOD::Jet*>* jets );
     /** @brief For jets below subleading pt threshold, call (optionally) applyVjetCalibration and applyJetUncertaintyTool */ 
-    EL::StatusCode applyJetSysVariation(std::vector< xAOD::Jet*>* jets, int iSysVar );
+    EL::StatusCode applyJetSysVariation(std::vector< xAOD::Jet*>* jets, unsigned int iSys );
     /** @brief Apply the JetTileCorrectionTool*/
-     EL::StatusCode applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets );
+     EL::StatusCode applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets, unsigned int iSys );
 
     /** @brief Apply the JetCleaningTool*/
      EL::StatusCode applyJetCleaningTool();
     /** @brief Apply the Jet Uncertainty Tool*/
-     EL::StatusCode applyJetUncertaintyTool( xAOD::Jet* jet , int iVar );
+     EL::StatusCode applyJetUncertaintyTool( xAOD::Jet* jet , unsigned int iSys );
     /** @brief Apply the Jet Resolution Tool*/
-     EL::StatusCode applyJetResolutionTool( xAOD::Jet* jet , int iVar );
+     EL::StatusCode applyJetResolutionTool( xAOD::Jet* jet , unsigned int iSys );
     /** @brief Apply the MJB calibration from previous iterations */
-     EL::StatusCode applyMJBCalibration( xAOD::Jet* jet , int iVar );
+     EL::StatusCode applyMJBCalibration( xAOD::Jet* jet , unsigned int iSys );
     /** @brief Order the jets in a collection to descend in \f$p_{T}\f$*/
      EL::StatusCode reorderJets(std::vector< xAOD::Jet*>* signalJets);
     
@@ -424,11 +425,13 @@ public:
     float m_prescale; //!
 
     bool MJBmode;
+    bool Gmode;
+    bool Zmode;
     /** @brief enum defining selection */
     enum SelType {PRE, SYST, RECOIL};
 
     /** @brief enum defining systematics */
-    enum SysType {NOMINAL, JES, JER, JVT, SCALERES, OOC, PHOTONPURITY, JETCALIB, CUTAsym, CUTAlpha, CUTBeta, CUTPt};
+    enum SysType {NOMINAL, JES, JER, JVT, SCALERES, OOC, PHOTONPURITY, JCS, CUTAsym, CUTAlpha, CUTBeta, CUTPt};
 
     bool cut_LeadEta(); //!
     bool cut_JetEta(); //!

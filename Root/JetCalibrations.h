@@ -217,11 +217,11 @@ EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
       foundMatch = true;
     } else {
       // Loop over the loaded systematics and find the match
-      for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
-        if( histName.find( m_sysName.at(iVar) ) != std::string::npos ){
+      for(unsigned int iSys=0; iSys < m_sysName.size(); ++iSys){
+        if( histName.find( m_sysName.at(iSys) ) != std::string::npos ){
           new_sysName.push_back( histName );
-          new_sysType.push_back( m_sysType.at(iVar) );
-          new_sysDetail.push_back( m_sysDetail.at(iVar) );
+          new_sysType.push_back( m_sysType.at(iSys) );
+          new_sysDetail.push_back( m_sysDetail.at(iSys) );
           foundMatch = true;
           break;
         }
@@ -272,16 +272,16 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( std::vector< xAOD
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , int iVar ){
-  if(m_debug) Info("applyJetUncertaintyTool", "Systematic %s", m_sysName.at(iVar).c_str() );
+EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , unsigned int iSys ){
+  if(m_debug) Info("applyJetUncertaintyTool", "Systematic %s", m_sysName.at(iSys).c_str() );
 
 
-   if( m_sysType.at(iVar) != JES ) //If not a JetUncertaintyTool sys variation
+   if( m_sysType.at(iSys) != JES ) //If not a JetUncertaintyTool sys variation
     return EL::StatusCode::SUCCESS;
 
 
-  if ( m_JetUncertaintiesTool_handle->applySystematicVariation( m_sysSet.at(iVar) ) != CP::SystematicCode::Ok ) {
-    Error("execute()", "Cannot configure JetUncertaintiesTool for systematic %s", m_sysName.at(iVar).c_str());
+  if ( m_JetUncertaintiesTool_handle->applySystematicVariation( m_sysSet.at(iSys) ) != CP::SystematicCode::Ok ) {
+    Error("execute()", "Cannot configure JetUncertaintiesTool for systematic %s", m_sysName.at(iSys).c_str());
     return EL::StatusCode::FAILURE;
   }
 
@@ -293,24 +293,24 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , 
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: applyJetResolutionTool( xAOD::Jet* jet , int iVar ){
-  if(m_debug) Info("applyJetResolutionTool", "Systematic %s", m_sysName.at(iVar).c_str());
+EL::StatusCode MultijetBalanceAlgo :: applyJetResolutionTool( xAOD::Jet* jet , unsigned int iSys ){
+  if(m_debug) Info("applyJetResolutionTool", "Systematic %s", m_sysName.at(iSys).c_str());
 
-  if( ( m_sysType.at(iVar) != JER ) // If not a JetResolutionTool sys variation
+  if( ( m_sysType.at(iSys) != JER ) // If not a JetResolutionTool sys variation
       && !(m_JERApplySmearing && m_isMC)  )  //If not applying smearing to MC
     return EL::StatusCode::SUCCESS;
 
   // Get systematic set, or nominal for m_JERApplySmearing
   CP::SystematicSet thisSysSet;
-  if ( m_sysType.at(iVar) == JER )
-    thisSysSet = m_sysSet.at(iVar);
+  if ( m_sysType.at(iSys) == JER )
+    thisSysSet = m_sysSet.at(iSys);
   else
     thisSysSet = m_sysSet.at( m_NominalIndex ); //an empty SystematicSet, equal to the nominal JER smearing
 
 
-//  std::cout << " for JES " << m_sysName.at(iVar) << " pt of " << jet->pt() << " to ";
+//  std::cout << " for JES " << m_sysName.at(iSys) << " pt of " << jet->pt() << " to ";
   if ( m_JERSmearingTool_handle->applySystematicVariation( thisSysSet ) != CP::SystematicCode::Ok ) {
-    Error("execute()", "Cannot configure JetResolutionTool for systematic %s", m_sysName.at(iVar).c_str());
+    Error("execute()", "Cannot configure JetResolutionTool for systematic %s", m_sysName.at(iSys).c_str());
     return EL::StatusCode::FAILURE;
   }
 
@@ -330,7 +330,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( std::vector< xAOD::J
 
   if(m_isMC)   
     return EL::StatusCode::SUCCESS;
-
+  
   for(unsigned int iJet=0; iJet < jets->size(); ++iJet){
  
     // Do not apply if leading jet or validation mode 
@@ -361,14 +361,14 @@ EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( std::vector< xAOD::J
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , int iVar ){
+EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , unsigned int iSys ){
   if(m_debug) Info("applyMJBCalibration", "applyMJBCalibration ");
 
   if(m_isMC)
     return EL::StatusCode::SUCCESS;
 
   // Get calibration
-  float thisCalibration = 1. / m_MJBHists.at(iVar)->GetBinContent( m_MJBHists.at(iVar)->FindBin(jet->pt()/1e3) );
+  float thisCalibration = 1. / m_MJBHists.at(iSys)->GetBinContent( m_MJBHists.at(iSys)->FindBin(jet->pt()/1e3) );
 
   xAOD::JetFourMom_t thisJet;
   thisJet.SetCoordinates( jet->pt(), jet->eta(), jet->phi(), jet->m() );
@@ -396,9 +396,12 @@ EL::StatusCode MultijetBalanceAlgo :: reorderJets( std::vector< xAOD::Jet*>* the
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*>* theseJets, int iSysVar ){
+EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*>* theseJets, unsigned int iSys ){
   if(m_debug) Info("applyJetSysVariation()", "applyJetSysVariation ");
-  
+ 
+  // No further corrections for earlier jet calibration stages 
+  if(m_sysType.at(iSys) == JCS)
+    return EL::StatusCode::SUCCESS;
 
   // Apply MJB iterative calibration when appropriate
   for(unsigned int iJet = 0; iJet < theseJets->size(); ++iJet){
@@ -412,7 +415,7 @@ EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*
     // or if subleading jets above threshold
     if(  (m_closureTest && iJet==0)
       || (iJet > 0 && jet->pt() > m_subjetThreshold.at(0)) ){
-      ANA_CHECK( applyMJBCalibration( jet , iSysVar ) );
+      ANA_CHECK( applyMJBCalibration( jet , iSys ) );
     }
 
   }//MJB calibration
@@ -430,8 +433,8 @@ EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*
     if(  m_validation 
       || (iJet > 0 && jet->pt() <= m_subjetThreshold.at(0)) ){
 
-      ANA_CHECK( applyJetUncertaintyTool( jet , iSysVar ) );
-      ANA_CHECK( applyJetResolutionTool( jet , iSysVar ) );
+      ANA_CHECK( applyJetUncertaintyTool( jet , iSys ) );
+      ANA_CHECK( applyJetResolutionTool( jet , iSys ) );
     }
 
   }// for each jet
@@ -440,10 +443,14 @@ EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets ){
+EL::StatusCode MultijetBalanceAlgo :: applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets, unsigned int iSys  ){
   if(m_debug) Info("applyJetTileCorrectionTool()", "applyJetTileCorrectionTool");
 
   if( m_isMC )
+    return EL::StatusCode::SUCCESS;
+  
+  // No further corrections for earlier jet calibration stages 
+  if(m_sysType.at(iSys) == JCS)
     return EL::StatusCode::SUCCESS;
 
   for(unsigned int iJet=0; iJet < jets->size(); ++iJet){

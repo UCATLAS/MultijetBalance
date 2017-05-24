@@ -88,10 +88,11 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
 
   m_TileCorrection = false;
 
-  m_inContainerName = "";
+  m_inContainerName_jets = "";
+  m_inContainerName_photons = "";
   m_triggerAndPt = "";
   m_MJBIteration = 0;
-  m_MJBIterationThreshold = "";
+  m_MJBIterationThreshold = "999999";
   m_MJBCorrectionFile = "";
   m_binning = "";
   m_VjetCalibFile = "";
@@ -145,7 +146,9 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_JERSystematicMode = "Simple";
 
 
-  MJBmode = "true";
+  MJBmode = false;
+  Gmode = true;
+  Zmode = false;
 
 }
 
@@ -155,7 +158,7 @@ MultijetBalanceAlgo ::~MultijetBalanceAlgo(){
 EL::StatusCode  MultijetBalanceAlgo :: configure (){
   Info("configure()", "Configuring MultijetBalanceAlgo Interface.");
 
-  if( m_inContainerName.empty() ) {
+  if( m_inContainerName_jets.empty() ) {
     Error("configure()", "InputContainer is empty!");
     return EL::StatusCode::FAILURE;
   }
@@ -205,6 +208,7 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
     Info("config", "Setting subleading pt threshold to a large number in validation mode");
     m_subjetThreshold.at(0) = 9999999999.;
   }// if m_validation
+std::cout << "de" << std::endl;
 
   // Setup bootstrap depending upon iteration
   // For data, bootstrap toys will be propagated from MJB correction histograms
@@ -222,27 +226,28 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
   if( m_writeNominalTree )
     m_writeTree = true;
 
+std::cout << "d" << std::endl;
   // Determine if special V+jets calibrations are to be used
   if (m_VjetCalibFile.size() > 0){
     m_VjetCalib = true;
   } else {
     m_VjetCalib = false;
   }
-  // if 
-  // subleading threshold 0 is set to -1000, the value will be determined from the code.
+std::cout << "c" << std::endl;
+  // if subleading threshold 0 is set to -1000, the value will be determined from the code.
   // Don't let this happen if we're not using m_VjetCalib
   if( !m_VjetCalib && (m_subjetThreshold.at(0) == -1000) ){
     Error("config", "Not running on VjetCalib, yet first MJBIterationThreshold is set to -1.  Exiting.");
     return EL::StatusCode::FAILURE;
   }
-
+std::cout << "a" << std::endl;
   ///// Jet calib and uncertainty Tool Config parameters /////
-
   if ( !m_isMC && m_jetCalibSequence.find("Insitu") == std::string::npos){
     m_jetCalibSequence += "_Insitu";
     Warning("configure()", "Adding _Insitu to data Jet Calibration");
   }
 
+std::cout << "b" << std::endl;
   if( m_isMC && m_jetCalibSequence.find("Insitu") != std::string::npos ){
     Error("configure()", "Attempting to use an Insitu calibration sequence on MC.  Exiting.");
     return EL::StatusCode::FAILURE;
@@ -419,6 +424,55 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       m_selType.push_back( RECOIL );
 
     }
+    
+    if( Gmode ){
+
+      std::function<bool(void)> func_LeadEta = std::bind(&MultijetBalanceAlgo::cut_LeadEta, this);
+      m_selections.push_back(func_LeadEta);
+      cutflowNames.push_back( "LeadEta" );
+      m_selType.push_back( PRE );
+
+      std::function<bool(void)> func_JetEta = std::bind(&MultijetBalanceAlgo::cut_JetEta, this);
+      m_selections.push_back(func_JetEta);
+      cutflowNames.push_back( "JetEta" );
+      m_selType.push_back( PRE );
+
+      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
+      m_selections.push_back(func_MCCleaning);
+      cutflowNames.push_back( "MCCleaning" );
+      m_selType.push_back( PRE );
+
+      std::function<bool(void)> func_JetPtThresh = std::bind(&MultijetBalanceAlgo::cut_JetPtThresh, this);
+      m_selections.push_back(func_JetPtThresh);
+      cutflowNames.push_back( "JetPtThresh" );
+      m_selType.push_back( SYST );
+
+      std::function<bool(void)> func_JVT = std::bind(&MultijetBalanceAlgo::cut_JVT, this);
+      m_selections.push_back(func_JVT);
+      cutflowNames.push_back( "JVT" );
+      m_selType.push_back( SYST );
+
+      std::function<bool(void)> func_TriggerEffRecoil = std::bind(&MultijetBalanceAlgo::cut_TriggerEffRecoil, this);
+      m_selections.push_back(func_TriggerEffRecoil);
+      cutflowNames.push_back( "TriggerEffRecoil" );
+      m_selType.push_back( RECOIL );
+
+      std::function<bool(void)> func_Alpha = std::bind(&MultijetBalanceAlgo::cut_Alpha, this);
+      m_selections.push_back(func_Alpha);
+      cutflowNames.push_back( "Alpha" );
+      m_selType.push_back( RECOIL );
+
+      std::function<bool(void)> func_Beta = std::bind(&MultijetBalanceAlgo::cut_Beta, this);
+      m_selections.push_back(func_Beta);
+      cutflowNames.push_back( "Beta" );
+      m_selType.push_back( RECOIL );
+
+      std::function<bool(void)> func_CleanJet = std::bind(&MultijetBalanceAlgo::cut_CleanJet, this);
+      m_selections.push_back(func_CleanJet);
+      cutflowNames.push_back( "CleanJet" );
+      m_selType.push_back( RECOIL );
+
+    }
 
 
 
@@ -434,6 +488,10 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
     TH1D* origCutflowHist = (TH1D*)file->Get("cutflow");
     TH1D* origCutflowHistW = (TH1D*)file->Get("cutflow_weighted");
 
+    //for(int i=0; i < origCutflowHist->GetNbinsX()+1; ++i){
+    //  std::cout << origCutflowHist->GetXaxis()->GetBinLabel(i) << std::endl;
+    //}
+
     for(unsigned int iCut = 0; iCut < cutflowNames.size(); ++iCut){
       if( iCut == 0)
         m_cutflowFirst = origCutflowHist->GetXaxis()->FindBin( cutflowNames.at(iCut).c_str() );
@@ -442,7 +500,6 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
       origCutflowHistW->GetXaxis()->FindBin( cutflowNames.at(iCut).c_str() );
     }
-
     //Add a cutflow for each variation
     for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
       m_cutflowHist.push_back( (TH1D*) origCutflowHist->Clone() );
@@ -487,6 +544,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
   }
 
   if( m_writeTree){
+    Info("initialize", "Setting TTrees");
     TFile * treeFile = wk()->getOutputFile ("tree");
     if( !treeFile ) {
       Error("initialize()","Failed to get file for output tree!");
@@ -556,7 +614,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   m_pvLocation = HelperFunctions::getPrimaryVertexLocation( vertices );  //Get primary vertex for JVF cut
 
   const xAOD::JetContainer* inJets = 0;
-  ANA_CHECK( HelperFunctions::retrieve(inJets, m_inContainerName, m_event, m_store, msg()) );
+  ANA_CHECK( HelperFunctions::retrieve(inJets, m_inContainerName_jets, m_event, m_store, msg()) );
 
   m_truthJets = 0;
   //const xAOD::JetContainer* m_truthJets = 0;
@@ -567,6 +625,11 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   
   /// Create an empty recoilObject ///  
   TLorentzVector recoilObject;
+
+  const xAOD::PhotonContainer* inPhotons = 0;
+
+  if( Gmode )
+    ANA_CHECK( HelperFunctions::retrieve(inPhotons, m_inContainerName_photons, m_event, m_store, msg()) );
 
   
   ///// For jets, create an editable shallow copy container & vector where jets are removable //////
@@ -621,9 +684,9 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 //}
 
   ////// Loop over systematic variations of recoil objects /////////////
-  for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
+  for(unsigned int iSys=0; iSys < m_sysName.size(); ++iSys){
 
-    m_iSys = iVar;
+    m_iSys = iSys;
 
     *m_jets = *savedJets;  // Reset the vector of pointers
     //// If MJB, need to reset 4-mom of jets and apply new systematic variations
@@ -631,15 +694,25 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
       //Reset each jet pt to calibrated copy (including V+jet if applicable)
       for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
-        m_jets->at(iJet)->setJetP4( jets_calibratedP4.at(iJet) );
-      }
+
+        if(m_sysType.at(iSys) == JCS){
+          // A systematic variation that lets us use any jet calibration stage for all jets
+          int iCalibStage = m_sysDetail.at(iSys);
+          xAOD::JetFourMom_t jetCalibStageCopy = m_jets->at(iJet)->getAttribute<xAOD::JetFourMom_t>( m_JCSStrings.at(iCalibStage).c_str() );
+          m_jets->at(iJet)->setJetP4( jetCalibStageCopy );
+        } else {
+
+          m_jets->at(iJet)->setJetP4( jets_calibratedP4.at(iJet) );
+  
+        }
+      }// for each jet
 
       // Apply additional jet corrections based on systematic variation.
       // Will apply iterative MJB calibration or JES / JER uncertainties. 
-      applyJetSysVariation(m_jets, iVar);
+      applyJetSysVariation(m_jets, iSys);
 
       // Apply tile correction tool last
-      applyJetTileCorrectionTool(m_jets);
+      applyJetTileCorrectionTool(m_jets, iSys);
 
       reorderJets( m_jets );
     }//If MJB mode
@@ -651,7 +724,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       if( m_selType.at(iS) != SYST )
         continue;
       if( m_selections.at(iS)() ){
-        fillCutflow(iS, iVar);
+        fillCutflow(iS, iSys);
       }else{
         hasFailedSyst = true;
         break;
@@ -671,6 +744,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
         tmpJet.SetPtEtaPhiE(m_jets->at(iJet)->pt(), m_jets->at(iJet)->eta(), m_jets->at(iJet)->phi(), m_jets->at(iJet)->e());
         m_recoilTLV += tmpJet;
       }
+    }else if( Gmode ){
+      m_recoilTLV.SetPtEtaPhiM(0,0,0,0);
     }
 
     ////// Do the event selections for each systematic after the recoiling object is built //////
@@ -679,7 +754,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       if( m_selType.at(iS) != RECOIL )
         continue;
       if( m_selections.at(iS)() ){
-        fillCutflow(iS, iVar);
+        fillCutflow(iS, iSys);
       }else{
         hasFailed = true;
         break;
@@ -734,14 +809,14 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       m_eventInfo->auxdecor< float >("weight") = m_prescale;
 
     /////////////// Output Plots ////////////////////////////////
-    if(m_debug) Info("execute()", "Begin Hist output for %s", m_sysName.at(iVar).c_str() );
-    m_jetHists.at(iVar)->execute( m_jets, m_eventInfo);
+    if(m_debug) Info("execute()", "Begin Hist output for %s", m_sysName.at(iSys).c_str() );
+    m_jetHists.at(iSys)->execute( m_jets, m_eventInfo);
 
 
-    if(m_debug) Info("execute()", "Begin TTree output for %s", m_sysName.at(iVar).c_str() );
+    if(m_debug) Info("execute()", "Begin TTree output for %s", m_sysName.at(iSys).c_str() );
     ///////////////// Optional MiniTree Output for Nominal Only //////////////////////////
     if( m_writeTree ) {
-      if(!m_writeNominalTree ||  m_NominalIndex == (int) iVar) {
+      if(!m_writeNominalTree ||  m_NominalIndex == (int) iSys) {
       //!! The following is a bit slow!
 //        std::pair< xAOD::JetContainer*, xAOD::ShallowAuxContainer* > originalSignalJetsSC = xAOD::shallowCopyContainer( *inJets );
         xAOD::JetContainer* plottingJets = new xAOD::JetContainer();
@@ -753,7 +828,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
           plottingJets->push_back( newJet );
         }
 
-        int iTree = iVar;
+        int iTree = iSys;
         if( m_writeNominalTree)
           iTree = 0;
         if(m_eventInfo)   m_treeList.at(iTree)->FillEvent( m_eventInfo    );
@@ -769,7 +844,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
     /////////////////////////////////////// SystTool ////////////////////////////////////////
 //!!    if( m_bootstrap ){
-//!!      systTool->fillSyst(m_sysName.at(iVar), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt()/GeV, (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
+//!!      systTool->fillSyst(m_sysName.at(iSys), eventInfo->runNumber(), eventInfo->eventNumber(), recoilJets.Pt()/GeV, (signalJets->at(0)->pt()/recoilJets.Pt()), eventInfo->auxdecor< float >("weight") );
 //!!    }
 
   } // loop over systematic variations of recoil objects
@@ -1011,24 +1086,21 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
       m_NominalIndex = m_sysName.size()-1;
 
     /////////////////// Every Jet Calibration Stage ////////////////
-    }else if( varVector.at(iVar).compare("JetCalibSequence") == 0 ){
+    }else if( varVector.at(iVar).compare("JCS") == 0 ){
       if( m_JCSTokens.size() <= 0){
         Error( "loadSystematics()", "JetCalibSequence is empty.  This will not be added to the systematics");
       }
       Info( "loadSystematics()", "Adding JetCalibSequence");
       for( unsigned int iJCS = 0; iJCS < m_JCSTokens.size(); ++iJCS){
         //Name - JetCalibTool - Variation Number - sign
-        m_sysName.push_back("JCS_"+m_JCSTokens.at(iJCS) ); m_sysType.push_back( JETCALIB ); m_sysDetail.push_back( iJCS );
+        m_sysName.push_back("JCS_"+m_JCSTokens.at(iJCS) ); m_sysType.push_back( JCS ); m_sysDetail.push_back( iJCS );
         m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
       }
 
     ////////////////////////////////// JES Uncertainties /////////////////////////////////////////
     } else if( varVector.at(iVar).find("JES") != std::string::npos ){
-      std::cout << "!!!!!!!!!!!!!!!!!!! a " << std::endl;
       const CP::SystematicSet recSysts = m_JetUncertaintiesTool_handle->recommendedSystematics();
-      std::cout << "!!!!!!!!!!!!!!!!!!! b " << std::endl;
       std::vector<CP::SystematicSet> JESSysList = HelperFunctions::getListofSystematics( recSysts, "All", 1, msg() ); //All sys at +-1 sigma
-      std::cout << "!!!!!!!!!!!!!!!!!!! c " << std::endl;
       for(unsigned int i=1; i < JESSysList.size(); ++i){
         m_sysName.push_back( JESSysList.at(i).name() );   m_sysType.push_back( JES ); m_sysDetail.push_back( i ); m_sysSet.push_back( JESSysList.at(i) );
       }
@@ -1053,27 +1125,27 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
       //Name - MJB Variation - MJB Value - sign
 
       //Alpha systematics are +-.1  (*100)
-      m_sysName.push_back("MJB_Alpha"+to_string(round(m_alpha*100)-10)+"__1down" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( -0.1 );
+      m_sysName.push_back("MJB_Alpha"+to_string(int(round(m_alpha*100))-10)+"__1down" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( -0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_Alpha"+to_string(round(m_alpha*100)+10)+"__1up" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( 0.1 );
+      m_sysName.push_back("MJB_Alpha"+to_string(int(round(m_alpha*100))+10)+"__1up" );   m_sysType.push_back( CUTAlpha ); m_sysDetail.push_back( 0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //Beta systematics are +-.5 (*10)
-      m_sysName.push_back("MJB_Beta"+to_string(round(m_beta*10)-5)+"__1down" );   m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( -0.5 );
+      m_sysName.push_back("MJB_Beta"+to_string(int(round(m_beta*10))-5)+"__1down" );   m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( -0.5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_Beta"+to_string(round(m_beta*10)+5)+"__1up" );     m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( 0.5 );
+      m_sysName.push_back("MJB_Beta"+to_string(int(round(m_beta*10))+5)+"__1up" );     m_sysType.push_back( CUTBeta ); m_sysDetail.push_back( 0.5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //pt Asymmetry systematics are +-.1 (*100)
-      m_sysName.push_back("MJB_Asym"+to_string(round(m_ptAsym*100)-10)+"__1down" );   m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( -0.1 );
+      m_sysName.push_back("MJB_Asym"+to_string(int(round(m_ptAsym*100))-10)+"__1down" );   m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( -0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_Asym"+to_string(round(m_ptAsym*100)+10)+"__1up" );     m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( 0.1 );
+      m_sysName.push_back("MJB_Asym"+to_string(int(round(m_ptAsym*100))+10)+"__1up" );     m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( 0.1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //pt threshold systematics are +- 5
-      m_sysName.push_back("MJB_Threshold"+to_string(round(m_ptThresh)-5)+"__1down" );   m_sysType.push_back( CUTPt ); m_sysDetail.push_back( -5 );
+      m_sysName.push_back("MJB_Threshold"+to_string(int(round(m_ptThresh))-5)+"__1down" );   m_sysType.push_back( CUTPt ); m_sysDetail.push_back( -5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      m_sysName.push_back("MJB_Threshold"+to_string(round(m_ptThresh)+5)+"__1up" );     m_sysType.push_back( CUTPt ); m_sysDetail.push_back( 5 );
+      m_sysName.push_back("MJB_Threshold"+to_string(int(round(m_ptThresh))+5)+"__1up" );     m_sysType.push_back( CUTPt ); m_sysDetail.push_back( 5 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //Jet 2 veto
@@ -1098,9 +1170,9 @@ EL::StatusCode MultijetBalanceAlgo :: setupJetCalibrationStages() {
   // Setup calibration stages tools //
   // Create a map from the CalibSequence string components to the xAOD aux data
   std::map <std::string, std::string> JCSMap;
-  if (m_inContainerName.find("EMTopo") != std::string::npos || m_inContainerName.find("EMPFlow") != std::string::npos)
+  if (m_inContainerName_jets.find("EMTopo") != std::string::npos || m_inContainerName_jets.find("EMPFlow") != std::string::npos)
     JCSMap["RAW"] = "JetEMScaleMomentum";
-  else if( m_inContainerName.find("LCTopo") != std::string::npos )
+  else if( m_inContainerName_jets.find("LCTopo") != std::string::npos )
     JCSMap["RAW"] = "JetConstitScaleMomentum";
   else{
     Error( "setupJetCalibrationStages()", " Input jets are not EMScale, EMPFlow or LCTopo.  Exiting.");

@@ -7,32 +7,59 @@ c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
 "m_applyGRLCut"                 : True,
 "m_msgLevel"      : "info",
                                      "m_GRLxml"                      : "MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
-                                     "m_derivationName"              : "JETM1",
+                                     "m_derivationName"              : "JETM4",
                                      "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
                                      "m_storeTrigDecisions"          : True,
                                      "m_applyTriggerCut"             : True,
-                                     "m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110",
-                                     #"m_triggerSelection"            : "HLT_j380|HLT_j260|HLT_j175|HLT_j110|HLT_j85",
+                                     "m_triggerSelection"            : "HLT_g140_loose|HLT_g120_loose|HLT_g100_loose|HLT_g80_loose|HLT_g70_loose|HLT_g60_loose|HLT_g50_loose|HLT_g35_loose|HLT_g25_loose|HLT_g20_loose|HLT_g15_loose|HLT_g10_loose",
                                      "m_checkDuplicatesData"         : False,
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True,
                                      "m_doPUreweighting"       : False,
-                                     "m_PRWFileNames"          : "MultijetBalance/PRW_QCD.root",
-                                     "m_lumiCalcFileNames"     : "MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
+                                     #"m_PRWFileNames"          : "MultijetBalance/PRW_QCD.root",
+                                     #"m_lumiCalcFileNames"     : "MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
                                      } )
-#prescales in run 307861
-#15 - 301, 25 - 124, 35 - 18.3, 45 - 88,  55 - 40.7, 60 - 20, 85 - 14, 110 - 5.7, 150 - 11.8, 175 - 4.1, 260 - 1.2, 
+
+c.setalg("PhotonCalibrator", {
+    "m_name"                : "photon_calib",
+    "m_msgLevel"            : "debug",
+    "m_inContainerName"     : "Photons",
+    "m_inputAlgoSystNames"  : "",
+    "m_outContainerName"    : "Photons_Calib",
+    "m_outputAlgoSystNames" : "Photons_Calib_Syst",
+    "m_esModel"             : "es2016data_mc15c",
+    "m_decorrelationModel"  : "1NP_v1",
+    #"m_esModel"            : "es2016PRE",
+    #"m_decorrelationModel"  : "1NPCOR_PLUS_UNCOR",
+    "m_systName"            : "",
+    "m_systVal"             : 0.0,
+    } )
+
+c.setalg("PhotonSelector", {
+    "m_name"                      : "photon_selection",
+    "m_msgLevel"                  : "debug",
+    "m_inContainerName"           : "Photons_Calib",
+    "m_outContainerName"          : "Photons_Selected",
+    "m_createSelectedContainer"   : True,
+    "m_decorateSelectedObjects"   : True,
+    "m_pT_min"                    : 25e3,
+    "m_eta_max"                   : 2.37,
+    "m_vetoCrack"                 : False,
+    "m_doAuthorCut"               : True,
+    "m_doOQCut"                   : True,
+    "m_photonIdCut"               : "Tight",
+    } )
 
 ### MJB Configuration  ###
-c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
+c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
 
 #---------------------------------------------------------------------------------------------
 #### Jet collection and associated observables ####
+  "m_inContainerName_photons"     : "Photons_Selected",
+
   "m_inContainerName_jets"     : "AntiKt4EMTopoJets",
   "m_jetDef"              : "AntiKt4EMTopo",
-#  "m_inContainerName"     : "AntiKt4LCTopoJets",
-#  "m_jetDef"              : "AntiKt4LCTopo",
 
   "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
 #  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
@@ -40,46 +67,21 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016_rel21.config",
   #"m_jetCalibConfig"    : "JES_2016data_Oct2016_EtaIntercalOnly.config",
 
-#  "m_inContainerName"     : "AntiKt4EMPFlowJets",
-#  "m_jetDef"              : "AntiKt4EMPFlow",
-#  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
-#  "m_jetCalibConfig"    : "JES_MC15cRecommendation_PFlow_Aug2016.config",
-
 #---------------------------------------------------------------------------------------------
 #### MJB iteration ####
 
 #  "m_triggerAndPt" : "", #Leave this empty for efficiency studies!
-  "m_triggerAndPt" : "HLT_j380:550,HLT_j260:400,HLT_j175:300,HLT_j110:200",
-#  min binning 2016 from study on tight beta cut: "HLT_j380:466,HLT_j260:320, HLT_j175:180",
-#  min binning 2016 from study on loose beta cut: ,
-  #"m_triggerAndPt" : "HLT_j380:500,HLT_j260:350,HLT_j175:250,HLT_j110:200",  #Used for validation
-#  "m_triggerAndPt" : "HLT_j360:420,HLT_j260:325,HLT_j200:250,HLT_j175:225,HLT_j150:200,HLT_j110:175,HLT_j85:125", #original
-
-  "m_MJBIteration" : 0,
-  ## The pt thresholds on the subleading jets for event inclusion. -1 gets taken from the V+jet file.
-  ## This is set automatically in m_validation to a large number!
-  "m_MJBIterationThreshold" : "9999999999",
-  #"m_MJBIterationThreshold" : "-1,2000",
-  ## For higher iterations:
-  "m_MJBCorrectionFile" : "",
-  #"m_MJBCorrectionFile" : "Bootstrap_Iteration0_LC_hist.combined.Pythia.DoubleMJB_initial.root",
-  #"m_MJBCorrectionFile" : "Iteration0_2016LC_hist.combined.Pythia.Fit_DoubleMJB_initial.root",
-
-## 2016 initial validation binning
-  "m_binning"   : "200,250,300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300,2600", #23bins
-#  "m_binning"   : "300,325,350,375,400,425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,850,875,900,925,950,975,1000,1050,1100,1150,1200,1300,1500,1700,2000,2300", #37 bins
-#  "m_binning"  : "300,350,400,450,500,550,600,650,700,750,800,850,900,950,1000,1100,1200,1300,1400,1600,1800,2000,2500,3000,3500",
+  "m_triggerAndPt" : "HLT_g140_loose:145,HLT_g120_loose:125,HLT_g100_loose:105,HLT_g80_loose:85,HLT_g70_loose:75,HLT_g60_loose:65,HLT_g50_loose:55,HLT_g35_loose:40,HLT_g25_loose:30,HLT_g20_loose:25,HLT_g15_loose:20,HLT_g10_loose:15",
 
 
- ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibration! ##
-# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Configs/Vjet_Nominal.root",
- "m_VjetCalibFile"  : "",
+  "m_binning"   : "15, 20, 25, 30, 40, 55, 65, 75, 85, 105, 125, 145, 170, 200, 250, 300, 400, 500, 600, 800, 1000, 1200, 1400, 1600, 2000, 10000",
+  #Jamie's binning
+  #"m_binning"   : "25, 45, 65, 85, 105, 125, 160, 210, 260, 310, 400, 500, 600, 800, 1000, 1200, 1400, 1600, 2000, 10000",
 
- ## Use GSC value, not insitu, for leading jet.
-#"m_leadingGSC" : True,
+
 
   ## Systematic Variations to use:
-  "m_sysVariations" : "Nominal-EvSel",
+  "m_sysVariations" : "Nominal",
 #  "m_sysVariations" : "Nominal-JCS-JES-JER",
 #  "m_sysVariations" : "All",
 

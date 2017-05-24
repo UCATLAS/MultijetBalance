@@ -54,11 +54,16 @@ bool MultijetBalanceAlgo:: cut_SubPt(){
 }
 
 bool MultijetBalanceAlgo:: cut_JetPtThresh() {
-//bool MultijetBalanceAlgo:: cut_JetPtThresh(std::vector< xAOD::Jet*>* m_jets) const {
+
+  float thisPtCut = m_ptThresh;
+  if( m_sysType.at(m_iSys) == CUTPt )
+    thisPtCut += m_sysDetail.at(m_iSys);
+
+  std::cout << "for " << m_iSys << " of enum " << m_sysType.at(m_iSys) << " with cut " << thisPtCut << std::endl;
 
   if(m_debug) Info("execute()", "Pt threshold ");
   for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
-    if( m_jets->at(iJet)->pt()/1e3 < m_ptThresh ){ //Default 25 GeV
+    if( m_jets->at(iJet)->pt()/1e3 < thisPtCut ){ //Default 25 GeV
       m_jets->erase(m_jets->begin()+iJet);
       --iJet;
     }
@@ -134,12 +139,18 @@ bool MultijetBalanceAlgo:: cut_TriggerEffRecoil(){
   }
 
 }
+
 bool MultijetBalanceAlgo:: cut_PtAsym(){
   //Remove dijet events, i.e. events where subleading jet dominates the recoil jets
   if(m_debug) Info("execute()", "Pt asym selection ");
+
+  float thisAsymCut = m_ptAsym;
+  if( m_sysType.at(m_iSys) == CUTAsym )
+    thisAsymCut += m_sysDetail.at(m_iSys);
+
   double ptAsym = m_jets->at(1)->pt() / m_recoilTLV.Pt();
   m_eventInfo->auxdecor< float >( "ptAsym" ) = ptAsym;
-  if( ptAsym > m_ptAsym ){ //Default 0.8
+  if( ptAsym > thisAsymCut ){ //Default 0.8
     return false;
   }
 
@@ -151,7 +162,12 @@ bool MultijetBalanceAlgo:: cut_Alpha(){
   if(m_debug) Info("execute()", "Alpha Selection ");
   double alpha = fabs(DeltaPhi( m_jets->at(0)->phi(), m_recoilTLV.Phi() )) ;
   m_eventInfo->auxdecor< float >( "alpha" ) = alpha;
-  if( (M_PI-alpha) > m_alpha ){  //0.3 by default
+
+  float thisAlphaCut = m_alpha;
+  if( m_sysType.at(m_iSys) == CUTAlpha )
+    thisAlphaCut += m_sysDetail.at(m_iSys);
+
+  if( (M_PI-alpha) > thisAlphaCut ){  //0.3 by default
     return false;
   }
   return true;
@@ -160,20 +176,26 @@ bool MultijetBalanceAlgo:: cut_Alpha(){
 bool MultijetBalanceAlgo:: cut_Beta(){
   //Beta is phi angle between leading jet and each other passing jet
   if(m_debug) Info("execute()", "Beta Selection ");
-  double smallestBeta=10., avgBeta = 0., thisBeta=0.;
+
+  double smallestBeta=10., avgBeta = 0., jetBeta=0.;
+
   for(unsigned int iJet=1; iJet < m_jets->size(); ++iJet){
-    thisBeta = DeltaPhi(m_jets->at(iJet)->phi(), m_jets->at(0)->phi() );
-    if( !m_looseBetaCut && (thisBeta < smallestBeta) ) 
-      smallestBeta = thisBeta;
-    else if( m_looseBetaCut && (thisBeta < smallestBeta) && (m_jets->at(iJet)->pt() > m_jets->at(0)->pt()*0.1) )
-      smallestBeta = thisBeta;
-    avgBeta += thisBeta;
-    m_jets->at(iJet)->auxdecor< float >( "beta") = thisBeta;
+    jetBeta = DeltaPhi(m_jets->at(iJet)->phi(), m_jets->at(0)->phi() );
+    if( !m_looseBetaCut && (jetBeta < smallestBeta) ) 
+      smallestBeta = jetBeta;
+    else if( m_looseBetaCut && (jetBeta < smallestBeta) && (m_jets->at(iJet)->pt() > m_jets->at(0)->pt()*0.1) )
+      smallestBeta = jetBeta;
+    avgBeta += jetBeta;
+    m_jets->at(iJet)->auxdecor< float >( "beta") = jetBeta;
   }
   avgBeta /= (m_jets->size()-1);
   m_eventInfo->auxdecor< float >( "avgBeta" ) = avgBeta;
 
-  if( smallestBeta < m_beta ){ 
+  float thisBetaCut = m_beta;
+  if( m_sysType.at(m_iSys) == CUTBeta )
+    thisBetaCut += m_sysDetail.at(m_iSys);
+
+  if( smallestBeta < thisBetaCut ){ 
     return false;
   }
 

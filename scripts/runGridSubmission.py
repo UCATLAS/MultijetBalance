@@ -12,10 +12,9 @@ from time import strftime
 
 ### User Options ###
 test = False # does not run the jobs
-#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2016_EM207.py"
-#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB_2015_Validation.py"
-#config_name = "$ROOTCOREBIN/data/MultijetBalance/config_MJB.py"
 config_name = "/home/jdandoy/Documents/Dijet/Rel21MJB/MultijetBalance/data/config_MJB.py"
+#config_name = "/home/jdandoy/Documents/Dijet/Rel21MJB/MultijetBalance/data/config_Gjet.py"
+#config_name = "/home/jdandoy/Documents/Dijet/Rel21MJB/MultijetBalance/data/config_Zjet.py"
 extraTag = "" # Extra output tag for all files
 
 
@@ -36,45 +35,44 @@ runType = 'grid'   #CERN grid
 production_name = ""
 #production_name = "phys-exotics"
 
+samples = { 
+  "MJBRel21"      : "data16_13TeV.*Main.deriv*JETM1.*p3142",
+#  "MJBRel207"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
+#
+#  "MJBData16"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
+#  "MJBData15"     : "data15_13TeV.*Main.merge*JETM1.*p2950",
+#  "QCDPythia"     : "mc15_13TeV.3610*.Pythia8*JZ*W.merge.*JETM1.*_r77*r7676_p2666",
+#  "QCDSherpa"     : "mc15_13TeV.4261*.Sherpa*JZ*.merge.*JETM1.*r7725_r7676_p2666",
+#
+#  'ZJBData16'     : 'data16_13TeV.*Main.merge*JETM3.*p2950',
+#  'ZJBData15'     : 'data15_13TeV.*Main.merge*JETM3.*p2950',
+#  'ELPythia'      : 'mc15_13TeV.361106*PowhegPythia*Zee*JETM3*p2996'], 
+#  'ELSherpa'      : 'mc15_13TeV.363*Sherpa*NNPDF30NNLO*Zee_Pt*JETM3*p2879'],
+#  'ELMadgraph'    : 'mc15_13TeV.36150*MadGraphPythia8*Zee*JETM3*p2879'],
+#  'MUPythia'      : 'mc15_13TeV.361107*PowhegPythia*Zmumu*JETM3*p2996'],
+#  'MUSherpa'      : 'mc15_13TeV.363*Sherpa*NNPDF30NNLO*Zmumu_Pt*JETM3*p2879'], 
+#  'MUMadgraph'    : 'mc15_13TeV.36150*MadGraphPythia8*Zmumu*JETM3*p2879'],
+#
+#  'GJBData16'     : 'data16_13TeV.*Main.merge*JETM4.*p2950'],
+#  'GJBData15'     : 'data15_13TeV.*Main.merge*JETM4.*p2950'],
+#  'PHPythia'      : 'mc15_13TeV.423*Pythia8*gammajet*JETM4*p2839'], 
+#  'PHSherpa'      : 'mc15_13TeV.3610*Sherpa*Photon*JETM4*p3017'],
+#  'PHSherpaQ'     : 'mc15_13TeV.3432*Sherpa*SinglePhotonPt*QCUT5*JETM4*p3017']
 
+}
 
 files = []
 outputTags = []
 
 #files.append("MultijetBalance/scripts/sampleLists/data16_r207_JETM1_p2950.txt")
 #outputTags.append("Rel207")
-files.append("MultijetBalance/scripts/sampleLists/data16_r21_JETM1_p3142.txt")
-outputTags.append("Rel21")
 
-## File lists and specific output Tags
+#for iFile, file_in in enumerate(files):
 
-##2016##
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
-#outputTags.append("QCDPythia8_JETM1_BS0")
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
-#outputTags.append("QCDSherpa_JETM1_BS0")
-#files.append("MultijetBalance/scripts/sampleLists/2016/Data2016_Main_JETM1_gridSamples.txt")
-#outputTags.append("Main2016_JETM1_BS0")
-#files.append("MultijetBalance/scripts/sampleLists/Data2016_Debug_JETM1_gridSamples.txt")
-#outputTags.append("Debug2016_JETM1_It0")
+for sampleName, sample in samples.iteritems():
 
-#files.append("MultijetBalance/scripts/sampleLists/2015/Data13TeV_Debug_EXOT2_207_gridSamples.txt")
-#outputTags.append("Db_R1")
-#files.append("MultijetBalance/scripts/sampleLists/2015/Data13TeV_Main_EXOT2_207_gridSamples.txt")
-#outputTags.append("Ex_B1")
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDPythia8_JETM1_207_gridSamples.txt")
-#outputTags.append("QCDPJ_R0")
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDSherpa_JETM1_207_gridSamples.txt")
-#outputTags.append("QCDSJ_R0")
-#files.append("MultijetBalance/scripts/sampleLists/2015/QCDHerwig_JETM1_207_gridSamples.txt")
-#outputTags.append("QCDHJ_R0")
-
-for iFile, file_in in enumerate(files):
-
-  output_tag = outputTags[iFile]
-  output_tag += extraTag
-  output_tag += timestamp
-  submit_dir = "gridOutput/gridJobs/submitDir_"+os.path.basename(file_in).rsplit('.',1)[0]+"."+output_tag # define submit dir name
+  output_tag = sampleName + extraTag + timestamp
+  submit_dir = "gridOutput/gridJobs/submitDir_"+output_tag 
 
   ## Configure submission driver ##
   driverCommand = ''
@@ -99,7 +97,7 @@ for iFile, file_in in enumerate(files):
   command = './xAODAnaHelpers/scripts/xAH_run.py'
   if runType == 'grid':
     command += ' --inputRucio '
-  command += ' --inputList --files '+file_in
+  command += ' --files '+sample
   command += ' --config '+config_name
   command += ' --force --submitDir '+submit_dir
   command += ' '+driverCommand
