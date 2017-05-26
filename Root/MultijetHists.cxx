@@ -275,7 +275,8 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
     m_MJBNjetsPhi.at(iJet)->       Fill( jets->at(iJet)->phi(),      eventWeight);
     m_MJBNjetsM.at(iJet)->         Fill( jets->at(iJet)->m()/1e3,    eventWeight);
     m_MJBNjetsE.at(iJet)->         Fill( jets->at(iJet)->e()/1e3,    eventWeight);
-    m_MJBNjetsBeta.at(iJet)->      Fill( beta(*jets->at(iJet)), eventWeight);
+
+    if( beta.isAvailable(*jets->at(iJet)) ) m_MJBNjetsBeta.at(iJet)->Fill( beta(*jets->at(iJet)), eventWeight);
   }
 
   m_recoilEta->Fill( recoilEta( *eventInfo ), eventWeight);
@@ -283,15 +284,19 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
   m_recoilM->Fill( recoilM( *eventInfo )/1e3, eventWeight);
   m_recoilE->Fill( recoilE( *eventInfo )/1e3, eventWeight);
   m_recoilPt_center->Fill( recoilJetPt, eventWeight);
-  m_subOverRecoilPt->Fill( (jets->at(1)->pt()/1e3)/recoilJetPt, eventWeight);
+  if( jets->size() >=2 ){
+    m_subOverRecoilPt->Fill( (jets->at(1)->pt()/1e3)/recoilJetPt, eventWeight);
+    m_recoilPt_jet1Pt      ->Fill(recoilJetPt, jets->at(1)->pt()/1e3, eventWeight);
+    m_leadJetPt_jet1Pt      ->Fill(leadJetPt, jets->at(1)->pt()/1e3, eventWeight);
+  }
 
-  m_avgBeta->Fill(avgBeta( *eventInfo ), eventWeight);
-  m_alpha->Fill(alpha( *eventInfo ), eventWeight);
-  m_njet->Fill(njet( *eventInfo ), eventWeight);
-  m_ptAsym->Fill(ptAsym( *eventInfo ), eventWeight);
+  if( avgBeta.isAvailable(*eventInfo) ) m_avgBeta->Fill(avgBeta( *eventInfo ), eventWeight);
+  if( alpha.isAvailable(*eventInfo) ) m_alpha->Fill(alpha( *eventInfo ), eventWeight);
+  if( njet.isAvailable(*eventInfo) ) m_njet->Fill(njet( *eventInfo ), eventWeight);
+  if( ptAsym.isAvailable(*eventInfo) ) m_ptAsym->Fill(ptAsym( *eventInfo ), eventWeight);
   m_ptBal->Fill(thisPtBal, eventWeight);
 
-  m_ptAsym_njet->Fill(ptAsym( *eventInfo ), njet( *eventInfo ), eventWeight);
+  if( njet.isAvailable(*eventInfo) ) m_ptAsym_njet->Fill(ptAsym( *eventInfo ), njet( *eventInfo ), eventWeight);
 
 
   ///// For Pt Binned Histograms //////
@@ -299,20 +304,14 @@ StatusCode MultijetHists::execute( std::vector< xAOD::Jet* >* jets, const xAOD::
   m_recoilPt->Fill( recoilJetPt, eventWeight);
 
   m_recoilPt_jet0Pt      ->Fill(recoilJetPt, leadJetPt, eventWeight);
-  m_recoilPt_jet1Pt      ->Fill(recoilJetPt, jets->at(1)->pt()/1e3, eventWeight);
-  m_recoilPt_avgBeta     ->Fill(recoilJetPt, avgBeta( *eventInfo ), eventWeight);
-  m_recoilPt_alpha       ->Fill(recoilJetPt, alpha( *eventInfo ), eventWeight);
-  m_recoilPt_njet        ->Fill(recoilJetPt, njet( *eventInfo ), eventWeight);
-//    m_recoilPt_averageIPC  ->Fill(recoilJetPt, eventInfo->averageInteractionsPerCrossing(), eventWeight);
-//    m_recoilPt_actualIPC   ->Fill(recoilJetPt, eventInfo->actualInteractionsPerCrossing(), eventWeight);
+  if( avgBeta.isAvailable(*eventInfo) ) m_recoilPt_avgBeta->Fill(recoilJetPt, avgBeta( *eventInfo ), eventWeight);
+  if( alpha.isAvailable(*eventInfo) ) m_recoilPt_alpha       ->Fill(recoilJetPt, alpha( *eventInfo ), eventWeight);
+  if( njet.isAvailable(*eventInfo) ) m_recoilPt_njet        ->Fill(recoilJetPt, njet( *eventInfo ), eventWeight);
 
 
-  m_leadJetPt_jet1Pt      ->Fill(leadJetPt, jets->at(1)->pt()/1e3, eventWeight);
-  m_leadJetPt_avgBeta     ->Fill(leadJetPt, avgBeta( *eventInfo ), eventWeight);
-  m_leadJetPt_alpha       ->Fill(leadJetPt, alpha( *eventInfo ), eventWeight);
-  m_leadJetPt_njet        ->Fill(leadJetPt, njet( *eventInfo ), eventWeight);
-//    m_leadJetPt_averageIPC  ->Fill(leadJetPt, averageIPC( *eventInfo ), eventWeight);
-//    m_leadJetPt_actualIPC   ->Fill(leadJetPt, actualIPC( *eventInfo ), eventWeight);
+  if( avgBeta.isAvailable(*eventInfo) ) m_leadJetPt_avgBeta     ->Fill(leadJetPt, avgBeta( *eventInfo ), eventWeight);
+  if( alpha.isAvailable(*eventInfo) ) m_leadJetPt_alpha       ->Fill(leadJetPt, alpha( *eventInfo ), eventWeight);
+  if( njet.isAvailable(*eventInfo) ) m_leadJetPt_njet        ->Fill(leadJetPt, njet( *eventInfo ), eventWeight);
 
 
 

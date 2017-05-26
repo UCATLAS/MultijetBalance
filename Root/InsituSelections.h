@@ -169,13 +169,17 @@ bool MultijetBalanceAlgo:: cut_PtAsym(){
 
   float maxPtCut = fmax( thisAsymMinCut, thisAsymVarCut * m_recoilTLV.Pt() );
 
-  m_eventInfo->auxdecor< float >( "ptAsym" ) = m_jets->at(1)->pt() / m_recoilTLV.Pt();
-
-  if( m_jets->at(1)->pt() > maxPtCut ){ 
-    return false;
+  if( m_jets->size() >= 2){
+    m_eventInfo->auxdecor< float >( "ptAsym" ) = m_jets->at(1)->pt() / m_recoilTLV.Pt();
+    if( m_jets->at(1)->pt() > maxPtCut )
+      return false;
+    else
+      return true;
+  } else {
+    m_eventInfo->auxdecor< float >( "ptAsym" ) = 0.;
+    return true;
   }
 
-  return true;
 }
 
 bool MultijetBalanceAlgo:: cut_Alpha(){
@@ -227,23 +231,38 @@ bool MultijetBalanceAlgo:: cut_ConvPhot(){
   // Remove Photons that are consistent with a converted photon
   if(m_debug) Info("execute()", "Converted Photon Selection ");
   
-//  if (xAOD::EgammaHelpers::conversionType(photon) > 0){
+  if (xAOD::EgammaHelpers::conversionType(m_recoilPhoton) == 0)
+    return true;
+
+  double clusterEt = m_recoilPhoton->caloCluster()->e() / cosh(m_recoilPhoton->caloCluster()->eta());
+  double trackPt  = xAOD::EgammaHelpers::momentumAtVertex(m_recoilPhoton).perp();
+  if (xAOD::EgammaHelpers::conversionType(m_recoilPhoton) > 2){
+    if (clusterEt / trackPt > 1.5 or clusterEt / trackPt < 0.5)
+      return false;
+  } else if (clusterEt / trackPt > 2.0){
+    return false;
+  }
+
+  return true;
+}
+
+/// MPF code just ignores any subleading photons
+bool MultijetBalanceAlgo:: cut_OverlapRemoval(){
+  // Remove jets that overlap with a photon
+  if(m_debug) Info("execute()", "OverlapRemoval Selection ");
+  for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
+    if( m_jets->at(iJet)->p4().DeltaR(m_recoilTLV) < m_overlapDR ){
+      m_jets->erase( m_jets->begin()+iJet );
+      --iJet;
+    }
+  }//for iJet
+
+  if (m_jets->size() >= m_numJets)
+    return true;
+  else
+    return false;
 }
   
-//  bool passEoverP = true;
-//  // E/p cut for converted photons
-//  if (xAOD::EgammaHelpers::conversionType(photon) > 0){
-//    double clusterEt = photon->caloCluster()->e() / cosh(photon->caloCluster()->eta());
-//    double trackPt  = xAOD::EgammaHelpers::momentumAtVertex(photon).perp();
-//    if (xAOD::EgammaHelpers::conversionType(photon) > 2){
-//      if (clusterEt / trackPt > 1.5 or clusterEt / trackPt < 0.5) passEoverP = false;
-//    }
-//    else if (clusterEt / trackPt > 2.0) passEoverP = false;
-//  }
-//  if (not passEoverP){ 
-//    failed->push_back(FindCode("Photon: Conversion"));
-//    return false;
-//   }
 
 //-----------------------------
 //   for all jets

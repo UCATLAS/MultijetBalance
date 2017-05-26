@@ -35,13 +35,14 @@
 #include "JetResolution/IJERSmearingTool.h"
 #include "JetInterface/IJetUpdateJvt.h"
 #include "JetJvtEfficiency/IJetJvtEfficiency.h"
-
 #include "xAODBTaggingEfficiency/IBTaggingEfficiencyTool.h"
 #include "xAODBTaggingEfficiency/IBTaggingSelectionTool.h"
-
 #include "JetCPInterfaces/IJetTileCorrectionTool.h"
 
 #include <functional>
+
+// algorithm wrapper
+#include "xAODAnaHelpers/Algorithm.h"
 
 
 class MultijetHists;
@@ -64,7 +65,8 @@ class IJetTileCorrectionTool;
 // variables that don't get filled at submission time should be
 // protected from being send from the submission node to the worker
 // node (done by the //!)
-class MultijetBalanceAlgo : public EL::Algorithm
+class MultijetBalanceAlgo : public xAH::Algorithm
+//class MultijetBalanceAlgo : public EL::Algorithm
 {
   // put your configuration variables here as public variables.
   // that way they can be set directly from CINT and python.
@@ -154,6 +156,10 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Relative pt threshold of each jet (compared to leading jet) to be considered in the MultijetBalanceAlgo#m_beta selection,
      * i.e. only jets with \f$p_{T}\f$ > m_betaPtVar*100% of the leading jet \f$p_{T}\f$ */
     float m_betaPtVar;
+
+    /** @brief Maximum deltaR value between a jet and a reference object.  Jets that fail are removed from consideration */
+    float m_overlapDR;
+
     /** @brief Apply the GSC-stage calibration to the leading jet when calibrating.  This should only be used
      * if a special eta-intercalibration stage insitu file is not available, and is a close approximate.  
      * @note It is an exact approximation if the leading jet detEta cut is changed from 1.2 to 0.8 */
@@ -255,36 +261,9 @@ class MultijetBalanceAlgo : public EL::Algorithm
 
 
 
-    /** @brief JetCalibrationTool handle*/
-    asg::AnaToolHandle<IJetCalibrationTool> m_JetCalibrationTool_handle; //!
-    /** @brief JetUncertaintiesTool instance*/
-    asg::AnaToolHandle<ICPJetUncertaintiesTool> m_JetUncertaintiesTool_handle; //!
-
-    /** @brief JERTool handle */
-    asg::AnaToolHandle<IJERTool> m_JERTool_handle;    //!
-    /** @brief JER Smearing Tool handle */
-    asg::AnaToolHandle<IJERSmearingTool> m_JERSmearingTool_handle;    //!
-
-    /** @brief JetCleaningTool handle*/
-    asg::AnaToolHandle<IJetSelector> m_JetCleaningTool_handle; //!
-
-    /** @brief JetUpdateJvt handle */
-    asg::AnaToolHandle<IJetUpdateJvt> m_JVTUpdateTool_handle; //!
-    /** @brief JetJvtEfficiency handle*/
-    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle; //!
-    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_up; //!
-    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_down; //!
 
     unsigned int m_iSys;
 
-
-    /** @brief Vector of BTaggingSelectionTool handles*/
-    std::vector< asg::AnaToolHandle<IBTaggingSelectionTool> >  m_AllBTaggingSelectionTool_handles; //!
-    /** @brief Vector of BTaggingEfficiencyTool handles*/
-    std::vector< asg::AnaToolHandle<IBTaggingEfficiencyTool> > m_AllBTaggingEfficiencyTool_handles; //!
-
-
-    asg::AnaToolHandle<CP::IJetTileCorrectionTool>  m_JetTileCorrectionTool_handle; //!
 
     /** @brief Location of primary vertex within xAOD::VertexContainer*/
     int m_pvLocation; //!
@@ -425,6 +404,7 @@ public:
     const xAOD::EventInfo* m_eventInfo; //!
     TLorentzVector m_recoilTLV; //!
     const xAOD::IParticle* m_recoilParticle; //!
+    const xAOD::Photon* m_recoilPhoton; //!
 
     float m_prescale; //!
 
@@ -450,6 +430,7 @@ public:
     bool cut_Alpha(); //!
     bool cut_Beta(); //!
     bool cut_ConvPhot(); //!
+    bool cut_OverlapRemoval(); //!
 
     std::vector< xAOD::Jet*>* m_jets; //!
     
@@ -458,14 +439,47 @@ public:
     
     std::vector< SelType > m_selType;
     std::vector< std::function<bool(void)> > m_selections;  //!
+    
+  
+//  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
+//  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
+//  m_JERTool_handle("JERTool/JERTool_"+name),
+//  m_JERSmearingTool_handle("JERSmearingTool/JERSmearingTool_"+name),
+//  m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
+//  m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
+//  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JVTEfficiencyTool_"+name),
+//  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
+//  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
+//  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
+  
+  private:
+
+    /** @brief AnaToolHandle for each CP tool*/
+    asg::AnaToolHandle<IJetCalibrationTool> m_JetCalibrationTool_handle{"JetCalibrationTool"}; //!
+    asg::AnaToolHandle<ICPJetUncertaintiesTool> m_JetUncertaintiesTool_handle{"JetUncertaintiesTool"}; //!
+
+    asg::AnaToolHandle<IJERTool> m_JERTool_handle{"JERTool"};    //!
+    asg::AnaToolHandle<IJERSmearingTool> m_JERSmearingTool_handle{"JERSmearingTool"};    //!
+
+    asg::AnaToolHandle<IJetSelector> m_JetCleaningTool_handle{"JetCleaningTool"}; //!
+    asg::AnaToolHandle<CP::IJetTileCorrectionTool>  m_JetTileCorrectionTool_handle{"JetTileCorrectionTool"}; //!
+
+    /** @brief JVT handles, including systematic variations*/
+    asg::AnaToolHandle<IJetUpdateJvt> m_JVTUpdateTool_handle{"JetVertexTaggerTool"}; //!
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle{"JetJVTEfficiencyTool"}; //!
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_up{"JetJVTEfficiencyTool_up"}; //!
+    asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_down{"JetJVTEfficiencyTool_down"}; //!
+    
+    /** @brief Vector of b-tagging handles, for each WP*/
+    std::vector< asg::AnaToolHandle<IBTaggingSelectionTool> >  m_AllBTaggingSelectionTool_handles; //!
+    std::vector< asg::AnaToolHandle<IBTaggingEfficiencyTool> > m_AllBTaggingEfficiencyTool_handles; //!
 
 
     /** @brief Standard constructor*/
-    MultijetBalanceAlgo (std::string name = "MultijetBalanceAlgo");
+    MultijetBalanceAlgo ();
     /** @brief Standard destructor*/
     ~MultijetBalanceAlgo ();
 
-  // these are the functions inherited from Algorithm
     /** @brief Setup the job (inherits from Algorithm)*/
     virtual EL::StatusCode setupJob (EL::Job& job);
     /** @brief Execute the file (inherits from Algorithm)*/

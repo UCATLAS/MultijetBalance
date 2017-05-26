@@ -61,18 +61,18 @@ ClassImp(MultijetBalanceAlgo)
 
 
 MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
-  Algorithm(),
-  m_name(name),
-  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
-  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
-  m_JERTool_handle("JERTool/JERTool_"+name),
-  m_JERSmearingTool_handle("JERSmearingTool/JERSmearingTool_"+name),
-  m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
-  m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
-  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JVTEfficiencyTool_"+name),
-  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
-  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
-  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
+  Algorithm("InsituBalance") //,
+//  m_name(name),
+//  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
+//  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
+//  m_JERTool_handle("JERTool/JERTool_"+name),
+//  m_JERSmearingTool_handle("JERSmearingTool/JERSmearingTool_"+name),
+//  m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
+//  m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
+//  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JVTEfficiencyTool_"+name),
+//  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
+//  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
+//  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
 {
   // Here you put any code for the base initialization of variables,
   // e.g. initialize all pointers to 0.  Note that you should only put
@@ -117,6 +117,8 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_eventDetailStr = "";
   m_jetDetailStr = "";
   m_trigDetailStr = "";
+ 
+  m_overlapDR = 0.;
 
   m_debug = false;
   m_MCPileupCheckContainer = "AntiKt4TruthJets";
@@ -365,6 +367,11 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
     std::vector< std::string > cutflowNames; 
     if( MJBmode ){
 
+      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
+      m_selections.push_back(func_MCCleaning);
+      cutflowNames.push_back( "MCCleaning" );
+      m_selType.push_back( PRE );
+
       std::function<bool(void)> func_LeadEta = std::bind(&MultijetBalanceAlgo::cut_LeadEta, this);
       m_selections.push_back(func_LeadEta);
       cutflowNames.push_back( "LeadEta" );
@@ -378,11 +385,6 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       std::function<bool(void)> func_SubPt = std::bind(&MultijetBalanceAlgo::cut_SubPt, this);
       m_selections.push_back(func_SubPt);
       cutflowNames.push_back( "SubPt" );
-      m_selType.push_back( PRE );
-
-      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
-      m_selections.push_back(func_MCCleaning);
-      cutflowNames.push_back( "MCCleaning" );
       m_selType.push_back( PRE );
 
       std::function<bool(void)> func_JetPtThresh = std::bind(&MultijetBalanceAlgo::cut_JetPtThresh, this);
@@ -429,6 +431,11 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       cutflowNames.push_back( "TriggerEffRecoil" );
       m_selType.push_back( PRE );
 
+      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
+      m_selections.push_back(func_MCCleaning);
+      cutflowNames.push_back( "MCCleaning" );
+      m_selType.push_back( PRE );
+
       std::function<bool(void)> func_JetEta = std::bind(&MultijetBalanceAlgo::cut_JetEta, this);
       m_selections.push_back(func_JetEta);
       cutflowNames.push_back( "JetEta" );
@@ -440,15 +447,10 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       cutflowNames.push_back( "ConvPhot" );
       m_selType.push_back( PRE );
 
-// jet-photon overlap removal      
-//      std::function<bool(void)> func_JVT = std::bind(&MultijetBalanceAlgo::cut_JVT, this);
-//      m_selections.push_back(func_JVT);
-//      cutflowNames.push_back( "JVT" );
-//      m_selType.push_back( SYST );
-
-      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
-      m_selections.push_back(func_MCCleaning);
-      cutflowNames.push_back( "MCCleaning" );
+      // jet-photon overlap removal      
+      std::function<bool(void)> func_OverlapRemoval = std::bind(&MultijetBalanceAlgo::cut_OverlapRemoval, this);
+      m_selections.push_back(func_OverlapRemoval);
+      cutflowNames.push_back( "OverlapRemoval" );
       m_selType.push_back( PRE );
 
       std::function<bool(void)> func_JVT = std::bind(&MultijetBalanceAlgo::cut_JVT, this);
@@ -640,7 +642,9 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     ANA_CHECK( HelperFunctions::retrieve(inPhotons, m_inContainerName_photons, m_event, m_store, msg()) );
 
     m_recoilParticle = inPhotons->at(0);
+    m_recoilPhoton = inPhotons->at(0);
     m_recoilTLV.SetPtEtaPhiE(m_recoilParticle->pt(), m_recoilParticle->eta(), m_recoilParticle->phi(), m_recoilParticle->e() );
+    std::cout << "!!!!!!!!!!!!!!!! m_recoilTLV is " << m_recoilTLV.Pt() << std::endl;
   }
 
   
@@ -756,8 +760,6 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
         tmpJet.SetPtEtaPhiE(m_jets->at(iJet)->pt(), m_jets->at(iJet)->eta(), m_jets->at(iJet)->phi(), m_jets->at(iJet)->e());
         m_recoilTLV += tmpJet;
       }
-    }else if( Gmode ){
-      m_recoilTLV.SetPtEtaPhiM(0,0,0,0);
     }
 
     ////// Do the event selections for each systematic after the recoiling object is built //////
@@ -787,6 +789,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     m_eventInfo->auxdecor< float >( "recoilM" ) = m_recoilTLV.M();
     m_eventInfo->auxdecor< float >( "recoilE" ) = m_recoilTLV.E();
     m_eventInfo->auxdecor< float >( "ptBal" ) = m_jets->at(0)->pt() / m_recoilTLV.Pt();
+
+    std::cout << "recoil pt is " << m_eventInfo->auxdecor< float >( "recoilPt" ) << std::endl;
 
     for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
 

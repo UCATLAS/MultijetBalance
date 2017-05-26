@@ -95,6 +95,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
   "m_ptAsymVar" : 0.1,
   "m_ptAsymMin" : 20,
   "m_leadJetPtThresh" : 10,
+  "m_overlapDR" : 0.2,
 
 #------ Bootstrap Mode ------#
   "m_bootstrap" : False,
