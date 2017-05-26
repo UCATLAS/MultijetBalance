@@ -7,6 +7,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
   if( !m_JVTUpdateTool_handle.isUserConfigured() ){
     ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JVTUpdateTool_handle, JetVertexTaggerTool) );
     ANA_CHECK( m_JVTUpdateTool_handle.setProperty("JVTFileName","JetMomentTools/JVTlikelihood_20140805.root") );
+    ANA_CHECK( m_JVTUpdateTool_handle.setProperty("JVFCorrName","JvtJvfcorr") );
     ANA_CHECK( m_JVTUpdateTool_handle.retrieve() );
   }
 

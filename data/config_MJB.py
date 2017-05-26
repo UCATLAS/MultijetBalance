@@ -84,13 +84,15 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_sysVariations" : "All",
 
 #------ Event Selections ------#
-#  "m_numJets"  : 3,
-#  "m_ptAsym" : 0.8,
-#  "m_alpha" : 0.3,
+  "m_numJets"  : 3,
+  "m_ptAsymVar" : 0.8,
+  "m_ptAsymMin" : -999,
+  "m_alpha" : 0.3,
   "m_beta" : 1.0,
+
 #  "m_ptThresh" : 60,  #in GeV
   ## Looser beta cut to improve statistics
-  "m_looseBetaCut" : True,
+  "m_betaPtVar" : 0.1,
 
 #------ Bootstrap Mode ------#
   "m_bootstrap" : False,
@@ -101,8 +103,8 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   ## Apply the jet calibrations to the leading jet:
   "m_validation" : True,
 #  ## Dijet validation mode: ##
-  "m_numJets"  : 2,
-  "m_ptAsym" : 1.0,
+#  "m_numJets"  : 2,
+#  "m_ptAsym" : 1.0,
 
 #------ B-tag Mode : Not yet implemented ------#
 #  "m_bTagWPsString" : "77,85",

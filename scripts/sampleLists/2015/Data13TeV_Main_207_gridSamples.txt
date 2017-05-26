@@ -1,6 +1,0 @@
-data15_13TeV.periodD.physics_Main.PhysCont.AOD.repro20_v02
-data15_13TeV.periodE.physics_Main.PhysCont.AOD.repro20_v02
-data15_13TeV.periodF.physics_Main.PhysCont.AOD.repro20_v02
-data15_13TeV.periodG.physics_Main.PhysCont.AOD.repro20_v02
-data15_13TeV.periodH.physics_Main.PhysCont.AOD.repro20_v02
-data15_13TeV.periodJ.physics_Main.PhysCont.AOD.repro20_v02

@@ -14,7 +14,7 @@ bool MultijetBalanceAlgo:: cut_LeadEta(){
 
 bool MultijetBalanceAlgo:: cut_JetEta(){
   
-  for (unsigned int iJet = 1; iJet < m_jets->size(); ++iJet){
+  for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
     xAOD::JetFourMom_t jetConstituentP4 = m_jets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum"); // or JetEMScaleMomentum
     m_jets->at(iJet)->auxdecor< float >( "detEta") = jetConstituentP4.eta();
     if( fabs(jetConstituentP4.eta()) > 2.8 ){
@@ -55,13 +55,12 @@ bool MultijetBalanceAlgo:: cut_SubPt(){
 
 bool MultijetBalanceAlgo:: cut_JetPtThresh() {
 
+  if(m_debug) Info("execute()", "Pt threshold ");
+
   float thisPtCut = m_ptThresh;
   if( m_sysType.at(m_iSys) == CUTPt )
     thisPtCut += m_sysDetail.at(m_iSys);
 
-  std::cout << "for " << m_iSys << " of enum " << m_sysType.at(m_iSys) << " with cut " << thisPtCut << std::endl;
-
-  if(m_debug) Info("execute()", "Pt threshold ");
   for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
     if( m_jets->at(iJet)->pt()/1e3 < thisPtCut ){ //Default 25 GeV
       m_jets->erase(m_jets->begin()+iJet);
@@ -70,6 +69,18 @@ bool MultijetBalanceAlgo:: cut_JetPtThresh() {
   }
   
   if (m_jets->size() >= m_numJets)
+    return true;
+  else
+    return false;
+
+}
+
+bool MultijetBalanceAlgo:: cut_LeadJetPtThresh() {
+
+  if(m_debug) Info("execute()", "Lead jet pt threshold ");
+
+  float thisLeadJetPtCut = m_leadJetPtThresh;
+  if( m_jets->at(0)->pt()/1e3 >= thisLeadJetPtCut )
     return true;
   else
     return false;
@@ -144,13 +155,23 @@ bool MultijetBalanceAlgo:: cut_PtAsym(){
   //Remove dijet events, i.e. events where subleading jet dominates the recoil jets
   if(m_debug) Info("execute()", "Pt asym selection ");
 
-  float thisAsymCut = m_ptAsym;
-  if( m_sysType.at(m_iSys) == CUTAsym )
-    thisAsymCut += m_sysDetail.at(m_iSys);
+  //Var cut changes with recoil object pt, while the minimum pt cut never changes
+  float thisAsymVarCut = m_ptAsymVar;
+  float thisAsymMinCut = m_ptAsymMin;
 
-  double ptAsym = m_jets->at(1)->pt() / m_recoilTLV.Pt();
-  m_eventInfo->auxdecor< float >( "ptAsym" ) = ptAsym;
-  if( ptAsym > thisAsymCut ){ //Default 0.8
+  if( m_sysType.at(m_iSys) == CUTAsym )
+    thisAsymVarCut += m_sysDetail.at(m_iSys);
+    // Change min cut systematic variable manually
+    if( m_sysDetail.at(m_iSys)  > 0 )
+      thisAsymMinCut += 10.; //GeV
+    else
+      thisAsymMinCut -= 10.; 
+
+  float maxPtCut = fmax( thisAsymMinCut, thisAsymVarCut * m_recoilTLV.Pt() );
+
+  m_eventInfo->auxdecor< float >( "ptAsym" ) = m_jets->at(1)->pt() / m_recoilTLV.Pt();
+
+  if( m_jets->at(1)->pt() > maxPtCut ){ 
     return false;
   }
 
@@ -181,12 +202,11 @@ bool MultijetBalanceAlgo:: cut_Beta(){
 
   for(unsigned int iJet=1; iJet < m_jets->size(); ++iJet){
     jetBeta = DeltaPhi(m_jets->at(iJet)->phi(), m_jets->at(0)->phi() );
-    if( !m_looseBetaCut && (jetBeta < smallestBeta) ) 
-      smallestBeta = jetBeta;
-    else if( m_looseBetaCut && (jetBeta < smallestBeta) && (m_jets->at(iJet)->pt() > m_jets->at(0)->pt()*0.1) )
-      smallestBeta = jetBeta;
-    avgBeta += jetBeta;
     m_jets->at(iJet)->auxdecor< float >( "beta") = jetBeta;
+    avgBeta += jetBeta;
+
+    if( (jetBeta < smallestBeta) && (m_jets->at(iJet)->pt() > m_jets->at(0)->pt()*m_betaPtVar) )
+      smallestBeta = jetBeta;
   }
   avgBeta /= (m_jets->size()-1);
   m_eventInfo->auxdecor< float >( "avgBeta" ) = avgBeta;
@@ -201,3 +221,30 @@ bool MultijetBalanceAlgo:: cut_Beta(){
 
   return true;
 }
+
+/// MPF code just ignores any subleading photons
+bool MultijetBalanceAlgo:: cut_ConvPhot(){
+  // Remove Photons that are consistent with a converted photon
+  if(m_debug) Info("execute()", "Converted Photon Selection ");
+  
+//  if (xAOD::EgammaHelpers::conversionType(photon) > 0){
+}
+  
+//  bool passEoverP = true;
+//  // E/p cut for converted photons
+//  if (xAOD::EgammaHelpers::conversionType(photon) > 0){
+//    double clusterEt = photon->caloCluster()->e() / cosh(photon->caloCluster()->eta());
+//    double trackPt  = xAOD::EgammaHelpers::momentumAtVertex(photon).perp();
+//    if (xAOD::EgammaHelpers::conversionType(photon) > 2){
+//      if (clusterEt / trackPt > 1.5 or clusterEt / trackPt < 0.5) passEoverP = false;
+//    }
+//    else if (clusterEt / trackPt > 2.0) passEoverP = false;
+//  }
+//  if (not passEoverP){ 
+//    failed->push_back(FindCode("Photon: Conversion"));
+//    return false;
+//   }
+
+//-----------------------------
+//   for all jets
+//   if (isPhoton and ( (*jet_itr)->p4().DeltaR(Ref) < ph_overlapRemoval)) -> remove jets

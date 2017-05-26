@@ -16,14 +16,15 @@ c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
                                      "m_checkDuplicatesData"         : False,
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True,
-                                     "m_doPUreweighting"       : False,
+                                     "m_doPUreweighting"       : True,
+                                     "m_PRWFileNames"          : "MultijetBalance/mc15c_v2_defaults.NotRecommended.prw.root",
                                      #"m_PRWFileNames"          : "MultijetBalance/PRW_QCD.root",
-                                     #"m_lumiCalcFileNames"     : "MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
+                                     "m_lumiCalcFileNames"     : "MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
                                      } )
 
 c.setalg("PhotonCalibrator", {
     "m_name"                : "photon_calib",
-    "m_msgLevel"            : "debug",
+    "m_msgLevel"            : "info",
     "m_inContainerName"     : "Photons",
     "m_inputAlgoSystNames"  : "",
     "m_outContainerName"    : "Photons_Calib",
@@ -38,17 +39,21 @@ c.setalg("PhotonCalibrator", {
 
 c.setalg("PhotonSelector", {
     "m_name"                      : "photon_selection",
-    "m_msgLevel"                  : "debug",
+    "m_msgLevel"                  : "info",
     "m_inContainerName"           : "Photons_Calib",
     "m_outContainerName"          : "Photons_Selected",
     "m_createSelectedContainer"   : True,
     "m_decorateSelectedObjects"   : True,
     "m_pT_min"                    : 25e3,
     "m_eta_max"                   : 2.37,
-    "m_vetoCrack"                 : False,
+    "m_pass_min"                  : 1,
+#Jamie    "m_eta_max"                   : 1.37,
+    "m_vetoCrack"                 : True,
     "m_doAuthorCut"               : True,
     "m_doOQCut"                   : True,
     "m_photonIdCut"               : "Tight",
+    "m_IsoWPList"                 : "FixedCutTight",
+#    "m_IsoWPList"                 : "FixedCutTightCaloOnly,FixedCutTight,FixedCutLoose",
     } )
 
 ### MJB Configuration  ###
@@ -60,13 +65,12 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
 
   "m_inContainerName_jets"     : "AntiKt4EMTopoJets",
   "m_jetDef"              : "AntiKt4EMTopo",
+  
+  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
+  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016.config",
 
-  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
-#  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
-# ICHEP 2016 20.7 calibration for validation
-  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016_rel21.config",
-  #"m_jetCalibConfig"    : "JES_2016data_Oct2016_EtaIntercalOnly.config",
-
+#  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
+#  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016_rel21.config",
 #---------------------------------------------------------------------------------------------
 #### MJB iteration ####
 
@@ -86,13 +90,11 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
 #  "m_sysVariations" : "All",
 
 #------ Event Selections ------#
-#  "m_numJets"  : 3,
-#  "m_ptAsym" : 0.8,
-#  "m_alpha" : 0.3,
-  "m_beta" : 1.0,
-#  "m_ptThresh" : 60,  #in GeV
-  ## Looser beta cut to improve statistics
-  "m_looseBetaCut" : True,
+  "m_numJets"  : 1,
+  "m_alpha"     : 0.3,
+  "m_ptAsymVar" : 0.1,
+  "m_ptAsymMin" : 20,
+  "m_leadJetPtThresh" : 10,
 
 #------ Bootstrap Mode ------#
   "m_bootstrap" : False,
@@ -101,10 +103,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
 #------ Validation Mode ------#
   #You should probably turn off the m_VjetCalibFile for this!!
   ## Apply the jet calibrations to the leading jet:
-  "m_validation" : True,
-#  ## Dijet validation mode: ##
-  "m_numJets"  : 2,
-  "m_ptAsym" : 1.0,
+#  "m_validation" : True,
 
 #------ B-tag Mode : Not yet implemented ------#
 #  "m_bTagWPsString" : "77,85",

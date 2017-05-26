@@ -139,17 +139,21 @@ class MultijetBalanceAlgo : public EL::Algorithm
     bool m_MJBStatsOn;
     /** @brief Selection for the minimum number of jets in the event (Default of 3)*/
     unsigned int m_numJets;
-    /** @brief Selection for the \f$p_{T}\f$ asymmetry of the event (Default 0.8)*/
-    float m_ptAsym;
+    /** @brief Selection for the relative \f$p_{T}\f$ asymmetry of the subleading jet compared to the recoil object*/
+    float m_ptAsymVar;
+    /** @brief Selection for the minimum \f$p_{T}\f$ rejection of the subleading jet */
+    float m_ptAsymMin;
     /** @brief Selection for the \f$\alpha\f$ of the event (Default 0.3)*/
     float m_alpha;
     /** @brief Selection for the \f$\beta\f$ of any jet in the event (Default 1.0)*/
     float m_beta;
     /** @brief \f$p_{T}\f$ threshold for each jet to be included (default 25 GeV)*/
     float m_ptThresh;
-    /** @brief Boolean requiring each jet to pass the MultijetBalanceAlgo#m_beta selection only for
-     * jets with \f$p_{T}\f$ > 25% of the leading jet \f$p_{T}\f$ */
-    bool m_looseBetaCut;
+    /** @brief \f$p_{T}\f$ threshold for leading jet*/
+    float m_leadJetPtThresh;
+    /** @brief Relative pt threshold of each jet (compared to leading jet) to be considered in the MultijetBalanceAlgo#m_beta selection,
+     * i.e. only jets with \f$p_{T}\f$ > m_betaPtVar*100% of the leading jet \f$p_{T}\f$ */
+    float m_betaPtVar;
     /** @brief Apply the GSC-stage calibration to the leading jet when calibrating.  This should only be used
      * if a special eta-intercalibration stage insitu file is not available, and is a close approximate.  
      * @note It is an exact approximation if the leading jet detEta cut is changed from 1.2 to 0.8 */
@@ -288,11 +292,9 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Event weight from the MC generation*/
     float m_mcEventWeight; //!
     /** @brief AMI cross-section weight, grabbed from file TODO*/
-    float m_xs; //!
+    float m_weight_xs; //!
     /** @brief AMI acceptance weight, grabbed from file TODO*/
-    float m_acceptance; //!
-    /** @brief AMI number of events, grabbed from file TODO*/
-    int m_numAMIEvents; //!
+    float m_weight_kfactor; //!
     /** @brief Channel number assigned to the MC sample*/
     int m_mcChannelNumber; //!
     /** @brief Run number assigned to the data*/
@@ -364,8 +366,8 @@ class MultijetBalanceAlgo : public EL::Algorithm
     /** @brief Vector of MiniTree objects to output, each corresponding to a different systematic*/
     std::vector<MiniTree*> m_treeList; //!
     /** @brief Retrieve event info from the xAOD::EventInfo object and the file TODO
-     * @note: Fills in values for MultijetBalanceAlgo#m_runNumber, MultijetBalanceAlgo#m_mcChannelNumber, MultijetBalanceAlgo#m_xs, MultijetBalanceAlgo#m_acceptance */
-    EL::StatusCode getLumiWeights(const xAOD::EventInfo* eventInfo);
+     * @note: Fills in values for MultijetBalanceAlgo#m_runNumber, MultijetBalanceAlgo#m_mcChannelNumber, MultijetBalanceAlgo#m_weight_xs, MultijetBalanceAlgo#m_weight_kfactor */
+    EL::StatusCode getSampleWeights(const xAOD::EventInfo* eventInfo);
     /** @brief Vector of MultijetHists objects to output, each corresponding to a different systematic*/
     std::vector<MultijetHists*> m_jetHists; //!
 
@@ -422,6 +424,8 @@ public:
     const xAOD::JetContainer* m_truthJets; //!
     const xAOD::EventInfo* m_eventInfo; //!
     TLorentzVector m_recoilTLV; //!
+    const xAOD::IParticle* m_recoilParticle; //!
+
     float m_prescale; //!
 
     bool MJBmode;
@@ -438,12 +442,14 @@ public:
     bool cut_MCCleaning(); //!
     bool cut_SubPt(); //!
     bool cut_JetPtThresh(); //!
+    bool cut_LeadJetPtThresh(); //!
     bool cut_JVT(); //!
     bool cut_CleanJet(); //!
     bool cut_TriggerEffRecoil(); //!
     bool cut_PtAsym(); //!
     bool cut_Alpha(); //!
     bool cut_Beta(); //!
+    bool cut_ConvPhot(); //!
 
     std::vector< xAOD::Jet*>* m_jets; //!
     
