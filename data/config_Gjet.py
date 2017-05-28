@@ -148,6 +148,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
 
   #-- JVT --#
   "m_JVTWP" : "Medium", # 2016
+  "m_JVTVar" : "JvtJvfcorr",
 
   #-- JetUncertaintiesTool --#
   "m_jetUncertaintyConfig" : "JES2016_AllNuisanceParameters.config",

@@ -248,6 +248,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     bool m_jetCleanUgly;
     /** @brief JVT working point to apply*/
     std::string m_JVTWP;
+    std::string m_JVTVar = "JVFCorr";
     /** @brief Configuration file for JetUncertainties */
     std::string m_jetUncertaintyConfig;
     /** @brief Configuration file for Jet Resolution Tool */

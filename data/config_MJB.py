@@ -35,11 +35,11 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 #  "m_inContainerName"     : "AntiKt4LCTopoJets",
 #  "m_jetDef"              : "AntiKt4LCTopo",
 
-#  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
-  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
+  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016_rel21.config",
+  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
 # ICHEP 2016 20.7 calibration for validation
-  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016.config",
-  #"m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016_rel21.config",
+#  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016.config",
+#  "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
   #"m_jetCalibConfig"    : "JES_2016data_Oct2016_EtaIntercalOnly.config",
 
 #  "m_inContainerName"     : "AntiKt4EMPFlowJets",
@@ -151,10 +151,12 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
   #-- JVT --#
   "m_JVTWP" : "Medium", # 2016
+  "m_JVTVar" : "JVFCorr",
+  #"m_JVTVar" : "JvtJvfcorr",
 
   #-- JetUncertaintiesTool --#
-#  "m_jetUncertaintyConfig" : "JetUncertainties/JES2016_AllNuisanceParameters.config",
-  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JES2016_AllNuisanceParameters.config",
+  "m_jetUncertaintyConfig" : "JetUncertainties/JES2016_AllNuisanceParameters.config",
+#  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JES2016_AllNuisanceParameters.config",
 #!!  "m_jetUncertaintyConfig" : "$ROOTCOREBIN/data/JetUncertainties/JES_2016/Moriond2017/JESNuisanceParametersForMJB.config",
 
   #-- JetResolutionTool --#

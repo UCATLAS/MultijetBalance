@@ -7,7 +7,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
   setToolName( m_JVTUpdateTool_handle );
   ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JVTUpdateTool_handle, JetVertexTaggerTool) );
   ANA_CHECK( m_JVTUpdateTool_handle.setProperty("JVTFileName","JetMomentTools/JVTlikelihood_20140805.root") );
-  ANA_CHECK( m_JVTUpdateTool_handle.setProperty("JVFCorrName","JvtJvfcorr") );
+  ANA_CHECK( m_JVTUpdateTool_handle.setProperty("JVFCorrName", m_JVTVar) );
   ANA_CHECK( m_JVTUpdateTool_handle.setProperty("OutputLevel", msg().level() ) );
   ANA_CHECK( m_JVTUpdateTool_handle.retrieve() );
 
@@ -70,13 +70,21 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
 
 //!!Test    m_jetUncertaintyConfig = "/home/jdandoy/Documents/Dijet/Rel21MJB/JetUncertainties/share/JES_2016/Moriond2017/"+m_jetUncertaintyConfig;
 
-//!!    std::cout << "config is " << m_jetUncertaintyConfig << std::endl;
-//!!    std::cout << "config is " << PathResolverFindCalibFile(m_jetUncertaintyConfig) << std::endl;
+  std::string tmp = PathResolverFindCalibFile(m_jetUncertaintyConfig);
+  if( tmp.size() > 0)
+    m_jetUncertaintyConfig = tmp;
+  else
+    return EL::StatusCode::SUCCESS;
+//    m_jetUncertaintyConfig = "/home/jdandoy/Documents/Dijet/Rel21MJB/JetUncertainties/share/JES_2016/Moriond2017/"+m_jetUncertaintyConfig;
+
+
+    std::cout << "config is " << m_jetUncertaintyConfig << std::endl;
+    std::cout << "config is " << PathResolverFindCalibFile(m_jetUncertaintyConfig) << std::endl;
   setToolName( m_JetUncertaintiesTool_handle );
   ANA_CHECK( ASG_MAKE_ANA_TOOL(m_JetUncertaintiesTool_handle, JetUncertaintiesTool) );
   ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("JetDefinition", m_jetDef) );
-  //!!ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", m_jetUncertaintyConfig ) );
-  ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", PathResolverFindCalibFile(m_jetUncertaintyConfig) ) );
+  ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", m_jetUncertaintyConfig ) );
+//!!  ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("ConfigFile", PathResolverFindCalibFile(m_jetUncertaintyConfig) ) );
   if( m_isAFII ){
     ANA_CHECK( m_JetUncertaintiesTool_handle.setProperty("MCType", "AFII") );
   }else{

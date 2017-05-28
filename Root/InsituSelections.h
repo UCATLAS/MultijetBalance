@@ -160,13 +160,14 @@ bool MultijetBalanceAlgo:: cut_PtAsym(){
   float thisAsymVarCut = m_ptAsymVar;
   float thisAsymMinCut = m_ptAsymMin;
 
-  if( m_sysType.at(m_iSys) == CUTAsym )
+  if( m_sysType.at(m_iSys) == CUTAsym ){
     thisAsymVarCut += m_sysDetail.at(m_iSys);
     // Change min cut systematic variable manually
     if( m_sysDetail.at(m_iSys)  > 0 )
       thisAsymMinCut += 10.; //GeV
     else
       thisAsymMinCut -= 10.;
+  }
 
   float maxPtCut = fmax( thisAsymMinCut, thisAsymVarCut * m_recoilTLV.Pt() );
 

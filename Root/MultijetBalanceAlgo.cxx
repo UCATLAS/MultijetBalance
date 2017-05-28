@@ -391,7 +391,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       m_selections.push_back(func_JVT);
       cutflowNames.push_back( "JVT" );
       m_selType.push_back( SYST );
-
+      
       std::function<bool(void)> func_TriggerEffRecoil = std::bind(&MultijetBalanceAlgo::cut_TriggerEffRecoil, this);
       m_selections.push_back(func_TriggerEffRecoil);
       cutflowNames.push_back( "TriggerEffRecoil" );
