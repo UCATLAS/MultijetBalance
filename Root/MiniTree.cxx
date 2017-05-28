@@ -16,11 +16,14 @@ MiniTree :: ~MiniTree()
 {
 }
 
-void MiniTree::AddEventUser(std::string detailStr)
+void MiniTree::AddEventUser(std::string detailStringMJB)
 {
-
+  // event variables
   m_tree->Branch("njet", &m_njet, "njet/I");
   m_tree->Branch("trig", &m_trig, "trig/I");
+//  m_tree->Branch("lumiBlock", &m_lumiBlock, "lumiBlock/I");
+
+ // m_tree->Branch("actualInteractionsPerCrossing", &m_actualInteractionsPerCrossing, "actualInteractionsPerCrossing/F");
 
   m_tree->Branch("weight", &m_weight, "weight/F");
   m_tree->Branch("weight_xs", &m_weight_xs, "weight_xs/F");
@@ -45,84 +48,75 @@ void MiniTree::AddEventUser(std::string detailStr)
 void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetName)
 {
 
-  if(m_debug)  Info("AddJetsUser with detail string %s", detailStr.c_str());
+  std::cout << "AddJetsUser gives " << detailStr << std::endl;
+  if (detailStr.find("MJBbTag_") != std::string::npos){
+    std::string tmp = detailStr.substr(detailStr.find("MJBbTag_")+8, detailStr.size());
+    tmp = tmp.substr(0, detailStr.find_last_of(' '));
 
-  if (detailStr.find("extra") != std::string::npos)
-    m_extraVar = true;
+    std::stringstream ssbtag(tmp);
+    std::string thisSubStr;
+    while (std::getline(ssbtag, thisSubStr, ',')) {
+      m_jet_BTagNames.push_back( thisSubStr );
+      std::vector<int> thisBTagBranch;
+      m_jet_BTagBranches.push_back( thisBTagBranch );
+      m_tree->Branch( ("jet_BTag_"+thisSubStr).c_str(), &m_jet_BTagBranches.at(m_jet_BTagBranches.size()-1) );
+      std::vector<float> thisBTagSFBranch;
+      m_jet_BTagSFBranches.push_back( thisBTagSFBranch );
+      m_tree->Branch( ("jet_BTagSF_"+thisSubStr).c_str(), &m_jet_BTagSFBranches.at(m_jet_BTagSFBranches.size()-1) );
 
-// The following can come from xAH?
-//  // If saving b-tagging info, loop over each WP
-//  if (detailStr.find("MJBbTag:") != std::string::npos){
-//    std::string bTagStr = detailStr.substr(detailStr.find("MJBbTag:")+8, detailStr.size());
-//    bTagStr = bTagStr.substr(0, detailStr.find_last_of(' '));
-//
-//    std::stringstream ssbTagStr(bTagStr);
-//    std::string thisSubStr;
-//    while (std::getline(ssbTagStr, thisSubStr, ',')) {
-//      m_jet_BTagNames.push_back( thisSubStr );
-//      std::vector<int> thisBTagBranch;
-//      m_jet_BTagBranches.push_back( thisBTagBranch );
-//      m_tree->Branch( ("jet_BTag_"+thisSubStr).c_str(), &m_jet_BTagBranches.at(m_jet_BTagBranches.size()-1) );
-//      std::vector<float> thisBTagSFBranch;
-//      m_jet_BTagSFBranches.push_back( thisBTagSFBranch );
-//      m_tree->Branch( ("jet_BTagSF_"+thisSubStr).c_str(), &m_jet_BTagSFBranches.at(m_jet_BTagSFBranches.size()-1) );
-//
-//    }// for each btag WP
-//  }
-  m_tree->Branch("jet_PartonTruthLabelID", &m_jet_PartonTruthLabelID);
+    }
+  }
 
+  // jet things
   m_tree->Branch("jet_detEta", &m_jet_detEta);
   m_tree->Branch("jet_TileCorrectedPt", &m_jet_TileCorrectedPt);
   m_tree->Branch("jet_beta", &m_jet_beta);
   m_tree->Branch("jet_corr", &m_jet_corr);
+
+//  m_tree->Branch("jet_EMFrac", &m_jet_EMFrac);
+//  m_tree->Branch("jet_HECFrac", &m_jet_HECFrac);
+  m_tree->Branch("jet_TileFrac", &m_jet_TileFrac);
   m_tree->Branch("jet_Jvt", &m_jet_Jvt);
+  
+  m_tree->Branch("jet_PartonTruthLabelID", &m_jet_PartonTruthLabelID);
 
-  if( m_extraVar ){
-    m_tree->Branch("jet_EMFrac", &m_jet_EMFrac);
-    m_tree->Branch("jet_HECFrac", &m_jet_HECFrac);
-    m_tree->Branch("jet_TileFrac", &m_jet_TileFrac);
-    m_tree->Branch("jet_EnergyPerSampling", &m_jet_EnergyPerSampling);
-    //vector < vector< float > >  = jets->at(iJet)->auxdata< vector<float> >("EnergyPerSampling").at(iLayer)/1e3
-  }
-
-
+//  m_tree->Branch("jet_EnergyPerSampling", &m_jet_EnergyPerSampling);
+    //just do this for first jet?
+//  vector < vector< float > >  = jets->at(iJet)->auxdata< vector<float> >("EnergyPerSampling").at(iLayer)/1e3
+//
 }
 
 void MiniTree::FillEventUser( const xAOD::EventInfo* eventInfo ) {
 
-  static SG::AuxElement::Accessor< float > weight("weight");
-  if(weight.isAvailable( *eventInfo )){  m_weight = weight.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > weight_xs("weight_xs");
-  if(weight_xs.isAvailable( *eventInfo )){  m_weight_xs = weight_xs.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > weight_mcEventWeight("weight_mcEventWeight");
-  if(weight_mcEventWeight.isAvailable( *eventInfo )){  m_weight_mcEventWeight = weight_mcEventWeight.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > weight_prescale("weight_prescale");
-  if(weight_prescale.isAvailable( *eventInfo )){  m_weight_prescale = weight_prescale.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > weight_pileup("PileupWeight");
-  if(weight_pileup.isAvailable( *eventInfo )){  m_weight_pileup = weight_pileup.isAvailable( *eventInfo ); }
+//  m_lumiBlock = eventInfo->lumiBlock();
+//  m_actualInteractionsPerCrossing = eventInfo->actualInteractionsPerCrossing();
+//  m_averageInteractionsPerCrossing = eventInfo->averageInteractionsPerCrossing();
 
-  static SG::AuxElement::Accessor< float > ptAsym("ptAsym");
-  if(ptAsym.isAvailable( *eventInfo )){  m_ptAsym = ptAsym.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > alpha("alpha");
-  if(alpha.isAvailable( *eventInfo )){  m_alpha = alpha.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > avgBeta("avgBeta");
-  if(avgBeta.isAvailable( *eventInfo )){  m_avgBeta = avgBeta.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > ptBal("ptBal");
-  if(ptBal.isAvailable( *eventInfo )){  m_ptBal = ptBal.isAvailable( *eventInfo ); }
+  m_weight = eventInfo->auxdecor< float >( "weight" );
+  m_weight_xs = eventInfo->auxdecor< float >( "weight_xs" );
+  m_weight_mcEventWeight = eventInfo->auxdecor< float >( "weight_mcEventWeight" );
+  m_weight_prescale = eventInfo->auxdecor< float >( "weight_prescale" );
+  if(eventInfo->isAvailable< float >("PileupWeight") ){
+    m_weight_pileup = eventInfo->auxdecor< float >("PileupWeight");
+  }else{
+    m_weight_pileup = -999;
+  }
 
-  static SG::AuxElement::Accessor< float > recoilPt("recoilPt");
-  if(recoilPt.isAvailable( *eventInfo )){  m_recoilPt = recoilPt.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > recoilEta("recoilEta");
-  if(recoilEta.isAvailable( *eventInfo )){  m_recoilEta = recoilEta.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > recoilPhi("recoilPhi");
-  if(recoilPhi.isAvailable( *eventInfo )){  m_recoilPhi = recoilPhi.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > recoilM("recoilM");
-  if(recoilM.isAvailable( *eventInfo )){  m_recoilM = recoilM.isAvailable( *eventInfo ); }
-  static SG::AuxElement::Accessor< float > recoilE("recoilE");
-  if(recoilE.isAvailable( *eventInfo )){  m_recoilE = recoilE.isAvailable( *eventInfo ); }
+  m_ptAsym = eventInfo->auxdecor< float >( "ptAsym" );
+  m_alpha = eventInfo->auxdecor< float >( "alpha" );
+  m_avgBeta = eventInfo->auxdecor< float >( "avgBeta" );
+  m_ptBal = eventInfo->auxdecor< float >( "ptBal" );
 
-  static SG::AuxElement::Accessor< int > trig("trig");
-  if(trig.isAvailable( *eventInfo )){  m_trig = trig.isAvailable( *eventInfo ); }
+  if( eventInfo->isAvailable< float >("recoilPt") )
+    m_recoilPt = eventInfo->auxdecor< float >( "recoilPt" );
+  else
+    m_recoilPt = -999;
+
+  m_recoilEta = eventInfo->auxdecor< float >( "recoilEta" );
+  m_recoilPhi = eventInfo->auxdecor< float >( "recoilPhi" );
+  m_recoilM = eventInfo->auxdecor< float >( "recoilM" );
+  m_recoilE = eventInfo->auxdecor< float >( "recoilE" );
+  m_trig = eventInfo->auxdecor< int > ( "trig" );
 
 }
 
@@ -149,27 +143,20 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
   }else{
     m_jet_corr.push_back( -999 );
   }
-  if( m_extraVar ) {
-    if (jet->isAvailable< float >( "EMFrac" ) ){
-      m_jet_EMFrac.push_back( jet->auxdata< float >("EMFrac") );
-    }else{
-      m_jet_EMFrac.push_back( -999 );
-    }
-    if (jet->isAvailable< float >( "HECFrac" ) ){
-      m_jet_HECFrac.push_back( jet->auxdata< float >("HECFrac") );
-    }else{
-      m_jet_HECFrac.push_back( -999 );
-    }
-    if (jet->isAvailable< float >( "TileFrac" ) ){
-      m_jet_TileFrac.push_back( jet->auxdata< float >("TileFrac") );
-    }else{
-      m_jet_TileFrac.push_back( -999 );
-    }
-//  std::vector<float> tempVector;
-//  if( jet->isAvailable< std::vector<float> >("EnergyPerSampling") ){
-//    tempVector = jet->auxdata< std::vector<float> >("EnergyPerSampling");
+//  if (jet->isAvailable< float >( "EMFrac" ) ){
+//    m_jet_EMFrac.push_back( jet->auxdata< float >("EMFrac") );
+//  }else{
+//    m_jet_EMFrac.push_back( -999 );
 //  }
-//  m_jet_EnergyPerSampling.push_back( tempVector );
+//  if (jet->isAvailable< float >( "HECFrac" ) ){
+//    m_jet_HECFrac.push_back( jet->auxdata< float >("HECFrac") );
+//  }else{
+//    m_jet_HECFrac.push_back( -999 );
+//  }
+  if (jet->isAvailable< float >( "TileFrac" ) ){
+    m_jet_TileFrac.push_back( jet->auxdata< float >("TileFrac") );
+  }else{
+    m_jet_TileFrac.push_back( -999 );
   }
   if (jet->isAvailable< float >( "Jvt" ) ){
     m_jet_Jvt.push_back( jet->auxdata< float >("Jvt") );
@@ -183,24 +170,29 @@ void MiniTree::FillJetsUser( const xAOD::Jet* jet, const std::string ) {
   }
 
 
-//  for(unsigned int iB=0; iB < m_jet_BTagNames.size(); ++iB){
-//    std::string thisBTagName = m_jet_BTagNames.at(iB);
-//
-//
-//    if( jet->isAvailable< int >( ("BTag_"+thisBTagName+"Fixed").c_str() ) ){
-//      m_jet_BTagBranches.at(iB).push_back( jet->auxdata< int >( ("BTag_"+thisBTagName+"Fixed").c_str()) );
-//    }else{
-//      m_jet_BTagBranches.at(iB).push_back( -999 );
-//    }
-//
-//    if( jet->isAvailable< float >( ("BTagSF_"+thisBTagName+"Fixed").c_str() ) ){
-//      m_jet_BTagSFBranches.at(iB).push_back( jet->auxdata< float >( ("BTagSF_"+thisBTagName+"Fixed").c_str()) );
-//    }else{
-//      m_jet_BTagSFBranches.at(iB).push_back( -999 );
-//    }
-//  }//for iB branches
+  for(unsigned int iB=0; iB < m_jet_BTagNames.size(); ++iB){
+    std::string thisBTagName = m_jet_BTagNames.at(iB);
+
+  
+    if( jet->isAvailable< int >( ("BTag_"+thisBTagName+"Fixed").c_str() ) ){
+      m_jet_BTagBranches.at(iB).push_back( jet->auxdata< int >( ("BTag_"+thisBTagName+"Fixed").c_str()) );
+    }else{
+      m_jet_BTagBranches.at(iB).push_back( -999 );
+    }
+  
+    if( jet->isAvailable< float >( ("BTagSF_"+thisBTagName+"Fixed").c_str() ) ){
+      m_jet_BTagSFBranches.at(iB).push_back( jet->auxdata< float >( ("BTagSF_"+thisBTagName+"Fixed").c_str()) );
+    }else{
+      m_jet_BTagSFBranches.at(iB).push_back( -999 );
+    }
+  }//for iB branches
 
 
+//  std::vector<float> tempVector;
+//  if( jet->isAvailable< std::vector<float> >("EnergyPerSampling") ){
+//    tempVector = jet->auxdata< std::vector<float> >("EnergyPerSampling");
+//  }
+//  m_jet_EnergyPerSampling.push_back( tempVector );
 
 }
 
@@ -226,3 +218,11 @@ void MiniTree::ClearJetsUser(const std::string jetName ) {
   }
 }
 
+
+//void MiniTree::FillMuonsUser( const xAOD::Muon* muon ) {
+//}
+//void MiniTree::FillElectronsUser( const xAOD::Electron* electron ){
+//}
+//void MiniTree::FillFatJetsUser( const xAOD::Jet* fatJet ){
+//}
+//

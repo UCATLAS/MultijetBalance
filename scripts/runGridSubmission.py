@@ -36,8 +36,14 @@ production_name = ""
 #production_name = "phys-exotics"
 
 samples = { 
-  "MJBRel21"      : "data16_13TeV.*Main.deriv*JETM1.*p3142",
+
+  "MJBRel21"      : "sampleLists/data16_r21_JETM1_p3142.txt",
+#  "MJBRel207"     : "sampleLists/data16_r207_JETM1_p2950.txt",
+#  "MJBRel21"      : "data16_13TeV.*Main.deriv*JETM1.*p3142",
 #  "MJBRel207"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
+
+    
+#  "QCDPythia21" : "mc16_13TeV.3610*.Pythia8*JZ*W.*JETM1*_r9315_p3141",
 #
 #  "MJBData16"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
 #  "MJBData15"     : "data15_13TeV.*Main.merge*JETM1.*p2950",
@@ -97,6 +103,9 @@ for sampleName, sample in samples.iteritems():
   command = './xAODAnaHelpers/scripts/xAH_run.py'
   if runType == 'grid':
     command += ' --inputRucio '
+
+  if sample.startswith('sampleLists'):
+    command += ' --inputList'
   command += ' --files '+sample
   command += ' --config '+config_name
   command += ' --force --submitDir '+submit_dir
