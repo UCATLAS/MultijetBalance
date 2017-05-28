@@ -74,6 +74,10 @@ class MultijetBalanceAlgo : public xAH::Algorithm
 
     MSG::Level m_msgLevel = MSG::INFO;
 
+    std::string m_modeStr = "MJB";
+
+
+
     /** @brief TEvent object */
     xAOD::TEvent *m_event;  //!
     /** @brief TStore object for variable storage*/
@@ -408,9 +412,10 @@ public:
 
     float m_prescale; //!
 
-    bool MJBmode;
-    bool Gmode;
-    bool Zmode;
+    enum Mode {MJB, GJET, ZJET};
+
+    Mode m_mode = MJB;
+
     /** @brief enum defining selection */
     enum SelType {PRE, SYST, RECOIL};
 
@@ -475,6 +480,7 @@ public:
     std::vector< asg::AnaToolHandle<IBTaggingEfficiencyTool> > m_AllBTaggingEfficiencyTool_handles; //!
 
 
+  public:
     /** @brief Standard constructor*/
     MultijetBalanceAlgo ();
 //    /** @brief Standard destructor*/

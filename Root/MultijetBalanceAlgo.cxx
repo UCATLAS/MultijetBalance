@@ -53,6 +53,7 @@
 #include "JetCalibrations.h"
 
 using namespace std;
+using namespace xAH;
 //using namespace std::placeholders;
 
 // this is needed to distribute the algorithm to the workers
@@ -60,102 +61,86 @@ ClassImp(MultijetBalanceAlgo)
 
 
 
-MultijetBalanceAlgo :: MultijetBalanceAlgo () :
+MultijetBalanceAlgo :: MultijetBalanceAlgo () : 
   Algorithm("InsituBalance")
-//D  m_name(name),
-//D  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
-//D  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
-//D  m_JERTool_handle("JERTool/JERTool_"+name),
-//D  m_JERSmearingTool_handle("JERSmearingTool/JERSmearingTool_"+name),
-//D  m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
-//D  m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
-//D  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JVTEfficiencyTool_"+name),
-//D  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
-//D  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
-//D  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
 {
+  // Here you put any code for the base initialization of variables,
+  // e.g. initialize all pointers to 0.  Note that you should only put
+  // the most basic initialization here, since this method will be
+  // called on both the submission and the worker node.  Most of your
+  // initialization code will go into histInitialize() and
+  // initialize().
+
+  // configuration variables set by user
+  m_validation = false;
+  m_closureTest = false;
+  m_bootstrap = false;
+
+  m_TileCorrection = false;
+
+  m_inContainerName_jets = "";
+  m_inContainerName_photons = "";
+  m_triggerAndPt = "";
+  m_MJBIteration = 0;
+  m_MJBIterationThreshold = "999999";
+  m_MJBCorrectionFile = "";
+  m_binning = "";
+  m_VjetCalibFile = "";
+  m_leadingGSC  = false;
+  m_systTool_nToys = 100;
+
+  m_sysVariations = "Nominal";
+  m_MJBStatsOn = false;
+
+  m_numJets = 3;
+  m_ptAsymVar = 0.8;
+  m_ptAsymMin = 0.;
+  m_alpha = 0.3;
+  m_beta = 1.0;
+  m_betaPtVar = 0.;
+  m_ptThresh = 25.;
+  m_leadJetPtThresh = 0.;
+
+  m_writeTree = false;
+  m_writeNominalTree = false;
+  m_MJBDetailStr = "";
+  m_eventDetailStr = "";
+  m_jetDetailStr = "";
+  m_trigDetailStr = "";
+
+  m_overlapDR = 0.;
+
+  //m_debug = false;
+  m_MCPileupCheckContainer = "AntiKt4TruthJets";
+  m_isAFII = false;
+  m_useCutFlow = true;
+  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt";
+
+
+  m_bTag = true;
+  m_bTagFileName = "$ROOTCOREBIN/data/xAODAnaHelpers/2015-PreRecomm-13TeV-MC12-CDI-October23_v1.root";
+  m_bTagVar    = "MV2c20";
+//  m_bTagOP = "FixedCutBEff_70";
+  m_useDevelopmentFile = true;
+  m_useConeFlavourLabel = true;
+  m_bTagWPsString = "";
+
+
+  //config for Jet Tools
+  m_jetDef = "";
+  m_jetCalibSequence = "";
+  m_jetCalibConfig = "";
+  m_jetCleanCutLevel = "";
+  m_jetCleanUgly = false;
+  m_JVTWP = "Medium";
+  m_jetUncertaintyConfig = "";
+
+  m_JERUncertaintyConfig = "";
+  m_JERApplySmearing = false;
+  m_JERSystematicMode = "Simple";
+
+
 }
-//!!  // Here you put any code for the base initialization of variables,
-//!!  // e.g. initialize all pointers to 0.  Note that you should only put
-//!!  // the most basic initialization here, since this method will be
-//!!  // called on both the submission and the worker node.  Most of your
-//!!  // initialization code will go into histInitialize() and
-//!!  // initialize().
-//!!
-//!!  // configuration variables set by user
-//!!  m_validation = false;
-//!!  m_closureTest = false;
-//!!  m_bootstrap = false;
-//!!
-//!!  m_TileCorrection = false;
-//!!
-//!!  m_inContainerName_jets = "";
-//!!  m_inContainerName_photons = "";
-//!!  m_triggerAndPt = "";
-//!!  m_MJBIteration = 0;
-//!!  m_MJBIterationThreshold = "999999";
-//!!  m_MJBCorrectionFile = "";
-//!!  m_binning = "";
-//!!  m_VjetCalibFile = "";
-//!!  m_leadingGSC  = false;
-//!!  m_systTool_nToys = 100;
-//!!
-//!!  m_sysVariations = "Nominal";
-//!!  m_MJBStatsOn = false;
-//!!
-//!!  m_numJets = 3;
-//!!  m_ptAsymVar = 0.8;
-//!!  m_ptAsymMin = 0.;
-//!!  m_alpha = 0.3;
-//!!  m_beta = 1.0;
-//!!  m_betaPtVar = 0.;
-//!!  m_ptThresh = 25.;
-//!!  m_leadJetPtThresh = 0.;
-//!!
-//!!  m_writeTree = false;
-//!!  m_writeNominalTree = false;
-//!!  m_MJBDetailStr = "";
-//!!  m_eventDetailStr = "";
-//!!  m_jetDetailStr = "";
-//!!  m_trigDetailStr = "";
-//!!
-//!!  m_overlapDR = 0.;
-//!!
-//!!  //m_debug = false;
-//!!  m_MCPileupCheckContainer = "AntiKt4TruthJets";
-//!!  m_isAFII = false;
-//!!  m_useCutFlow = true;
-//!!  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt";
-//!!
-//!!
-//!!  m_bTag = true;
-//!!  m_bTagFileName = "$ROOTCOREBIN/data/xAODAnaHelpers/2015-PreRecomm-13TeV-MC12-CDI-October23_v1.root";
-//!!  m_bTagVar    = "MV2c20";
-//!!//  m_bTagOP = "FixedCutBEff_70";
-//!!  m_useDevelopmentFile = true;
-//!!  m_useConeFlavourLabel = true;
-//!!  m_bTagWPsString = "";
-//!!
-//!!
-//!!  //config for Jet Tools
-//!!  m_jetDef = "";
-//!!  m_jetCalibSequence = "";
-//!!  m_jetCalibConfig = "";
-//!!  m_jetCleanCutLevel = "";
-//!!  m_jetCleanUgly = false;
-//!!  m_JVTWP = "Medium";
-//!!  m_jetUncertaintyConfig = "";
-//!!
-//!!  m_JERUncertaintyConfig = "";
-//!!  m_JERApplySmearing = false;
-//!!  m_JERSystematicMode = "Simple";
-//!!
-//!!
-//!!  MJBmode = false;
-//!!  Gmode = true;
-//!!  Zmode = false;
-//!!
-//!!}
 
 //MultijetBalanceAlgo ::~MultijetBalanceAlgo(){
 //}
@@ -167,6 +152,14 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
     Error("configure()", "InputContainer is empty!");
     return EL::StatusCode::FAILURE;
   }
+
+  if( m_modeStr.find("MJB") != std::string::npos)
+    m_mode = MJB;
+  else if( m_modeStr.find("Gjet") != std::string::npos)
+    m_mode = GJET;
+  else if( m_modeStr.find("Zjet") != std::string::npos)
+    m_mode = ZJET;
+
 
 
   // Save binning to use
@@ -354,8 +347,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
   ANA_CHECK(loadJetCleaningTool());
   ANA_CHECK(loadJVTTool());
   ANA_CHECK(loadBTagTools());
-  if( m_TileCorrection )
-    ANA_CHECK(loadJetTileCorrectionTool());
+  ANA_CHECK(loadJetTileCorrectionTool());
   if( m_VjetCalib )
     ANA_CHECK(loadVjetCalibration());
 
@@ -368,7 +360,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
     //// Add the defined selections, in correct order /////
     std::vector< std::string > cutflowNames;
-    if( MJBmode ){
+    if( m_mode == MJB ){
 
       std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
       m_selections.push_back(func_MCCleaning);
@@ -427,7 +419,8 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
     }
 
-    if( Gmode ){
+    if( m_mode == GJET ){
+
 
       std::function<bool(void)> func_TriggerEffRecoil = std::bind(&MultijetBalanceAlgo::cut_TriggerEffRecoil, this);
       m_selections.push_back(func_TriggerEffRecoil);
@@ -641,7 +634,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
   /// Create recoilParticle ///
   const xAOD::PhotonContainer* inPhotons = 0;
-  if( Gmode ){
+  if( m_mode == GJET ){
     ANA_CHECK( HelperFunctions::retrieve(inPhotons, m_inContainerName_photons, m_event, m_store, msg()) );
 
     m_recoilParticle = inPhotons->at(0);
@@ -668,7 +661,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 
   // Apply dedicated V+jet calibration on subleading jets if MJB mode //
-  if( MJBmode && m_VjetCalib){ // Only apply if we're running MJB and Vjet Calibration is turned on
+  if( m_mode == MJB && m_VjetCalib){ // Only apply if we're running MJB and Vjet Calibration is turned on
     ANA_CHECK( applyVjetCalibration( m_jets ) );
   }
 
@@ -709,7 +702,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
     *m_jets = *savedJets;  // Reset the vector of pointers
     //// If MJB, need to reset 4-mom of jets and apply new systematic variations
-    if( MJBmode ){
+    if( m_mode == MJB ){
 
       //Reset each jet pt to calibrated copy (including V+jet if applicable)
       for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
@@ -755,7 +748,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 
     ////////// Build the recoil object for MJB //////////
-    if( MJBmode ){
+    if( m_mode == MJB ){
       //Create recoilJets object from all nonleading, passing jets
       m_recoilTLV.SetPtEtaPhiM(0,0,0,0);
       for (unsigned int iJet = 1; iJet < m_jets->size(); ++iJet){
@@ -792,8 +785,6 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     m_eventInfo->auxdecor< float >( "recoilM" ) = m_recoilTLV.M();
     m_eventInfo->auxdecor< float >( "recoilE" ) = m_recoilTLV.E();
     m_eventInfo->auxdecor< float >( "ptBal" ) = m_jets->at(0)->pt() / m_recoilTLV.Pt();
-
-    std::cout << "recoil pt is " << m_eventInfo->auxdecor< float >( "recoilPt" ) << std::endl;
 
     for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
 
@@ -877,7 +868,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 EL::StatusCode MultijetBalanceAlgo :: postExecute ()
 {
-  ANA_MSG_INFO("postExecute()");
+  ANA_MSG_VERBOSE("postExecute()");
   // Here you do everything that needs to be done after the main event
   // processing.  This is typically very rare, particularly in user
   // code.  It is mainly used in implementing the NTupleSvc.
@@ -1164,7 +1155,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
       //pt Asymmetry systematics are +-.1 (*100)
-      if( MJBmode ){
+      if( m_mode == MJB ){
         m_sysName.push_back("EvSel_Asym"+to_string(int(round(m_ptAsymVar*100))-10)+"__1down" );   m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( -0.1 );
         m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
         m_sysName.push_back("EvSel_Asym"+to_string(int(round(m_ptAsymVar*100))+10)+"__1up" );     m_sysType.push_back( CUTAsym ); m_sysDetail.push_back( 0.1 );
