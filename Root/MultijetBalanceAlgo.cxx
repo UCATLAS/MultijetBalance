@@ -60,8 +60,8 @@ ClassImp(MultijetBalanceAlgo)
 
 
 
-MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
-  Algorithm("InsituBalance") //,
+MultijetBalanceAlgo :: MultijetBalanceAlgo () :
+  Algorithm("InsituBalance")
 //D  m_name(name),
 //D  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
 //D  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
@@ -74,90 +74,91 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
 //D  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
 //D  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
 {
-  // Here you put any code for the base initialization of variables,
-  // e.g. initialize all pointers to 0.  Note that you should only put
-  // the most basic initialization here, since this method will be
-  // called on both the submission and the worker node.  Most of your
-  // initialization code will go into histInitialize() and
-  // initialize().
-
-  // configuration variables set by user
-  m_validation = false;
-  m_closureTest = false;
-  m_bootstrap = false;
-
-  m_TileCorrection = false;
-
-  m_inContainerName_jets = "";
-  m_inContainerName_photons = "";
-  m_triggerAndPt = "";
-  m_MJBIteration = 0;
-  m_MJBIterationThreshold = "999999";
-  m_MJBCorrectionFile = "";
-  m_binning = "";
-  m_VjetCalibFile = "";
-  m_leadingGSC  = false;
-  m_systTool_nToys = 100;
-
-  m_sysVariations = "Nominal";
-  m_MJBStatsOn = false;
-
-  m_numJets = 3;
-  m_ptAsymVar = 0.8;
-  m_ptAsymMin = 0.;
-  m_alpha = 0.3;
-  m_beta = 1.0;
-  m_betaPtVar = 0.;
-  m_ptThresh = 25.;
-  m_leadJetPtThresh = 0.;
-
-  m_writeTree = false;
-  m_writeNominalTree = false;
-  m_MJBDetailStr = "";
-  m_eventDetailStr = "";
-  m_jetDetailStr = "";
-  m_trigDetailStr = "";
-
-  m_overlapDR = 0.;
-
-  //m_debug = false;
-  m_MCPileupCheckContainer = "AntiKt4TruthJets";
-  m_isAFII = false;
-  m_useCutFlow = true;
-  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt";
-
-
-  m_bTag = true;
-  m_bTagFileName = "$ROOTCOREBIN/data/xAODAnaHelpers/2015-PreRecomm-13TeV-MC12-CDI-October23_v1.root";
-  m_bTagVar    = "MV2c20";
-//  m_bTagOP = "FixedCutBEff_70";
-  m_useDevelopmentFile = true;
-  m_useConeFlavourLabel = true;
-  m_bTagWPsString = "";
-
-
-  //config for Jet Tools
-  m_jetDef = "";
-  m_jetCalibSequence = "";
-  m_jetCalibConfig = "";
-  m_jetCleanCutLevel = "";
-  m_jetCleanUgly = false;
-  m_JVTWP = "Medium";
-  m_jetUncertaintyConfig = "";
-
-  m_JERUncertaintyConfig = "";
-  m_JERApplySmearing = false;
-  m_JERSystematicMode = "Simple";
-
-
-  MJBmode = false;
-  Gmode = true;
-  Zmode = false;
-
 }
+//!!  // Here you put any code for the base initialization of variables,
+//!!  // e.g. initialize all pointers to 0.  Note that you should only put
+//!!  // the most basic initialization here, since this method will be
+//!!  // called on both the submission and the worker node.  Most of your
+//!!  // initialization code will go into histInitialize() and
+//!!  // initialize().
+//!!
+//!!  // configuration variables set by user
+//!!  m_validation = false;
+//!!  m_closureTest = false;
+//!!  m_bootstrap = false;
+//!!
+//!!  m_TileCorrection = false;
+//!!
+//!!  m_inContainerName_jets = "";
+//!!  m_inContainerName_photons = "";
+//!!  m_triggerAndPt = "";
+//!!  m_MJBIteration = 0;
+//!!  m_MJBIterationThreshold = "999999";
+//!!  m_MJBCorrectionFile = "";
+//!!  m_binning = "";
+//!!  m_VjetCalibFile = "";
+//!!  m_leadingGSC  = false;
+//!!  m_systTool_nToys = 100;
+//!!
+//!!  m_sysVariations = "Nominal";
+//!!  m_MJBStatsOn = false;
+//!!
+//!!  m_numJets = 3;
+//!!  m_ptAsymVar = 0.8;
+//!!  m_ptAsymMin = 0.;
+//!!  m_alpha = 0.3;
+//!!  m_beta = 1.0;
+//!!  m_betaPtVar = 0.;
+//!!  m_ptThresh = 25.;
+//!!  m_leadJetPtThresh = 0.;
+//!!
+//!!  m_writeTree = false;
+//!!  m_writeNominalTree = false;
+//!!  m_MJBDetailStr = "";
+//!!  m_eventDetailStr = "";
+//!!  m_jetDetailStr = "";
+//!!  m_trigDetailStr = "";
+//!!
+//!!  m_overlapDR = 0.;
+//!!
+//!!  //m_debug = false;
+//!!  m_MCPileupCheckContainer = "AntiKt4TruthJets";
+//!!  m_isAFII = false;
+//!!  m_useCutFlow = true;
+//!!  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt";
+//!!
+//!!
+//!!  m_bTag = true;
+//!!  m_bTagFileName = "$ROOTCOREBIN/data/xAODAnaHelpers/2015-PreRecomm-13TeV-MC12-CDI-October23_v1.root";
+//!!  m_bTagVar    = "MV2c20";
+//!!//  m_bTagOP = "FixedCutBEff_70";
+//!!  m_useDevelopmentFile = true;
+//!!  m_useConeFlavourLabel = true;
+//!!  m_bTagWPsString = "";
+//!!
+//!!
+//!!  //config for Jet Tools
+//!!  m_jetDef = "";
+//!!  m_jetCalibSequence = "";
+//!!  m_jetCalibConfig = "";
+//!!  m_jetCleanCutLevel = "";
+//!!  m_jetCleanUgly = false;
+//!!  m_JVTWP = "Medium";
+//!!  m_jetUncertaintyConfig = "";
+//!!
+//!!  m_JERUncertaintyConfig = "";
+//!!  m_JERApplySmearing = false;
+//!!  m_JERSystematicMode = "Simple";
+//!!
+//!!
+//!!  MJBmode = false;
+//!!  Gmode = true;
+//!!  Zmode = false;
+//!!
+//!!}
 
-MultijetBalanceAlgo ::~MultijetBalanceAlgo(){
-}
+//MultijetBalanceAlgo ::~MultijetBalanceAlgo(){
+//}
 
 EL::StatusCode  MultijetBalanceAlgo :: configure (){
   Info("configure()", "Configuring MultijetBalanceAlgo Interface.");
@@ -291,6 +292,8 @@ EL::StatusCode MultijetBalanceAlgo :: histInitialize ()
   // connected.
   Info("histInitialize()", "Calling histInitialize \n");
 
+  ANA_MSG_INFO( "Calling histInitialize");
+  ANA_CHECK( xAH::Algorithm::algInitialize())
 
 
   return EL::StatusCode::SUCCESS;
@@ -825,11 +828,11 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       m_eventInfo->auxdecor< float >("weight") = m_prescale;
 
     /////////////// Output Plots ////////////////////////////////
-    ANA_MSG_DEBUG("Begin Hist output for %s", m_sysName.at(iSys).c_str() );
+    ANA_MSG_DEBUG("Begin Hist output for " << m_sysName.at(iSys) );
     m_jetHists.at(iSys)->execute( m_jets, m_eventInfo);
 
 
-    ANA_MSG_DEBUG("Begin TTree output for %s", m_sysName.at(iSys).c_str() );
+    ANA_MSG_DEBUG("Begin TTree output for " << m_sysName.at(iSys) );
     ///////////////// Optional MiniTree Output for Nominal Only //////////////////////////
     if( m_writeTree ) {
       if(!m_writeNominalTree ||  m_NominalIndex == (int) iSys) {
@@ -985,14 +988,14 @@ EL::StatusCode MultijetBalanceAlgo :: histFinalize ()
   // they processed input events.
 
 
-
+  ANA_CHECK( xAH::Algorithm::algFinalize());
   return EL::StatusCode::SUCCESS;
 }
 
 
 EL::StatusCode MultijetBalanceAlgo::fillCutflow(int iSel, int iVar){
   if(m_useCutFlow) {
-    ANA_MSG_DEBUG("fillCutflow(): passing cut %i of selection %i", iSel, iVar);
+    ANA_MSG_DEBUG("fillCutflow(): passing cut " << iSel << " of selection " << iVar);
     m_cutflowHist.at(iVar)->Fill(iSel+m_cutflowFirst, 1);
     m_cutflowHistW.at(iVar)->Fill(iSel+m_cutflowFirst, m_mcEventWeight);
   }
@@ -1003,7 +1006,7 @@ return EL::StatusCode::SUCCESS;
 
 EL::StatusCode MultijetBalanceAlgo::fillCutflowAll(int iSel){
   if(m_useCutFlow) {
-    ANA_MSG_DEBUG("fillCutflowAll(): passing cut %i", iSel);
+    ANA_MSG_DEBUG("fillCutflowAll(): passing cut " << iSel);
     for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
       m_cutflowHist.at(iVar)->Fill(iSel+m_cutflowFirst, 1);
       m_cutflowHistW.at(iVar)->Fill(iSel+m_cutflowFirst, m_mcEventWeight);
@@ -1255,7 +1258,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadBTagTools(){
     ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("OperatingPoint",      thisBTagOP) );
     ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()) );
     ANA_CHECK( this_BTaggingSelectionTool_handle.retrieve() );
-    ANA_MSG_INFO("loadBTagTools(): bTaggingSelectionTool initialized : %s ", this_BTaggingSelectionTool_handle.name().c_str() );
+    ANA_MSG_INFO("loadBTagTools(): bTaggingSelectionTool initialized : " << this_BTaggingSelectionTool_handle.name() );
 
     m_AllBTaggingSelectionTool_handles.push_back( this_BTaggingSelectionTool_handle );
 
@@ -1271,7 +1274,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadBTagTools(){
       ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("UseDevelopmentFile",  m_useDevelopmentFile) );
       ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("ConeFlavourLabel",    m_useConeFlavourLabel) );
       ANA_CHECK( this_BTaggingEfficiencyTool_handle.retrieve() );
-      ANA_MSG_INFO("loadBTagTools(): bTaggingEfficiencyTool initialized : %s ", this_BTaggingEfficiencyTool_handle.name().c_str() );
+      ANA_MSG_INFO("loadBTagTools(): bTaggingEfficiencyTool initialized : " << this_BTaggingEfficiencyTool_handle.name() );
 
       m_AllBTaggingEfficiencyTool_handles.push_back( this_BTaggingEfficiencyTool_handle );
     }

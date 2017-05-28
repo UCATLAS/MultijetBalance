@@ -45,7 +45,7 @@ void MiniTree::AddEventUser(std::string detailStr)
 void MiniTree::AddJetsUser(const std::string detailStr, const std::string jetName)
 {
 
-  if(m_debug)  Info("AddJetsUser with detail string %s", detailStr);
+  if(m_debug)  Info("AddJetsUser with detail string %s", detailStr.c_str());
 
   if (detailStr.find("extra") != std::string::npos)
     m_extraVar = true;

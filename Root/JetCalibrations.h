@@ -270,8 +270,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( std::vector< xAOD
 
 
 EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , unsigned int iSys ){
-  ANA_MSG_DEBUG("applyJetUncertaintyTool with systematic %s", m_sysName.at(iSys).c_str() );
-
+  ANA_MSG_DEBUG("applyJetUncertaintyTool with systematic " << m_sysName.at(iSys) );
 
    if( m_sysType.at(iSys) != JES ) //If not a JetUncertaintyTool sys variation
     return EL::StatusCode::SUCCESS;
@@ -291,7 +290,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , 
 }
 
 EL::StatusCode MultijetBalanceAlgo :: applyJetResolutionTool( xAOD::Jet* jet , unsigned int iSys ){
-  ANA_MSG_DEBUG("applyJetResolutionToolwith systematic %s", m_sysName.at(iSys).c_str());
+  ANA_MSG_DEBUG("applyJetResolutionToolwith systematic " << m_sysName.at(iSys) );
 
   if( ( m_sysType.at(iSys) != JER ) // If not a JetResolutionTool sys variation
       && !(m_JERApplySmearing && m_isMC)  )  //If not applying smearing to MC

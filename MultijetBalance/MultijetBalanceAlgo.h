@@ -6,8 +6,11 @@
  *  @author Jeff Dandoy
  */
 
-#include <EventLoop/StatusCode.h>
-#include <EventLoop/Algorithm.h>
+// algorithm wrapper
+#include "xAODAnaHelpers/Algorithm.h"
+
+//#include <EventLoop/StatusCode.h>
+//#include <EventLoop/Algorithm.h>
 
 // Infrastructure include(s):
 #include "xAODRootAccess/Init.h"
@@ -40,8 +43,6 @@
 
 #include <functional>
 
-// algorithm wrapper
-#include "xAODAnaHelpers/Algorithm.h"
 
 
 class MultijetHists;
@@ -476,8 +477,8 @@ public:
 
     /** @brief Standard constructor*/
     MultijetBalanceAlgo ();
-    /** @brief Standard destructor*/
-    ~MultijetBalanceAlgo ();
+//    /** @brief Standard destructor*/
+//    ~MultijetBalanceAlgo ();
 
     /** @brief Setup the job (inherits from Algorithm)*/
     virtual EL::StatusCode setupJob (EL::Job& job);
@@ -485,7 +486,7 @@ public:
     virtual EL::StatusCode fileExecute ();
     /** @brief Initialize the output histograms before any input file is attached (inherits from Algorithm)*/
     virtual EL::StatusCode histInitialize ();
-//    /** @brief Change to the next input file (inherits from Algorithm)*/
+    /** @brief Change to the next input file (inherits from Algorithm)*/
 //    virtual EL::StatusCode changeInput (bool firstFile);
     /** @brief Initialize the input file (inherits from Algorithm)*/
     virtual EL::StatusCode initialize ();
