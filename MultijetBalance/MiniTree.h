@@ -17,15 +17,13 @@ class MiniTree : public HelpTreeBase
 
   private:
 
+    /** @brief Include extra variables */
+    bool m_extraVar;
+
     /** @brief Number of jets in the event*/
     int m_njet;
     /** @brief Luminosity block of the event */
     int m_lumiBlock;
-
-    /** @brief Number of actual interactions per crossing*/
-    //float m_actualInteractionsPerCrossing;
-    /** @brief Average number of interactions per crossing*/
-    float m_corrected_averageInteractionsPerCrossing;
 
     /** @brief Total weight of the event, a multiplication of other event weights*/
     float m_weight;

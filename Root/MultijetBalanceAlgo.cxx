@@ -62,17 +62,17 @@ ClassImp(MultijetBalanceAlgo)
 
 MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   Algorithm("InsituBalance") //,
-//  m_name(name),
-//  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
-//  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
-//  m_JERTool_handle("JERTool/JERTool_"+name),
-//  m_JERSmearingTool_handle("JERSmearingTool/JERSmearingTool_"+name),
-//  m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
-//  m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
-//  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JVTEfficiencyTool_"+name),
-//  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
-//  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
-//  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
+//D  m_name(name),
+//D  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
+//D  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
+//D  m_JERTool_handle("JERTool/JERTool_"+name),
+//D  m_JERSmearingTool_handle("JERSmearingTool/JERSmearingTool_"+name),
+//D  m_JetCleaningTool_handle("JetCleaningTool/JetCleaningTool_"+name),
+//D  m_JVTUpdateTool_handle("JetVertexTaggerTool/JVTUpdateTool_"+name),
+//D  m_JetJVTEfficiencyTool_handle("CP::JetJVTEfficiency/JVTEfficiencyTool_"+name),
+//D  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
+//D  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
+//D  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
 {
   // Here you put any code for the base initialization of variables,
   // e.g. initialize all pointers to 0.  Note that you should only put
@@ -117,14 +117,14 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo (std::string name) :
   m_eventDetailStr = "";
   m_jetDetailStr = "";
   m_trigDetailStr = "";
- 
+
   m_overlapDR = 0.;
 
-  m_debug = false;
+  //m_debug = false;
   m_MCPileupCheckContainer = "AntiKt4TruthJets";
   m_isAFII = false;
   m_useCutFlow = true;
-  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt"; 
+  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt";
 
 
   m_bTag = true;
@@ -202,7 +202,7 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
     m_useMCPileupCheck = false;
   else
     m_useMCPileupCheck = true;
-  
+
 
   if( m_validation ){
     if( m_MJBIteration > 0 ){
@@ -364,7 +364,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 //
 
     //// Add the defined selections, in correct order /////
-    std::vector< std::string > cutflowNames; 
+    std::vector< std::string > cutflowNames;
     if( MJBmode ){
 
       std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
@@ -423,9 +423,9 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       m_selType.push_back( RECOIL );
 
     }
-    
+
     if( Gmode ){
-      
+
       std::function<bool(void)> func_TriggerEffRecoil = std::bind(&MultijetBalanceAlgo::cut_TriggerEffRecoil, this);
       m_selections.push_back(func_TriggerEffRecoil);
       cutflowNames.push_back( "TriggerEffRecoil" );
@@ -440,14 +440,14 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       m_selections.push_back(func_JetEta);
       cutflowNames.push_back( "JetEta" );
       m_selType.push_back( PRE );
-     
-      ///// Photon E/P 
+
+      ///// Photon E/P
       std::function<bool(void)> func_ConvPhot = std::bind(&MultijetBalanceAlgo::cut_ConvPhot, this);
       m_selections.push_back(func_ConvPhot);
       cutflowNames.push_back( "ConvPhot" );
       m_selType.push_back( PRE );
 
-      // jet-photon overlap removal      
+      // jet-photon overlap removal
       std::function<bool(void)> func_OverlapRemoval = std::bind(&MultijetBalanceAlgo::cut_OverlapRemoval, this);
       m_selections.push_back(func_OverlapRemoval);
       cutflowNames.push_back( "OverlapRemoval" );
@@ -468,7 +468,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
       m_selections.push_back(func_LeadEta);
       cutflowNames.push_back( "LeadEta" );
       m_selType.push_back( SYST );
-      
+
       std::function<bool(void)> func_PtAsym = std::bind(&MultijetBalanceAlgo::cut_PtAsym, this);
       m_selections.push_back(func_PtAsym);
       cutflowNames.push_back( "PtAsym" );
@@ -602,8 +602,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   // events, e.g. read input variables, apply cuts, and fill
   // histograms and trees.  This is where most of your actual analysis
   // code will go.
-  if(m_debug) Info("execute()", "Begin Execute");
   ++m_eventCounter;
+  ANA_MSG_VERBOSE("Begin Execute " << m_eventCounter);
 
   if(m_eventCounter %100000 == 0)
     Info("execute()", "Event # %i", m_eventCounter);
@@ -615,7 +615,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   // Event information
   //---------------------------
   ///////////////////////////// Retrieve Containers /////////////////////////////////////////
-  if(m_debug) Info("execute()", "Retrieve Containers ");
+  ANA_MSG_DEBUG("Retrieve Containers");
 
   m_eventInfo = 0;
   //const xAOD::EventInfo* eventInfo = 0;
@@ -635,8 +635,8 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     ANA_CHECK( HelperFunctions::retrieve(m_truthJets, m_MCPileupCheckContainer, m_event, m_store, msg()) );
   }
 
-  
-  /// Create recoilParticle ///  
+
+  /// Create recoilParticle ///
   const xAOD::PhotonContainer* inPhotons = 0;
   if( Gmode ){
     ANA_CHECK( HelperFunctions::retrieve(inPhotons, m_inContainerName_photons, m_event, m_store, msg()) );
@@ -647,7 +647,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
     std::cout << "!!!!!!!!!!!!!!!! m_recoilTLV is " << m_recoilTLV.Pt() << std::endl;
   }
 
-  
+
   ///// For jets, create an editable shallow copy container & vector where jets are removable //////
   std::pair< xAOD::JetContainer*, xAOD::ShallowAuxContainer* > jetsSC = xAOD::shallowCopyContainer( *inJets );
 
@@ -659,7 +659,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 
   ////////////////////////////////// Apply jet calibrations ////////////////////////////////////////
-  if(m_debug) Info("execute()", "Apply Jet Calibration Tool ");
+  ANA_MSG_DEBUG("Apply Jet Calibration Tool");
   ANA_CHECK( applyJetCalibrationTool( m_jets ) );
   reorderJets( m_jets );
 
@@ -668,13 +668,13 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
   if( MJBmode && m_VjetCalib){ // Only apply if we're running MJB and Vjet Calibration is turned on
     ANA_CHECK( applyVjetCalibration( m_jets ) );
   }
- 
+
 
   ////// Do the event selections before looping over systematics  //////
   for(unsigned int iS = 0; iS < m_selections.size(); ++iS){
     if( m_selType.at(iS) != PRE )
       continue;
-    
+
     if( m_selections.at(iS)() ){
       fillCutflowAll(iS);
     }else{
@@ -683,7 +683,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       wk()->skipEvent();  return EL::StatusCode::SUCCESS;
     }
   }// for preselections
-  
+
   // MJB: A vector to save the calibrated P4 of jets
   std::vector<xAOD::JetFourMom_t> jets_calibratedP4;
   for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
@@ -719,12 +719,12 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
         } else {
 
           m_jets->at(iJet)->setJetP4( jets_calibratedP4.at(iJet) );
-  
+
         }
       }// for each jet
 
       // Apply additional jet corrections based on systematic variation.
-      // Will apply iterative MJB calibration or JES / JER uncertainties. 
+      // Will apply iterative MJB calibration or JES / JER uncertainties.
       applyJetSysVariation(m_jets, iSys);
 
       // Apply tile correction tool last
@@ -825,11 +825,11 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
       m_eventInfo->auxdecor< float >("weight") = m_prescale;
 
     /////////////// Output Plots ////////////////////////////////
-    if(m_debug) Info("execute()", "Begin Hist output for %s", m_sysName.at(iSys).c_str() );
+    ANA_MSG_DEBUG("Begin Hist output for %s", m_sysName.at(iSys).c_str() );
     m_jetHists.at(iSys)->execute( m_jets, m_eventInfo);
 
 
-    if(m_debug) Info("execute()", "Begin TTree output for %s", m_sysName.at(iSys).c_str() );
+    ANA_MSG_DEBUG("Begin TTree output for %s", m_sysName.at(iSys).c_str() );
     ///////////////// Optional MiniTree Output for Nominal Only //////////////////////////
     if( m_writeTree ) {
       if(!m_writeNominalTree ||  m_NominalIndex == (int) iSys) {
@@ -874,7 +874,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 
 EL::StatusCode MultijetBalanceAlgo :: postExecute ()
 {
-  if(m_debug) Info("postExecute()", "postExecute");
+  ANA_MSG_INFO("postExecute()");
   // Here you do everything that needs to be done after the main event
   // processing.  This is typically very rare, particularly in user
   // code.  It is mainly used in implementing the NTupleSvc.
@@ -884,7 +884,7 @@ EL::StatusCode MultijetBalanceAlgo :: postExecute ()
 
 EL::StatusCode MultijetBalanceAlgo :: finalize ()
 {
-  if(m_debug) Info("finalize()", "finalize");
+  ANA_MSG_INFO("finalize()");
   // This method is the mirror image of initialize(), meaning it gets
   // called after the last event has been processed on the worker node
   // and allows you to finish up any objects you created in
@@ -898,7 +898,7 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
     m_jetHists.at(iVar)->finalize();
   }
 
-  if(m_debug) Info("finalize()", "Done with jes hists");
+  ANA_MSG_INFO("Done with jes hists");
 
 //!!  if( m_bootstrap ){
 //!!    systTool->writeToFile(wk()->getOutputFile("SystToolOutput"));
@@ -942,7 +942,7 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
     wk()->addOutput(histCutflowW);
   }//m_useCutFlow
 
-  if(m_debug) Info("finalize()", "Done with cutflow hists");
+  ANA_MSG_INFO("Done with cutflow hists");
   //Only if Nominal is available
   if( m_writeTree && m_NominalIndex >= 0) {
     TH1D *treeCutflow, *treeCutflowW;
@@ -963,7 +963,7 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
   }
 
   m_ss.str( std::string() );
-  if(m_debug) Info("finalize()", "Done finalize");
+  ANA_MSG_INFO("Done finalize");
 
   return EL::StatusCode::SUCCESS;
 }
@@ -972,7 +972,7 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
 
 EL::StatusCode MultijetBalanceAlgo :: histFinalize ()
 {
-  if(m_debug) Info("histFinalize()", "histFinalize");
+  ANA_MSG_INFO("histFinalize()");
   // This method is the mirror image of histInitialize(), meaning it
   // gets called after the last event has been processed on the worker
   // node and allows you to finish up any objects you created in
@@ -992,7 +992,7 @@ EL::StatusCode MultijetBalanceAlgo :: histFinalize ()
 
 EL::StatusCode MultijetBalanceAlgo::fillCutflow(int iSel, int iVar){
   if(m_useCutFlow) {
-    if(m_debug) Info("fillCutflow()", "Passing Cut %i-%i", iSel, iVar);
+    ANA_MSG_DEBUG("fillCutflow(): passing cut %i of selection %i", iSel, iVar);
     m_cutflowHist.at(iVar)->Fill(iSel+m_cutflowFirst, 1);
     m_cutflowHistW.at(iVar)->Fill(iSel+m_cutflowFirst, m_mcEventWeight);
   }
@@ -1003,7 +1003,7 @@ return EL::StatusCode::SUCCESS;
 
 EL::StatusCode MultijetBalanceAlgo::fillCutflowAll(int iSel){
   if(m_useCutFlow) {
-    if(m_debug) Info("fillCutflowAll()", "Passing Cut");
+    ANA_MSG_DEBUG("fillCutflowAll(): passing cut %i", iSel);
     for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
       m_cutflowHist.at(iVar)->Fill(iSel+m_cutflowFirst, 1);
       m_cutflowHistW.at(iVar)->Fill(iSel+m_cutflowFirst, m_mcEventWeight);
@@ -1016,7 +1016,7 @@ return EL::StatusCode::SUCCESS;
 
 //This grabs luminosity, acceptace, and eventNumber information from the respective text file
 EL::StatusCode MultijetBalanceAlgo::getSampleWeights(const xAOD::EventInfo* eventInfo) {
-  if(m_debug) Info("getSampleWeights()", "getSampleWeights");
+  ANA_MSG_INFO("getSampleWeights()");
 
   float weight_xs = 1.0, weight_kfactor = 1.0, weight_eff = 1.0;
   if(!m_isMC){
@@ -1079,9 +1079,9 @@ double MultijetBalanceAlgo::DeltaR(double eta1, double phi1,double eta2, double 
 }
 
 EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
-  if(m_debug) Info("loadSystematics()", "loadSystematics");
+  ANA_MSG_INFO("loadSystematics()");
 
-  // Define the All systematic // 
+  // Define the All systematic //
   if( m_sysVariations.find("All") != std::string::npos){
     if(m_isMC){
       m_sysVariations = "Nominal-EvSel-JER";
@@ -1136,12 +1136,12 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
       for(unsigned int i=1; i < JERSysList.size(); ++i){
         m_sysName.push_back( JERSysList.at(i).name() );   m_sysType.push_back( JER ); m_sysDetail.push_back( i ); m_sysSet.push_back( JERSysList.at(i) );
       }
-    
+
     } else if( varVector.at(iVar).find("JVT") != std::string::npos ){
-      m_sysName.push_back( "JVT__1down" );   m_sysType.push_back( JVT ); m_sysDetail.push_back( -1 ); 
+      m_sysName.push_back( "JVT__1down" );   m_sysType.push_back( JVT ); m_sysDetail.push_back( -1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
-      
-      m_sysName.push_back( "JVT__1up" );   m_sysType.push_back( JVT ); m_sysDetail.push_back( 1 ); 
+
+      m_sysName.push_back( "JVT__1up" );   m_sysType.push_back( JVT ); m_sysDetail.push_back( 1 );
       m_sysSet.push_back( CP::SystematicSet() ); m_sysSet.back().insert( CP::SystematicVariation("") );
 
     //////////////////////////////////////// Event Selection  /////////////////////////////////////////
@@ -1188,7 +1188,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
 
 EL::StatusCode MultijetBalanceAlgo :: setupJetCalibrationStages() {
 
-  if(m_debug) Info("setupJetCalibrationStages", "setupJetCalibrationStages");
+  ANA_MSG_INFO("setupJetCalibrationStages()");
   // Setup calibration stages tools //
   // Create a map from the CalibSequence string components to the xAOD aux data
   std::map <std::string, std::string> JCSMap;
@@ -1241,50 +1241,38 @@ EL::StatusCode MultijetBalanceAlgo :: loadBTagTools(){
     return EL::StatusCode::SUCCESS;
   }
 
-  for(unsigned int iB=0; iB < m_bTagWPs.size(); ++iB){ 
+  for(unsigned int iB=0; iB < m_bTagWPs.size(); ++iB){
+    std::string thisBTagOP = "FixedCutBEff_"+m_bTagWPs.at(iB);
 
     // Initialize & Configure the BJetSelectionTool
-    asg::AnaToolHandle<IBTaggingSelectionTool> this_BTaggingSelectionTool_handle;
-    this_BTaggingSelectionTool_handle.setTypeAndName("BTaggingSelectionTool/BTaggingSelectionTool_"+m_bTagWPs.at(iB)+"_"+m_name);
+    asg::AnaToolHandle<IBTaggingSelectionTool> this_BTaggingSelectionTool_handle{"BTaggingSelectionTool_"+m_bTagWPs.at(iB)};
+    setToolName( this_BTaggingSelectionTool_handle);
+    ANA_CHECK( ASG_MAKE_ANA_TOOL( this_BTaggingSelectionTool_handle, BTaggingSelectionTool ) );
+    ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("MaxEta",2.5) );
+    ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("MinPt",20000.) );
+    ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("FlvTagCutDefinitionsFileName",m_bTagFileName.c_str()) );
+    ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("TaggerName",          m_bTagVar) );
+    ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("OperatingPoint",      thisBTagOP) );
+    ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()) );
+    ANA_CHECK( this_BTaggingSelectionTool_handle.retrieve() );
+    ANA_MSG_INFO("loadBTagTools(): bTaggingSelectionTool initialized : %s ", this_BTaggingSelectionTool_handle.name().c_str() );
 
-    if( !this_BTaggingSelectionTool_handle.isUserConfigured() ){
-      ANA_CHECK( ASG_MAKE_ANA_TOOL( this_BTaggingSelectionTool_handle, BTaggingSelectionTool ) );
-
-      std::string thisBTagOP = "FixedCutBEff_"+m_bTagWPs.at(iB);
-      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("MaxEta",2.5) );
-      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("MinPt",20000.) );
-      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("FlvTagCutDefinitionsFileName",m_bTagFileName.c_str()) );
-      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("TaggerName",          m_bTagVar) );
-      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("OperatingPoint",      thisBTagOP) );
-      ANA_CHECK( this_BTaggingSelectionTool_handle.setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()) );
-
-      ANA_CHECK( this_BTaggingSelectionTool_handle.retrieve() );
-      Info("loadBTagTools()", "BTaggingSelectionTool initialized : %s ", this_BTaggingSelectionTool_handle.name().c_str() );
-
-    }
     m_AllBTaggingSelectionTool_handles.push_back( this_BTaggingSelectionTool_handle );
 
     // Initialize & Configure the BJetEfficiencyCorrectionTool
-
     if( m_isMC) {
-      asg::AnaToolHandle<IBTaggingEfficiencyTool> this_BTaggingEfficiencyTool_handle;
-      this_BTaggingEfficiencyTool_handle.setTypeAndName("BTaggingEfficiencyTool/BTaggingEfficiencyTool_"+m_bTagWPs.at(iB)+"_"+m_name);
+      asg::AnaToolHandle<IBTaggingEfficiencyTool> this_BTaggingEfficiencyTool_handle{"BTaggingEfficiencyTool/BTaggingEfficiencyTool_"+m_bTagWPs.at(iB)};
+      setToolName( this_BTaggingEfficiencyTool_handle );
+      ANA_CHECK( ASG_MAKE_ANA_TOOL( this_BTaggingEfficiencyTool_handle, BTaggingEfficiencyTool ) );
+      ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("TaggerName",          m_bTagVar) );
+      ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("OperatingPoint",      thisBTagOP) );
+      ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()) );
+      ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("ScaleFactorFileName", m_bTagFileName.c_str()) );
+      ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("UseDevelopmentFile",  m_useDevelopmentFile) );
+      ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("ConeFlavourLabel",    m_useConeFlavourLabel) );
+      ANA_CHECK( this_BTaggingEfficiencyTool_handle.retrieve() );
+      ANA_MSG_INFO("loadBTagTools(): bTaggingEfficiencyTool initialized : %s ", this_BTaggingEfficiencyTool_handle.name().c_str() );
 
-      if( !this_BTaggingEfficiencyTool_handle.isUserConfigured() ){
-        ANA_CHECK( ASG_MAKE_ANA_TOOL( this_BTaggingEfficiencyTool_handle, BTaggingEfficiencyTool ) );
-
-        std::string thisBTagOP = "FixedCutBEff_"+m_bTagWPs.at(iB);
-        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("TaggerName",          m_bTagVar) );
-        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("OperatingPoint",      thisBTagOP) );
-        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("JetAuthor",           (m_jetDef+"Jets").c_str()) );
-        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("ScaleFactorFileName", m_bTagFileName.c_str()) );
-        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("UseDevelopmentFile",  m_useDevelopmentFile) );
-        ANA_CHECK( this_BTaggingEfficiencyTool_handle.setProperty("ConeFlavourLabel",    m_useConeFlavourLabel) );
-
-        ANA_CHECK( this_BTaggingEfficiencyTool_handle.retrieve() );
-        Info("loadBTagTools()", "BTaggingEfficiencyTool initialized : %s ", this_BTaggingEfficiencyTool_handle.name().c_str() );
-
-      }
       m_AllBTaggingEfficiencyTool_handles.push_back( this_BTaggingEfficiencyTool_handle );
     }
   }//for iB working points

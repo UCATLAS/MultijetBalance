@@ -4,7 +4,6 @@
 /** @file MultijetBalanceAlgo.h
  *  @brief Run the Multijet Balance Selection
  *  @author Jeff Dandoy
- *  @bug No known bugs
  */
 
 #include <EventLoop/StatusCode.h>
@@ -161,7 +160,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     float m_overlapDR;
 
     /** @brief Apply the GSC-stage calibration to the leading jet when calibrating.  This should only be used
-     * if a special eta-intercalibration stage insitu file is not available, and is a close approximate.  
+     * if a special eta-intercalibration stage insitu file is not available, and is a close approximate.
      * @note It is an exact approximation if the leading jet detEta cut is changed from 1.2 to 0.8 */
     bool m_leadingGSC;
     /** @brief True value will allow TTree output */
@@ -284,14 +283,14 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     /** @brief Vector of each individual systematic variation name*/
     std::vector<std::string> m_sysName; //!
     /** @brief Integer corresponding to the type of systematic used.
-     * @note Value is  -1 for Nominal, 
+     * @note Value is  -1 for Nominal,
      * 0 for JetUncertainties, 1 for JER, 10 for JetCalibSequence, 2 for MJB alpha, 3 for MJB beta, 4 for MJB \f$p_{T}\f$ asymmetry,
      * 5 for MJB \f$p_{T}\f$ threshold, 6 for MJB statistical uncertainty. */
     std::vector<int> m_sysType; //!
     /** @brief Detail related to the systematic uncertainty.
      * @note For example, this would be the selection value for MJB systematics, or the index of a JES systematic uncertainty in the JetUncertainties tool*/
     std::vector<int> m_sysDetail; //!
-    /** @brief CP::SystematicSet for each systematic */ 
+    /** @brief CP::SystematicSet for each systematic */
     std::vector<CP::SystematicSet> m_sysSet; //!
     /** @brief Position of the Nominal result within m_sysVar */
     int m_NominalIndex; //!
@@ -305,7 +304,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     /** @brief Substring name given to each JES calibration stage in MultijetBalanceAlgo#m_jetCalibSequence,
      * used for JetCalibSequence option of MultijetBalanceAlgo#m_sysVariations */
     std::vector<std::string> m_JCSTokens; //!
-    /** @brief Full name of each JES calibration stage (i.e. JetGSCScaleMomentum). 
+    /** @brief Full name of each JES calibration stage (i.e. JetGSCScaleMomentum).
      * Has a direct correspondence with MultijetBalanceAlgo#m_JCSTokens*/
     std::vector<std::string> m_JCSStrings; //!
 
@@ -380,7 +379,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
      EL::StatusCode applyJetCalibrationTool( std::vector< xAOD::Jet*>* jets );
     /** @brief Apply the intermediate V+jet \a in-situ calibrations*/
      EL::StatusCode applyVjetCalibration( std::vector< xAOD::Jet*>* jets );
-    /** @brief For jets below subleading pt threshold, call (optionally) applyVjetCalibration and applyJetUncertaintyTool */ 
+    /** @brief For jets below subleading pt threshold, call (optionally) applyVjetCalibration and applyJetUncertaintyTool */
     EL::StatusCode applyJetSysVariation(std::vector< xAOD::Jet*>* jets, unsigned int iSys );
     /** @brief Apply the JetTileCorrectionTool*/
      EL::StatusCode applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets, unsigned int iSys );
@@ -395,7 +394,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
      EL::StatusCode applyMJBCalibration( xAOD::Jet* jet , unsigned int iSys );
     /** @brief Order the jets in a collection to descend in \f$p_{T}\f$*/
      EL::StatusCode reorderJets(std::vector< xAOD::Jet*>* signalJets);
-    
+
 
     #endif
 
@@ -433,14 +432,14 @@ public:
     bool cut_OverlapRemoval(); //!
 
     std::vector< xAOD::Jet*>* m_jets; //!
-    
+
     std::vector< std::function<bool(void)> > m_preSelections;  //!
     std::vector< std::function<bool(void)> > m_systSelections;  //!
-    
+
     std::vector< SelType > m_selType;
     std::vector< std::function<bool(void)> > m_selections;  //!
-    
-  
+
+
 //  m_JetCalibrationTool_handle("JetCalibrationTool/JetCalibrationTool_"+name),
 //  m_JetUncertaintiesTool_handle("JetUncertaintiesTool/JetUncertaintiesTool_"+name),
 //  m_JERTool_handle("JERTool/JERTool_"+name),
@@ -451,7 +450,7 @@ public:
 //  m_JetJVTEfficiencyTool_handle_up("CP::JetJVTEfficiency/JVTEfficiencyToolUp_"+name),
 //  m_JetJVTEfficiencyTool_handle_down("CP::JetJVTEfficiency/JVTEfficiencyToolDown_"+name),
 //  m_JetTileCorrectionTool_handle("CP::JetTileCorrectionTool/JetTileCorrectionTool_"+name)
-  
+
   private:
 
     /** @brief AnaToolHandle for each CP tool*/
@@ -469,7 +468,7 @@ public:
     asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle{"JetJVTEfficiencyTool"}; //!
     asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_up{"JetJVTEfficiencyTool_up"}; //!
     asg::AnaToolHandle<CP::IJetJvtEfficiency> m_JetJVTEfficiencyTool_handle_down{"JetJVTEfficiencyTool_down"}; //!
-    
+
     /** @brief Vector of b-tagging handles, for each WP*/
     std::vector< asg::AnaToolHandle<IBTaggingSelectionTool> >  m_AllBTaggingSelectionTool_handles; //!
     std::vector< asg::AnaToolHandle<IBTaggingEfficiencyTool> > m_AllBTaggingEfficiencyTool_handles; //!
