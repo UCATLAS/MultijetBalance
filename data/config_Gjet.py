@@ -61,6 +61,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
 
 #---------------------------------------------------------------------------------------------
 #### Jet collection and associated observables ####
+  "m_modeStr"   : "Gjet",
   "m_inContainerName_photons"     : "Photons_Selected",
 
   "m_inContainerName_jets"     : "AntiKt4EMTopoJets",
@@ -69,10 +70,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
   "m_jetCalibSequence"  : "JetArea_Residual_Origin_EtaJES_GSC",
   "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016.config",
 
-#  "m_jetCalibSequence"  : "JetArea_Residual_EtaJES_GSC",
-#  "m_jetCalibConfig"    : "JES_data2016_data2015_Recommendation_Dec2016_rel21.config",
 #---------------------------------------------------------------------------------------------
-#### MJB iteration ####
 
 #  "m_triggerAndPt" : "", #Leave this empty for efficiency studies!
   "m_triggerAndPt" : "HLT_g140_loose:145,HLT_g120_loose:125,HLT_g100_loose:105,HLT_g80_loose:85,HLT_g70_loose:75,HLT_g60_loose:65,HLT_g50_loose:55,HLT_g35_loose:40,HLT_g25_loose:30,HLT_g20_loose:25,HLT_g15_loose:20,HLT_g10_loose:15",

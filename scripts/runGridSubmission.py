@@ -12,8 +12,9 @@ from time import strftime
 
 ### User Options ###
 test = False # does not run the jobs
-config_name = "source/MultijetBalance/data/config_MJB.py"
-extraTag = "_r21" # Extra output tag for all files
+config_name = "MultijetBalance/data/config_MJB_Rootcore.py"
+#config_name = "MultijetBalance/data/config_Gjet.py"
+extraTag = "_r20" # Extra output tag for all files
 
 
 timestamp = strftime("_%d%m%y")
@@ -35,17 +36,17 @@ production_name = ""
 
 samples = { 
 
-  "DataOld"      : "source/MultijetBalance/scripts/sampleLists/data16_r21_JETM1_p3142.txt",
-  "QCDPythia" : "mc16_13TeV.3610*.Pythia8*JZ*W.*JETM1*_r9315_p3141",
-  "DataNew"      : "data16_13TeV.*Main.deriv*JETM1.*p3172",
+#  "DataOld"      : "source/MultijetBalance/scripts/sampleLists/data16_r21_JETM1_p3142.txt",
+#  "QCDPythia" : "mc16_13TeV.3610*.Pythia8*JZ*W.*JETM1*_r9315_p3141",
+#  "DataNew"      : "data16_13TeV.*Main.deriv*JETM1.*p3172",
 
 
-#  "MJBRel207"     : "MultijetBalance/scripts/sampleLists/data16_r207_JETM1_p2950.txt",
-#  "MJBRel207"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
+  "Data"     : "MultijetBalance/scripts/sampleLists/data16_r207_JETM1_p2950.txt",
+  "QCDPythia"     : "mc15_13TeV.3610*.Pythia8*JZ*W.merge.*JETM1.*_p2996",
 
 #
-#  "MJBData16"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
 #  "MJBData15"     : "data15_13TeV.*Main.merge*JETM1.*p2950",
+#  "MJBData16"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
 #  "QCDPythia"     : "mc15_13TeV.3610*.Pythia8*JZ*W.merge.*JETM1.*_p2996",
 ###  "QCDPythia"     : "mc15_13TeV.3610*.Pythia8*JZ*W.merge.*JETM1.*_r77*r7676_p2666",
 #  "QCDSherpa"     : "mc15_13TeV.4261*.Sherpa*JZ*.merge.*JETM1.*r7725_r7676_p2666",
@@ -101,7 +102,7 @@ for sampleName, sample in samples.iteritems():
     driverCommand = ' direct'
 
 
-  command = './source/xAODAnaHelpers/scripts/xAH_run.py'
+  command = './xAODAnaHelpers/scripts/xAH_run.py'
   if runType == 'grid':
     command += ' --inputRucio '
 
