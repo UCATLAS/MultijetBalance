@@ -12,10 +12,8 @@ from time import strftime
 
 ### User Options ###
 test = False # does not run the jobs
-config_name = "/home/jdandoy/Documents/Dijet/Rel21MJB/MultijetBalance/data/config_MJB.py"
-#config_name = "/home/jdandoy/Documents/Dijet/Rel21MJB/MultijetBalance/data/config_Gjet.py"
-#config_name = "/home/jdandoy/Documents/Dijet/Rel21MJB/MultijetBalance/data/config_Zjet.py"
-extraTag = "" # Extra output tag for all files
+config_name = "source/MultijetBalance/data/config_MJB.py"
+extraTag = "_r21" # Extra output tag for all files
 
 
 timestamp = strftime("_%d%m%y")
@@ -37,17 +35,19 @@ production_name = ""
 
 samples = { 
 
-  "MJBRel21"      : "sampleLists/data16_r21_JETM1_p3142.txt",
-#  "MJBRel207"     : "sampleLists/data16_r207_JETM1_p2950.txt",
-#  "MJBRel21"      : "data16_13TeV.*Main.deriv*JETM1.*p3142",
+  "DataOld"      : "source/MultijetBalance/scripts/sampleLists/data16_r21_JETM1_p3142.txt",
+  "QCDPythia" : "mc16_13TeV.3610*.Pythia8*JZ*W.*JETM1*_r9315_p3141",
+  "DataNew"      : "data16_13TeV.*Main.deriv*JETM1.*p3172",
+
+
+#  "MJBRel207"     : "MultijetBalance/scripts/sampleLists/data16_r207_JETM1_p2950.txt",
 #  "MJBRel207"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
 
-    
-#  "QCDPythia21" : "mc16_13TeV.3610*.Pythia8*JZ*W.*JETM1*_r9315_p3141",
 #
 #  "MJBData16"     : "data16_13TeV.*Main.merge*JETM1.*p2950",
 #  "MJBData15"     : "data15_13TeV.*Main.merge*JETM1.*p2950",
-#  "QCDPythia"     : "mc15_13TeV.3610*.Pythia8*JZ*W.merge.*JETM1.*_r77*r7676_p2666",
+#  "QCDPythia"     : "mc15_13TeV.3610*.Pythia8*JZ*W.merge.*JETM1.*_p2996",
+###  "QCDPythia"     : "mc15_13TeV.3610*.Pythia8*JZ*W.merge.*JETM1.*_r77*r7676_p2666",
 #  "QCDSherpa"     : "mc15_13TeV.4261*.Sherpa*JZ*.merge.*JETM1.*r7725_r7676_p2666",
 #
 #  'ZJBData16'     : 'data16_13TeV.*Main.merge*JETM3.*p2950',
@@ -92,7 +92,8 @@ for sampleName, sample in samples.iteritems():
       driverCommand += 'group.'+production_name
     else:
       driverCommand += 'user.%nickname%'
-    driverCommand += '.%in:name[1]%.%in:name[2]%.'+output_tag
+    driverCommand += '.%in:name[2]%.'+output_tag
+    #!driverCommand += '.%in:name[1]%.%in:name[2]%.'+output_tag
     #driverCommand += '.%in:name[1]%.%in:name[2]%.%in:name[3]%.'+output_tag
   elif runType == 'condor':
     driverCommand = ' condor --optFilesPerWorker 10 --optBatchWait'
@@ -100,11 +101,11 @@ for sampleName, sample in samples.iteritems():
     driverCommand = ' direct'
 
 
-  command = './xAODAnaHelpers/scripts/xAH_run.py'
+  command = './source/xAODAnaHelpers/scripts/xAH_run.py'
   if runType == 'grid':
     command += ' --inputRucio '
 
-  if sample.startswith('sampleLists'):
+  if 'sampleLists' in sample:
     command += ' --inputList'
   command += ' --files '+sample
   command += ' --config '+config_name

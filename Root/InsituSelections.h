@@ -3,6 +3,10 @@
 bool MultijetBalanceAlgo:: cut_LeadEta(){
   ANA_MSG_DEBUG("Cut: lead jet detector eta");
 
+  if( m_jets->size() < m_numJets )
+    return false;
+  if( m_jets->size() == 0 )
+    return true;
 
   xAOD::JetFourMom_t jetConstituentP4 = m_jets->at(0)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum"); // or JetEMScaleMomentum
   m_jets->at(0)->auxdecor< float >( "detEta") = jetConstituentP4.eta();
@@ -35,6 +39,10 @@ bool MultijetBalanceAlgo:: cut_MCCleaning(){
   ANA_MSG_DEBUG("Cut: MC Cleaning");
 
   if(m_useMCPileupCheck && m_isMC){
+
+    if( m_jets->size() <= 1 )
+      return true;
+
     float pTAvg = ( m_jets->at(0)->pt() + m_jets->at(1)->pt() ) / 2.0;
     if( m_truthJets->size() == 0 || (pTAvg / m_truthJets->at(0)->pt() > 1.4) ){
       return false;
@@ -46,6 +54,12 @@ bool MultijetBalanceAlgo:: cut_MCCleaning(){
 
 bool MultijetBalanceAlgo:: cut_SubPt(){
   ANA_MSG_DEBUG("Cut: Subleading jet pt");
+
+  if( m_jets->size() < m_numJets )
+    return false;
+  if( m_jets->size() <= 1 )
+    return true;
+
 
   if( m_jets->at(1)->pt() > m_subjetThreshold.at(m_MJBIteration) )
     return false;
@@ -80,6 +94,11 @@ bool MultijetBalanceAlgo:: cut_LeadJetPtThresh() {
 
   ANA_MSG_DEBUG("Cut: lead jet pt threshold");
 
+  if( m_jets->size() < m_numJets )
+    return false;
+  if( m_jets->size() == 0 )
+    return true;
+
   float thisLeadJetPtCut = m_leadJetPtThresh;
   if( m_jets->at(0)->pt()/1e3 >= thisLeadJetPtCut )
     return true;
@@ -111,6 +130,7 @@ bool MultijetBalanceAlgo:: cut_JVT() {
 //// Ignore event if any of the used jets are not clean ////
 bool MultijetBalanceAlgo:: cut_CleanJet(){
   ANA_MSG_DEBUG("Cut: Jet Cleaning");
+
   for(unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
     if(! m_JetCleaningTool_handle->keep( *(m_jets->at(iJet))) ){
       return false;
@@ -187,6 +207,13 @@ bool MultijetBalanceAlgo:: cut_PtAsym(){
 bool MultijetBalanceAlgo:: cut_Alpha(){
   //Alpha is phi angle between leading jet and recoilJet system
   ANA_MSG_DEBUG("Cut: Alpha (delta phi)");
+
+
+  if( m_jets->size() < m_numJets )
+    return false;
+  if( m_jets->size() == 0 )
+    return true;
+
   double alpha = fabs(DeltaPhi( m_jets->at(0)->phi(), m_recoilTLV.Phi() )) ;
   m_eventInfo->auxdecor< float >( "alpha" ) = alpha;
 
@@ -203,6 +230,11 @@ bool MultijetBalanceAlgo:: cut_Alpha(){
 bool MultijetBalanceAlgo:: cut_Beta(){
   //Beta is phi angle between leading jet and each other passing jet
   ANA_MSG_DEBUG("Cut: Beta");
+  
+  if( m_jets->size() < m_numJets )
+    return false;
+  if( m_jets->size() <= 1 )
+    return true;
 
   double smallestBeta=10., avgBeta = 0., jetBeta=0.;
 
@@ -252,6 +284,7 @@ bool MultijetBalanceAlgo:: cut_ConvPhot(){
 bool MultijetBalanceAlgo:: cut_OverlapRemoval(){
   // Remove jets that overlap with a photon
   ANA_MSG_DEBUG("Cut: overlap removal");
+
   for(unsigned int iJet=0; iJet < m_jets->size(); ++iJet){
     if( m_jets->at(iJet)->p4().DeltaR(m_recoilTLV) < m_overlapDR ){
       m_jets->erase( m_jets->begin()+iJet );
@@ -265,7 +298,3 @@ bool MultijetBalanceAlgo:: cut_OverlapRemoval(){
     return false;
 }
 
-
-//-----------------------------
-//   for all jets
-//   if (isPhoton and ( (*jet_itr)->p4().DeltaR(Ref) < ph_overlapRemoval)) -> remove jets

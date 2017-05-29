@@ -303,13 +303,13 @@ EL::StatusCode MultijetBalanceAlgo :: fileExecute ()
 
 
 
-//EL::StatusCode MultijetBalanceAlgo :: changeInput (bool firstFile)
-//{
-//  // Here you do everything you need to do when we change input files,
-//  // e.g. resetting branch addresses on trees.  If you are using
-//  // D3PDReader or a similar service this method is not needed.
-//  return EL::StatusCode::SUCCESS;
-//}
+EL::StatusCode MultijetBalanceAlgo :: changeInput (bool firstFile)
+{
+  // Here you do everything you need to do when we change input files,
+  // e.g. resetting branch addresses on trees.  If you are using
+  // D3PDReader or a similar service this method is not needed.
+  return EL::StatusCode::SUCCESS;
+}
 
 
 
@@ -338,7 +338,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
   // load all variations
   setupJetCalibrationStages();
-  ANA_CHECK(loadJetUncertaintyTool());
+//  ANA_CHECK(loadJetUncertaintyTool());
   ANA_CHECK(loadJetResolutionTool());
   ANA_CHECK(loadSystematics());
 

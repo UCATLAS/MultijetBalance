@@ -27,6 +27,7 @@ c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
 ### MJB Configuration  ###
 c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
+"m_msgLevel"      : "info",
 #---------------------------------------------------------------------------------------------
 #### Jet collection and associated observables ####
   "m_modeStr"   : "MJB",

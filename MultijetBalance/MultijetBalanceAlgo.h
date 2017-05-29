@@ -72,7 +72,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
   // that way they can be set directly from CINT and python.
   public:
 
-    MSG::Level m_msgLevel = MSG::INFO;
+//    MSG::Level m_msgLevel = MSG::INFO;
 
     std::string m_modeStr = "MJB";
 
@@ -494,7 +494,7 @@ public:
     /** @brief Initialize the output histograms before any input file is attached (inherits from Algorithm)*/
     virtual EL::StatusCode histInitialize ();
     /** @brief Change to the next input file (inherits from Algorithm)*/
-//    virtual EL::StatusCode changeInput (bool firstFile);
+    virtual EL::StatusCode changeInput (bool firstFile);
     /** @brief Initialize the input file (inherits from Algorithm)*/
     virtual EL::StatusCode initialize ();
     /** @brief Execute each event of the input file (inherits from Algorithm)*/
