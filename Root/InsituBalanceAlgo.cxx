@@ -28,9 +28,9 @@
 // package include(s):
 //#include <xAODAnaHelpers/tools/ReturnCheck.h>
 //#include <xAODAnaHelpers/tools/ReturnCheckConfig.h>
-#include <MultijetBalance/MultijetBalanceAlgo.h>
+#include <InsituBalance/InsituBalanceAlgo.h>
 #include <xAODAnaHelpers/HelperFunctions.h>
-#include <MultijetBalance/MultijetHists.h>
+#include <InsituBalance/MultijetHists.h>
 
 // external tools include(s):
 #include "JetCalibTools/JetCalibrationTool.h"
@@ -49,7 +49,7 @@
 
 #include "JetTileCorrection/JetTileCorrectionTool.h"
 
-#include "InsituSelections.h"
+#include "Selections.h"
 #include "JetCalibrations.h"
 
 using namespace std;
@@ -57,11 +57,11 @@ using namespace xAH;
 //using namespace std::placeholders;
 
 // this is needed to distribute the algorithm to the workers
-ClassImp(MultijetBalanceAlgo)
+ClassImp(InsituBalanceAlgo)
 
 
 
-MultijetBalanceAlgo :: MultijetBalanceAlgo () : 
+InsituBalanceAlgo :: InsituBalanceAlgo () : 
   Algorithm("InsituBalance")
 {
   // Here you put any code for the base initialization of variables,
@@ -114,7 +114,7 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo () :
   m_MCPileupCheckContainer = "AntiKt4TruthJets";
   m_isAFII = false;
   m_useCutFlow = true;
-  m_XSFile = "$ROOTCOREBIN/data/MultijetBalance/XsAcc_13TeV.txt";
+  m_XSFile = "$ROOTCOREBIN/data/InsituBalance/XsAcc_13TeV.txt";
 
 
   m_bTag = true;
@@ -142,11 +142,11 @@ MultijetBalanceAlgo :: MultijetBalanceAlgo () :
 
 }
 
-//MultijetBalanceAlgo ::~MultijetBalanceAlgo(){
+//InsituBalanceAlgo ::~InsituBalanceAlgo(){
 //}
 
-EL::StatusCode  MultijetBalanceAlgo :: configure (){
-  Info("configure()", "Configuring MultijetBalanceAlgo Interface.");
+EL::StatusCode  InsituBalanceAlgo :: configure (){
+  Info("configure()", "Configuring InsituBalanceAlgo Interface.");
 
   if( m_inContainerName_jets.empty() ) {
     Error("configure()", "InputContainer is empty!");
@@ -247,13 +247,13 @@ EL::StatusCode  MultijetBalanceAlgo :: configure (){
   }
 
   Info("configure()", "JetCalibTool: %s, %s", m_jetCalibConfig.c_str(), m_jetCalibSequence.c_str() );
-  Info("configure()", "MultijetBalanceAlgo Interface succesfully configured! \n");
+  Info("configure()", "InsituBalanceAlgo Interface succesfully configured! \n");
 
   return EL::StatusCode::SUCCESS;
 }
 
 
-EL::StatusCode MultijetBalanceAlgo :: setupJob (EL::Job& job)
+EL::StatusCode InsituBalanceAlgo :: setupJob (EL::Job& job)
 {
   // Here you put code that sets up the job on the submission object
   // so that it is ready to work with your algorithm, e.g. you can
@@ -263,7 +263,7 @@ EL::StatusCode MultijetBalanceAlgo :: setupJob (EL::Job& job)
   // activated/deactivated when you add/remove the algorithm from your
   // job, which may or may not be of value to you.
   job.useXAOD();
-  xAOD::Init( "MultijetBalanceAlgo" ).ignore(); // call before opening first file
+  xAOD::Init( "InsituBalanceAlgo" ).ignore(); // call before opening first file
 
   EL::OutputStream outForTree("tree");
   job.outputAdd (outForTree);
@@ -277,7 +277,7 @@ EL::StatusCode MultijetBalanceAlgo :: setupJob (EL::Job& job)
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: histInitialize ()
+EL::StatusCode InsituBalanceAlgo :: histInitialize ()
 {
   // Here you do everything that needs to be done at the very
   // beginning on each worker node, e.g. create histograms and output
@@ -294,7 +294,7 @@ EL::StatusCode MultijetBalanceAlgo :: histInitialize ()
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: fileExecute ()
+EL::StatusCode InsituBalanceAlgo :: fileExecute ()
 {
   // Here you do everything that needs to be done exactly once for every
   // single file, e.g. collect a list of all lumi-blocks processed
@@ -303,7 +303,7 @@ EL::StatusCode MultijetBalanceAlgo :: fileExecute ()
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: changeInput (bool firstFile)
+EL::StatusCode InsituBalanceAlgo :: changeInput (bool firstFile)
 {
   // Here you do everything you need to do when we change input files,
   // e.g. resetting branch addresses on trees.  If you are using
@@ -313,7 +313,7 @@ EL::StatusCode MultijetBalanceAlgo :: changeInput (bool firstFile)
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: initialize ()
+EL::StatusCode InsituBalanceAlgo :: initialize ()
 {
   // Here you do everything that you need to do after the first input
   // file has been connected and before the first event is processed,
@@ -362,57 +362,57 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
     std::vector< std::string > cutflowNames;
     if( m_mode == MJB ){
 
-      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
+      std::function<bool(void)> func_MCCleaning = std::bind(&InsituBalanceAlgo::cut_MCCleaning, this);
       m_selections.push_back(func_MCCleaning);
       cutflowNames.push_back( "MCCleaning" );
       m_selType.push_back( PRE );
 
-      std::function<bool(void)> func_LeadEta = std::bind(&MultijetBalanceAlgo::cut_LeadEta, this);
+      std::function<bool(void)> func_LeadEta = std::bind(&InsituBalanceAlgo::cut_LeadEta, this);
       m_selections.push_back(func_LeadEta);
       cutflowNames.push_back( "LeadEta" );
       m_selType.push_back( PRE );
 
-      std::function<bool(void)> func_JetEta = std::bind(&MultijetBalanceAlgo::cut_JetEta, this);
+      std::function<bool(void)> func_JetEta = std::bind(&InsituBalanceAlgo::cut_JetEta, this);
       m_selections.push_back(func_JetEta);
       cutflowNames.push_back( "JetEta" );
       m_selType.push_back( PRE );
 
-      std::function<bool(void)> func_SubPt = std::bind(&MultijetBalanceAlgo::cut_SubPt, this);
+      std::function<bool(void)> func_SubPt = std::bind(&InsituBalanceAlgo::cut_SubPt, this);
       m_selections.push_back(func_SubPt);
       cutflowNames.push_back( "SubPt" );
       m_selType.push_back( PRE );
 
-      std::function<bool(void)> func_JetPtThresh = std::bind(&MultijetBalanceAlgo::cut_JetPtThresh, this);
+      std::function<bool(void)> func_JetPtThresh = std::bind(&InsituBalanceAlgo::cut_JetPtThresh, this);
       m_selections.push_back(func_JetPtThresh);
       cutflowNames.push_back( "JetPtThresh" );
       m_selType.push_back( SYST );
 
-      std::function<bool(void)> func_JVT = std::bind(&MultijetBalanceAlgo::cut_JVT, this);
+      std::function<bool(void)> func_JVT = std::bind(&InsituBalanceAlgo::cut_JVT, this);
       m_selections.push_back(func_JVT);
       cutflowNames.push_back( "JVT" );
       m_selType.push_back( SYST );
       
-      std::function<bool(void)> func_TriggerEffRecoil = std::bind(&MultijetBalanceAlgo::cut_TriggerEffRecoil, this);
+      std::function<bool(void)> func_TriggerEffRecoil = std::bind(&InsituBalanceAlgo::cut_TriggerEffRecoil, this);
       m_selections.push_back(func_TriggerEffRecoil);
       cutflowNames.push_back( "TriggerEffRecoil" );
       m_selType.push_back( RECOIL );
 
-      std::function<bool(void)> func_PtAsym = std::bind(&MultijetBalanceAlgo::cut_PtAsym, this);
+      std::function<bool(void)> func_PtAsym = std::bind(&InsituBalanceAlgo::cut_PtAsym, this);
       m_selections.push_back(func_PtAsym);
       cutflowNames.push_back( "PtAsym" );
       m_selType.push_back( RECOIL );
 
-      std::function<bool(void)> func_Alpha = std::bind(&MultijetBalanceAlgo::cut_Alpha, this);
+      std::function<bool(void)> func_Alpha = std::bind(&InsituBalanceAlgo::cut_Alpha, this);
       m_selections.push_back(func_Alpha);
       cutflowNames.push_back( "Alpha" );
       m_selType.push_back( RECOIL );
 
-      std::function<bool(void)> func_Beta = std::bind(&MultijetBalanceAlgo::cut_Beta, this);
+      std::function<bool(void)> func_Beta = std::bind(&InsituBalanceAlgo::cut_Beta, this);
       m_selections.push_back(func_Beta);
       cutflowNames.push_back( "Beta" );
       m_selType.push_back( RECOIL );
 
-      std::function<bool(void)> func_CleanJet = std::bind(&MultijetBalanceAlgo::cut_CleanJet, this);
+      std::function<bool(void)> func_CleanJet = std::bind(&InsituBalanceAlgo::cut_CleanJet, this);
       m_selections.push_back(func_CleanJet);
       cutflowNames.push_back( "CleanJet" );
       m_selType.push_back( RECOIL );
@@ -422,61 +422,61 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
     if( m_mode == GJET ){
 
 
-      std::function<bool(void)> func_TriggerEffRecoil = std::bind(&MultijetBalanceAlgo::cut_TriggerEffRecoil, this);
+      std::function<bool(void)> func_TriggerEffRecoil = std::bind(&InsituBalanceAlgo::cut_TriggerEffRecoil, this);
       m_selections.push_back(func_TriggerEffRecoil);
       cutflowNames.push_back( "TriggerEffRecoil" );
       m_selType.push_back( PRE );
 
-      std::function<bool(void)> func_MCCleaning = std::bind(&MultijetBalanceAlgo::cut_MCCleaning, this);
+      std::function<bool(void)> func_MCCleaning = std::bind(&InsituBalanceAlgo::cut_MCCleaning, this);
       m_selections.push_back(func_MCCleaning);
       cutflowNames.push_back( "MCCleaning" );
       m_selType.push_back( PRE );
 
-      std::function<bool(void)> func_JetEta = std::bind(&MultijetBalanceAlgo::cut_JetEta, this);
+      std::function<bool(void)> func_JetEta = std::bind(&InsituBalanceAlgo::cut_JetEta, this);
       m_selections.push_back(func_JetEta);
       cutflowNames.push_back( "JetEta" );
       m_selType.push_back( PRE );
 
       ///// Photon E/P
-      std::function<bool(void)> func_ConvPhot = std::bind(&MultijetBalanceAlgo::cut_ConvPhot, this);
+      std::function<bool(void)> func_ConvPhot = std::bind(&InsituBalanceAlgo::cut_ConvPhot, this);
       m_selections.push_back(func_ConvPhot);
       cutflowNames.push_back( "ConvPhot" );
       m_selType.push_back( PRE );
 
       // jet-photon overlap removal
-      std::function<bool(void)> func_OverlapRemoval = std::bind(&MultijetBalanceAlgo::cut_OverlapRemoval, this);
+      std::function<bool(void)> func_OverlapRemoval = std::bind(&InsituBalanceAlgo::cut_OverlapRemoval, this);
       m_selections.push_back(func_OverlapRemoval);
       cutflowNames.push_back( "OverlapRemoval" );
       m_selType.push_back( PRE );
 
-      std::function<bool(void)> func_JVT = std::bind(&MultijetBalanceAlgo::cut_JVT, this);
+      std::function<bool(void)> func_JVT = std::bind(&InsituBalanceAlgo::cut_JVT, this);
       m_selections.push_back(func_JVT);
       cutflowNames.push_back( "JVT" );
       m_selType.push_back( SYST );
 
       ////// Here we now have the leading jet /////
-      std::function<bool(void)> func_LeadJetPtThresh = std::bind(&MultijetBalanceAlgo::cut_LeadJetPtThresh, this);
+      std::function<bool(void)> func_LeadJetPtThresh = std::bind(&InsituBalanceAlgo::cut_LeadJetPtThresh, this);
       m_selections.push_back(func_LeadJetPtThresh);
       cutflowNames.push_back( "LeadJetPtThresh" );
       m_selType.push_back( SYST );
 
-      std::function<bool(void)> func_LeadEta = std::bind(&MultijetBalanceAlgo::cut_LeadEta, this);
+      std::function<bool(void)> func_LeadEta = std::bind(&InsituBalanceAlgo::cut_LeadEta, this);
       m_selections.push_back(func_LeadEta);
       cutflowNames.push_back( "LeadEta" );
       m_selType.push_back( SYST );
 
-      std::function<bool(void)> func_PtAsym = std::bind(&MultijetBalanceAlgo::cut_PtAsym, this);
+      std::function<bool(void)> func_PtAsym = std::bind(&InsituBalanceAlgo::cut_PtAsym, this);
       m_selections.push_back(func_PtAsym);
       cutflowNames.push_back( "PtAsym" );
       m_selType.push_back( RECOIL );
 
       //// This is delta phi ////////////
-      std::function<bool(void)> func_Alpha = std::bind(&MultijetBalanceAlgo::cut_Alpha, this);
+      std::function<bool(void)> func_Alpha = std::bind(&InsituBalanceAlgo::cut_Alpha, this);
       m_selections.push_back(func_Alpha);
       cutflowNames.push_back( "Alpha" );
       m_selType.push_back( RECOIL );
 
-      std::function<bool(void)> func_CleanJet = std::bind(&MultijetBalanceAlgo::cut_CleanJet, this);
+      std::function<bool(void)> func_CleanJet = std::bind(&InsituBalanceAlgo::cut_CleanJet, this);
       m_selections.push_back(func_CleanJet);
       cutflowNames.push_back( "CleanJet" );
       m_selType.push_back( RECOIL );
@@ -592,7 +592,7 @@ EL::StatusCode MultijetBalanceAlgo :: initialize ()
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: execute ()
+EL::StatusCode InsituBalanceAlgo :: execute ()
 {
   // Here you do everything that needs to be done on every single
   // events, e.g. read input variables, apply cuts, and fill
@@ -866,7 +866,7 @@ EL::StatusCode MultijetBalanceAlgo :: execute ()
 }
 
 
-EL::StatusCode MultijetBalanceAlgo :: postExecute ()
+EL::StatusCode InsituBalanceAlgo :: postExecute ()
 {
   ANA_MSG_VERBOSE("postExecute()");
   // Here you do everything that needs to be done after the main event
@@ -876,7 +876,7 @@ EL::StatusCode MultijetBalanceAlgo :: postExecute ()
 }
 
 
-EL::StatusCode MultijetBalanceAlgo :: finalize ()
+EL::StatusCode InsituBalanceAlgo :: finalize ()
 {
   ANA_MSG_INFO("finalize()");
   // This method is the mirror image of initialize(), meaning it gets
@@ -964,7 +964,7 @@ EL::StatusCode MultijetBalanceAlgo :: finalize ()
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: histFinalize ()
+EL::StatusCode InsituBalanceAlgo :: histFinalize ()
 {
   ANA_MSG_INFO("histFinalize()");
   // This method is the mirror image of histInitialize(), meaning it
@@ -984,7 +984,7 @@ EL::StatusCode MultijetBalanceAlgo :: histFinalize ()
 }
 
 
-EL::StatusCode MultijetBalanceAlgo::fillCutflow(int iSel, int iVar){
+EL::StatusCode InsituBalanceAlgo::fillCutflow(int iSel, int iVar){
   if(m_useCutFlow) {
     ANA_MSG_DEBUG("fillCutflow(): passing cut " << iSel << " of selection " << iVar);
     m_cutflowHist.at(iVar)->Fill(iSel+m_cutflowFirst, 1);
@@ -995,7 +995,7 @@ return EL::StatusCode::SUCCESS;
 }
 
 
-EL::StatusCode MultijetBalanceAlgo::fillCutflowAll(int iSel){
+EL::StatusCode InsituBalanceAlgo::fillCutflowAll(int iSel){
   if(m_useCutFlow) {
     ANA_MSG_DEBUG("fillCutflowAll(): passing cut " << iSel);
     for(unsigned int iVar=0; iVar < m_sysName.size(); ++iVar){
@@ -1009,7 +1009,7 @@ return EL::StatusCode::SUCCESS;
 }
 
 //This grabs luminosity, acceptace, and eventNumber information from the respective text file
-EL::StatusCode MultijetBalanceAlgo::getSampleWeights(const xAOD::EventInfo* eventInfo) {
+EL::StatusCode InsituBalanceAlgo::getSampleWeights(const xAOD::EventInfo* eventInfo) {
   ANA_MSG_INFO("getSampleWeights()");
 
   float weight_xs = 1.0, weight_kfactor = 1.0, weight_eff = 1.0;
@@ -1017,8 +1017,8 @@ EL::StatusCode MultijetBalanceAlgo::getSampleWeights(const xAOD::EventInfo* even
     m_runNumber = eventInfo->runNumber();
   }else{
     m_mcChannelNumber = eventInfo->mcChannelNumber();
-//    ifstream fileIn(  PathResolverFindCalibFile( "$ROOTCOREBIN/data/MultijetBalance/susy_crosssections_13TeV.txt" ) );
-    ifstream fileIn(  PathResolverFindCalibFile( "MultijetBalance/susy_crosssections_13TeV.txt" ) );
+//    ifstream fileIn(  PathResolverFindCalibFile( "$ROOTCOREBIN/data/InsituBalance/susy_crosssections_13TeV.txt" ) );
+    ifstream fileIn(  PathResolverFindCalibFile( "InsituBalance/susy_crosssections_13TeV.txt" ) );
 
     // Search the input file for the correct MCChannelNumber, and find the XS and kfactor numbers
     std::string mcChanStr = std::to_string( m_mcChannelNumber );
@@ -1057,14 +1057,14 @@ EL::StatusCode MultijetBalanceAlgo::getSampleWeights(const xAOD::EventInfo* even
 }
 
 //Calculate DeltaPhi
-double MultijetBalanceAlgo::DeltaPhi(double phi1, double phi2){
+double InsituBalanceAlgo::DeltaPhi(double phi1, double phi2){
   phi1=TVector2::Phi_0_2pi(phi1);
   phi2=TVector2::Phi_0_2pi(phi2);
   return fabs(TVector2::Phi_mpi_pi(phi1-phi2));
 }
 
 //Calculate DeltaR
-double MultijetBalanceAlgo::DeltaR(double eta1, double phi1,double eta2, double phi2){
+double InsituBalanceAlgo::DeltaR(double eta1, double phi1,double eta2, double phi2){
   phi1=TVector2::Phi_0_2pi(phi1);
   phi2=TVector2::Phi_0_2pi(phi2);
   double dphi = DeltaPhi( phi1, phi2);
@@ -1072,7 +1072,7 @@ double MultijetBalanceAlgo::DeltaR(double eta1, double phi1,double eta2, double 
   return sqrt(deta*deta+dphi*dphi);
 }
 
-EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
+EL::StatusCode InsituBalanceAlgo :: loadSystematics (){
   ANA_MSG_INFO("loadSystematics()");
 
   // Define the All systematic //
@@ -1180,7 +1180,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadSystematics (){
 }
 
 
-EL::StatusCode MultijetBalanceAlgo :: setupJetCalibrationStages() {
+EL::StatusCode InsituBalanceAlgo :: setupJetCalibrationStages() {
 
   ANA_MSG_INFO("setupJetCalibrationStages()");
   // Setup calibration stages tools //
@@ -1229,7 +1229,7 @@ EL::StatusCode MultijetBalanceAlgo :: setupJetCalibrationStages() {
 }
 
 // initialize and configure B-tagging efficiency tools
-EL::StatusCode MultijetBalanceAlgo :: loadBTagTools(){
+EL::StatusCode InsituBalanceAlgo :: loadBTagTools(){
 
   if (! m_bTag){
     return EL::StatusCode::SUCCESS;

@@ -1,6 +1,6 @@
 
 // initialize and configure the JVT correction tool
-EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
+EL::StatusCode InsituBalanceAlgo :: loadJVTTool(){
   ANA_MSG_INFO("loadJVTTool()");
 
   //// Set up tagger tool to update JVT value after calibration
@@ -35,7 +35,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJVTTool(){
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: loadJetCalibrationTool(){
+EL::StatusCode InsituBalanceAlgo :: loadJetCalibrationTool(){
 
   ANA_MSG_INFO("loadJetCalibrationTool()");
 
@@ -51,7 +51,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetCalibrationTool(){
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: loadJetCleaningTool(){
+EL::StatusCode InsituBalanceAlgo :: loadJetCleaningTool(){
   ANA_MSG_INFO("loadJetCleaningTool()");
 
   setToolName( m_JetCleaningTool_handle );
@@ -65,7 +65,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetCleaningTool(){
 }
 
 
-EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
+EL::StatusCode InsituBalanceAlgo :: loadJetUncertaintyTool(){
   ANA_MSG_INFO("loadJetUncertaintyTool()");
 
 //!!Test    m_jetUncertaintyConfig = "/home/jdandoy/Documents/Dijet/Rel21MJB/JetUncertainties/share/JES_2016/Moriond2017/"+m_jetUncertaintyConfig;
@@ -97,7 +97,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetUncertaintyTool(){
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: loadJetResolutionTool(){
+EL::StatusCode InsituBalanceAlgo :: loadJetResolutionTool(){
   ANA_MSG_INFO("loadJetResolutionTool()");
 
   // Instantiate the JER Uncertainty tool
@@ -122,7 +122,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetResolutionTool(){
 }
 
 
-EL::StatusCode MultijetBalanceAlgo :: loadJetTileCorrectionTool(){
+EL::StatusCode InsituBalanceAlgo :: loadJetTileCorrectionTool(){
   ANA_MSG_INFO("loadJetTileCorrectionTool()");
 
   setToolName( m_JetTileCorrectionTool_handle );
@@ -135,7 +135,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadJetTileCorrectionTool(){
 }
 
 //Setup V+jet calibration and systematics files
-EL::StatusCode MultijetBalanceAlgo :: loadVjetCalibration(){
+EL::StatusCode InsituBalanceAlgo :: loadVjetCalibration(){
   ANA_MSG_INFO("loadVjetCalibration()");
 
   TFile *VjetFile = TFile::Open( PathResolverFindCalibFile(m_VjetCalibFile).c_str() , "READ" );
@@ -163,7 +163,7 @@ EL::StatusCode MultijetBalanceAlgo :: loadVjetCalibration(){
 }
 
 //Setup Previous MJB calibration and systematics files
-EL::StatusCode MultijetBalanceAlgo :: loadMJBCalibration(){
+EL::StatusCode InsituBalanceAlgo :: loadMJBCalibration(){
   ANA_MSG_INFO("loadMJBCalibration()");
 
   if(m_MJBIteration == 0 && !m_closureTest)
@@ -263,7 +263,7 @@ return EL::StatusCode::SUCCESS;
 
 
 ///////////////// Apply calibrations //////////////
-EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( std::vector< xAOD::Jet*>* jets ){
+EL::StatusCode InsituBalanceAlgo :: applyJetCalibrationTool( std::vector< xAOD::Jet*>* jets ){
 
   ANA_MSG_DEBUG("applyJetCalibrationTool()");
   for(unsigned int iJet=0; iJet < jets->size(); ++iJet){
@@ -277,7 +277,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetCalibrationTool( std::vector< xAOD
 
 
 
-EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , unsigned int iSys ){
+EL::StatusCode InsituBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , unsigned int iSys ){
   ANA_MSG_DEBUG("applyJetUncertaintyTool with systematic " << m_sysName.at(iSys) );
 
    if( m_sysType.at(iSys) != JES ) //If not a JetUncertaintyTool sys variation
@@ -297,7 +297,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetUncertaintyTool( xAOD::Jet* jet , 
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: applyJetResolutionTool( xAOD::Jet* jet , unsigned int iSys ){
+EL::StatusCode InsituBalanceAlgo :: applyJetResolutionTool( xAOD::Jet* jet , unsigned int iSys ){
   ANA_MSG_DEBUG("applyJetResolutionToolwith systematic " << m_sysName.at(iSys) );
 
   if( ( m_sysType.at(iSys) != JER ) // If not a JetResolutionTool sys variation
@@ -329,7 +329,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyJetResolutionTool( xAOD::Jet* jet , u
 
 
 // Apply the Vjet Calibration to jets
-EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( std::vector< xAOD::Jet*>* jets ){
+EL::StatusCode InsituBalanceAlgo :: applyVjetCalibration( std::vector< xAOD::Jet*>* jets ){
   ANA_MSG_DEBUG("applyVjetCalibration()");
 
   if(m_isMC)
@@ -365,7 +365,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyVjetCalibration( std::vector< xAOD::J
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , unsigned int iSys ){
+EL::StatusCode InsituBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , unsigned int iSys ){
   ANA_MSG_DEBUG("applyMJBCalibration()");
 
   if(m_isMC)
@@ -383,7 +383,7 @@ EL::StatusCode MultijetBalanceAlgo :: applyMJBCalibration( xAOD::Jet* jet , unsi
 }
 
 
-EL::StatusCode MultijetBalanceAlgo :: reorderJets( std::vector< xAOD::Jet*>* theseJets ){
+EL::StatusCode InsituBalanceAlgo :: reorderJets( std::vector< xAOD::Jet*>* theseJets ){
 
   ANA_MSG_VERBOSE("reorderJets()");
   xAOD::Jet* tmpJet = nullptr;
@@ -400,7 +400,7 @@ EL::StatusCode MultijetBalanceAlgo :: reorderJets( std::vector< xAOD::Jet*>* the
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*>* theseJets, unsigned int iSys ){
+EL::StatusCode InsituBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*>* theseJets, unsigned int iSys ){
   ANA_MSG_DEBUG("applyJetSysVariation()");
 
   // No further corrections for earlier jet calibration stages
@@ -447,7 +447,7 @@ EL::StatusCode MultijetBalanceAlgo::applyJetSysVariation(std::vector< xAOD::Jet*
   return EL::StatusCode::SUCCESS;
 }
 
-EL::StatusCode MultijetBalanceAlgo :: applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets, unsigned int iSys  ){
+EL::StatusCode InsituBalanceAlgo :: applyJetTileCorrectionTool( std::vector< xAOD::Jet*>* jets, unsigned int iSys  ){
   ANA_MSG_DEBUG("applyJetTileCorrectionTool()");
 
   if( m_isMC )

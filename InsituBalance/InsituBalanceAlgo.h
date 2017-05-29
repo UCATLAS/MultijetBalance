@@ -1,7 +1,7 @@
-#ifndef MultijetBalance_MultijetBalanceAlgo_H
-#define MultijetBalance_MultijetBalanceAlgo_H
+#ifndef InsituBalance_InsituBalanceAlgo_H
+#define InsituBalance_InsituBalanceAlgo_H
 
-/** @file MultijetBalanceAlgo.h
+/** @file InsituBalanceAlgo.h
  *  @brief Run the Multijet Balance Selection
  *  @author Jeff Dandoy
  */
@@ -22,7 +22,7 @@
 
 // inlude the parent class header for tree
 #ifndef __MAKECINT__
-#include "MultijetBalance/MiniTree.h"
+#include "InsituBalance/MiniTree.h"
 #endif
 
 #include <sstream>
@@ -65,8 +65,8 @@ class IJetTileCorrectionTool;
 // variables that don't get filled at submission time should be
 // protected from being send from the submission node to the worker
 // node (done by the //!)
-class MultijetBalanceAlgo : public xAH::Algorithm
-//class MultijetBalanceAlgo : public EL::Algorithm
+class InsituBalanceAlgo : public xAH::Algorithm
+//class InsituBalanceAlgo : public EL::Algorithm
 {
   // put your configuration variables here as public variables.
   // that way they can be set directly from CINT and python.
@@ -103,17 +103,17 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     /** @brief The iteration of the current MJB
      * @note MJB is an iterative procedure, with each iteration using outputs from the previous.
      * The procedure starts at a m_MJBIteration value of 0, and is increased by 1 for each iteration.
-     * This value corresponds directly to the entries in MultijetBalanceAlgo#m_MJBIterationThreshold.
+     * This value corresponds directly to the entries in InsituBalanceAlgo#m_MJBIterationThreshold.
      * */
     int m_MJBIteration;               // Number of previous MJB iterations
     /** @brief A comma separated list of subleading jet \f$p_{T}\f$ thresholds
      * @note The comma separated list is translated into a vector of values.
      * Each vector entry corresponds to a potential MJB iteration, and the value used is chosen
-     * by MultijetBalanceAlgo#m_MJBIteration.
+     * by InsituBalanceAlgo#m_MJBIteration.
      * */
     std::string m_MJBIterationThreshold;
     /** @brief The location of the file containing previous MJB calibrations
-     * @note The file corresponds to previous MJB calibrations and will not be used for a MultijetBalanceAlgo#m_MJBIteration of zero.
+     * @note The file corresponds to previous MJB calibrations and will not be used for a InsituBalanceAlgo#m_MJBIteration of zero.
      * The naming convention of the calibration histograms should agree with the iteration.
      * */
     std::string m_MJBCorrectionFile;
@@ -126,7 +126,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
      * Short-cut strings are also accepted, including:
      *   - Nominal : Include the nominal result
      *   - AllSystematic : Include every defined systematic
-     *   - MJB : Include all MJB systematics (defined in MultijetBalanceAlgo#loadSystematics)
+     *   - MJB : Include all MJB systematics (defined in InsituBalanceAlgo#loadSystematics)
      *   - AllZjet : Include all Z+jet \a in-situ calibration systematics
      *   - AllGjet : Include all \f$\gamma\f$+jet \a in-situ calibration systematics
      *   - AllXXX  : Include all JetUncertainties systematics include the substring "XXX"
@@ -157,7 +157,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     float m_ptThresh;
     /** @brief \f$p_{T}\f$ threshold for leading jet*/
     float m_leadJetPtThresh;
-    /** @brief Relative pt threshold of each jet (compared to leading jet) to be considered in the MultijetBalanceAlgo#m_beta selection,
+    /** @brief Relative pt threshold of each jet (compared to leading jet) to be considered in the InsituBalanceAlgo#m_beta selection,
      * i.e. only jets with \f$p_{T}\f$ > m_betaPtVar*100% of the leading jet \f$p_{T}\f$ */
     float m_betaPtVar;
 
@@ -218,21 +218,21 @@ class MultijetBalanceAlgo : public xAH::Algorithm
 ////// configuration variables set automatically //////
     /** @brief If input is MC, as automatically determined from xAOD::EventInfo::IS_SIMULATION*/
     bool m_isMC;
-    /** @brief Vector of subleading jet \f$p_{T}\f$ selection thresholds, filled automatically from MultijetBalanceAlgo#m_MJBIterationThreshold*/
+    /** @brief Vector of subleading jet \f$p_{T}\f$ selection thresholds, filled automatically from InsituBalanceAlgo#m_MJBIterationThreshold*/
     std::vector<float> m_subjetThreshold;
-    /** @brief Vector of b-tag working point efficiency percentages, filled automatically from MultijetBalanceAlgo#m_bTag*/
+    /** @brief Vector of b-tag working point efficiency percentages, filled automatically from InsituBalanceAlgo#m_bTag*/
     std::vector<std::string> m_bTagWPs;
-    /** @brief Set to true automatically if MultijetBalanceAlgo#m_MCPileupCheckContainer is not "None"*/
+    /** @brief Set to true automatically if InsituBalanceAlgo#m_MCPileupCheckContainer is not "None"*/
     bool m_useMCPileupCheck;
     /** @brief Set to true for iterations beyond the first, as bootstrap mode propagation is handled differently */
     bool m_iterateBootstrap;
-    /** @brief Vector of triggers, filled automatically from MultijetBalanceAlgo#m_triggerAndPt*/
+    /** @brief Vector of triggers, filled automatically from InsituBalanceAlgo#m_triggerAndPt*/
     std::vector<std::string> m_triggers;
-    /** @brief Vector of trigger thresholds, filled automatically from MultijetBalanceAlgo#m_triggerAndPt*/
+    /** @brief Vector of trigger thresholds, filled automatically from InsituBalanceAlgo#m_triggerAndPt*/
     std::vector<float> m_triggerThresholds;
-    /** @brief Vector of bins, filled automatically from MultijetBalanceAlgo#m_binning*/
+    /** @brief Vector of bins, filled automatically from InsituBalanceAlgo#m_binning*/
     std::vector<double> m_bins;
-    /** @brief Whether to use V+jet intermediate calibrations, set to true if MultijetBalanceAlgo#m_VjetCalibFile.size()*/
+    /** @brief Whether to use V+jet intermediate calibrations, set to true if InsituBalanceAlgo#m_VjetCalibFile.size()*/
     bool m_VjetCalib;
 
 ////// config for Jet Tools //////
@@ -301,17 +301,17 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     /** @brief Position of the Nominal result within m_sysVar */
     int m_NominalIndex; //!
 
-    /** @brief V+jet \a in-situ nominal calibration histogram taken from MultijetBalanceAlgo#m_VjetCalibFile*/
+    /** @brief V+jet \a in-situ nominal calibration histogram taken from InsituBalanceAlgo#m_VjetCalibFile*/
     TH1F* m_VjetHist; //!
-    /** @brief MJB \a in-situ calibration histograms from previous iterations taken from MultijetBalanceAlgo#m_MJBCorrectionFile*/
+    /** @brief MJB \a in-situ calibration histograms from previous iterations taken from InsituBalanceAlgo#m_MJBCorrectionFile*/
     std::vector< TH1D* > m_MJBHists; //!
 //    std::map<int, int> m_VjetMap; //!
 //    std::map<int, int> m_JESMap; //!
-    /** @brief Substring name given to each JES calibration stage in MultijetBalanceAlgo#m_jetCalibSequence,
-     * used for JetCalibSequence option of MultijetBalanceAlgo#m_sysVariations */
+    /** @brief Substring name given to each JES calibration stage in InsituBalanceAlgo#m_jetCalibSequence,
+     * used for JetCalibSequence option of InsituBalanceAlgo#m_sysVariations */
     std::vector<std::string> m_JCSTokens; //!
     /** @brief Full name of each JES calibration stage (i.e. JetGSCScaleMomentum).
-     * Has a direct correspondence with MultijetBalanceAlgo#m_JCSTokens*/
+     * Has a direct correspondence with InsituBalanceAlgo#m_JCSTokens*/
     std::vector<std::string> m_JCSStrings; //!
 
     /** @brief Update every cutflow for this selection
@@ -350,14 +350,14 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     /** @brief Vector of MiniTree objects to output, each corresponding to a different systematic*/
     std::vector<MiniTree*> m_treeList; //!
     /** @brief Retrieve event info from the xAOD::EventInfo object and the file TODO
-     * @note: Fills in values for MultijetBalanceAlgo#m_runNumber, MultijetBalanceAlgo#m_mcChannelNumber, MultijetBalanceAlgo#m_weight_xs, MultijetBalanceAlgo#m_weight_kfactor */
+     * @note: Fills in values for InsituBalanceAlgo#m_runNumber, InsituBalanceAlgo#m_mcChannelNumber, InsituBalanceAlgo#m_weight_xs, InsituBalanceAlgo#m_weight_kfactor */
     EL::StatusCode getSampleWeights(const xAOD::EventInfo* eventInfo);
     /** @brief Vector of MultijetHists objects to output, each corresponding to a different systematic*/
     std::vector<MultijetHists*> m_jetHists; //!
 
     #endif
 
-    /** @brief Load all the systematic variations from MultijetBalanceAlgo#m_sysVariations */
+    /** @brief Load all the systematic variations from InsituBalanceAlgo#m_sysVariations */
     EL::StatusCode loadSystematics();
     /** @brief Load the JVT correction Tool*/
     EL::StatusCode loadJVTTool();
@@ -365,7 +365,7 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     EL::StatusCode loadJetCalibrationTool();
     /** @brief Load the Jet Resolution Tool*/
     EL::StatusCode loadJetResolutionTool();
-    /** @brief Find and connect the jet calibration stages for MultijetBalanceAlgo#m_JCSTokens and MultijetBalanceAlgo#m_JCSStrings*/
+    /** @brief Find and connect the jet calibration stages for InsituBalanceAlgo#m_JCSTokens and InsituBalanceAlgo#m_JCSStrings*/
     EL::StatusCode setupJetCalibrationStages();
     /** @brief Load the JetCleaningTool*/
     EL::StatusCode loadJetCleaningTool();
@@ -373,9 +373,9 @@ class MultijetBalanceAlgo : public xAH::Algorithm
     EL::StatusCode loadJetUncertaintyTool();
     /** @brief Load the JetTileCorrectionTool*/
     EL::StatusCode loadJetTileCorrectionTool();
-    /** @brief Load the intermediate V+jet \a in-situ calibration from  MultijetBalanceAlgo#m_VjetCalibFile*/
+    /** @brief Load the intermediate V+jet \a in-situ calibration from  InsituBalanceAlgo#m_VjetCalibFile*/
     EL::StatusCode loadVjetCalibration();
-    /** @brief Load the previous MJB calibrations from MultijetBalanceAlgo#m_MJBCorrectionFile*/
+    /** @brief Load the previous MJB calibrations from InsituBalanceAlgo#m_MJBCorrectionFile*/
     EL::StatusCode loadMJBCalibration();
     /** @brief Load the b-tagging tools*/
     EL::StatusCode loadBTagTools();
@@ -483,9 +483,9 @@ public:
 
   public:
     /** @brief Standard constructor*/
-    MultijetBalanceAlgo ();
+    InsituBalanceAlgo ();
 //    /** @brief Standard destructor*/
-//    ~MultijetBalanceAlgo ();
+//    ~InsituBalanceAlgo ();
 
     /** @brief Setup the job (inherits from Algorithm)*/
     virtual EL::StatusCode setupJob (EL::Job& job);
@@ -511,7 +511,7 @@ public:
     virtual EL::StatusCode configure ();
 
     /** @brief Used to distribute the algorithm to the workers*/
-    ClassDef(MultijetBalanceAlgo, 1);
+    ClassDef(InsituBalanceAlgo, 1);
 };
 
 #endif

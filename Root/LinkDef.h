@@ -1,7 +1,7 @@
-#include <MultijetBalance/MultijetBalanceAlgo.h>
-//#include <MultijetBalanceAlgo/TH1DBootstrap.h>
-//#include <MultijetBalanceAlgo/TH2DBootstrap.h>
-//#include <MultijetBalanceAlgo/BootstrapGenerator.h>
+#include <InsituBalance/InsituBalanceAlgo.h>
+//#include <InsituBalanceAlgo/TH1DBootstrap.h>
+//#include <InsituBalanceAlgo/TH2DBootstrap.h>
+//#include <InsituBalanceAlgo/BootstrapGenerator.h>
 
 #include <map>
 #include <TString.h>
@@ -17,7 +17,7 @@
 #endif
 
 #ifdef __CINT__
-#pragma link C++ class MultijetBalanceAlgo+;
+#pragma link C++ class InsituBalanceAlgo+;
 
 //#pragma link C++ class BootstrapGenerator+;
 //#pragma link C++ class TH1Bootstrap+;

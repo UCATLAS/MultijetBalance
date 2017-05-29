@@ -1,4 +1,4 @@
-#include <MultijetBalance/MultijetHists.h>
+#include <InsituBalance/MultijetHists.h>
 #include <sstream>
 
 using namespace std;

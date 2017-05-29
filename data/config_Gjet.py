@@ -6,7 +6,7 @@ c = xAH_config()
 c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
 "m_applyGRLCut"                 : True,
 "m_msgLevel"      : "info",
-                                     "m_GRLxml"                      : "MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
+                                     "m_GRLxml"                      : "InsituBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
                                      "m_derivationName"              : "JETM4",
                                      "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
@@ -17,9 +17,9 @@ c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True,
                                      "m_doPUreweighting"       : True,
-                                     "m_PRWFileNames"          : "MultijetBalance/mc15c_v2_defaults.NotRecommended.prw.root",
-                                     #"m_PRWFileNames"          : "MultijetBalance/PRW_QCD.root",
-                                     "m_lumiCalcFileNames"     : "MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
+                                     "m_PRWFileNames"          : "InsituBalance/mc15c_v2_defaults.NotRecommended.prw.root",
+                                     #"m_PRWFileNames"          : "InsituBalance/PRW_QCD.root",
+                                     "m_lumiCalcFileNames"     : "InsituBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
                                      } )
 
 c.setalg("PhotonCalibrator", {
@@ -57,7 +57,7 @@ c.setalg("PhotonSelector", {
     } )
 
 ### MJB Configuration  ###
-c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
+c.setalg("InsituBalanceAlgo",   { "m_name"                : "GammaJetBalance",
 
 #---------------------------------------------------------------------------------------------
 #### Jet collection and associated observables ####
@@ -135,7 +135,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "GammaJetBalance",
   #!!  "m_isDAOD" : True,
 #!!  "m_useCutFlow" : False,
 
-  "m_XSFile"  : "MultijetBalance/XsAcc_13TeV.txt", 
+  "m_XSFile"  : "InsituBalance/XsAcc_13TeV.txt", 
 
 #---------------------------------------------------------------------------------------------
 #### Tool Configurations ####

@@ -6,7 +6,7 @@ c = xAH_config()
 c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
 "m_applyGRLCut"                 : True,
 "m_msgLevel"      : "info",
-                                     "m_GRLxml"                      : "MultijetBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
+                                     "m_GRLxml"                      : "InsituBalance/data16_13TeV.periodAllYear_DetStatus-v88-pro20-21_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml",
                                      "m_derivationName"              : "JETM1",
                                      "m_useMetaData"                 : False,
                                      "m_storePassHLT"                : True,
@@ -18,14 +18,14 @@ c.setalg("BasicEventSelection",    { "m_name"   : "tmp",
                                      "m_applyEventCleaningCut"       : True,
                                      "m_applyPrimaryVertexCut"       : True,
                                      "m_doPUreweighting"       : False,
-                                     "m_PRWFileNames"          : "MultijetBalance/PRW_QCD.root",
-                                     "m_lumiCalcFileNames"     : "MultijetBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
+                                     "m_PRWFileNames"          : "InsituBalance/PRW_QCD.root",
+                                     "m_lumiCalcFileNames"     : "InsituBalance/ilumicalc_histograms_None_297730-311481_OflLumi-13TeV-005.root",
                                      } )
 #prescales in run 307861
 #15 - 301, 25 - 124, 35 - 18.3, 45 - 88,  55 - 40.7, 60 - 20, 85 - 14, 110 - 5.7, 150 - 11.8, 175 - 4.1, 260 - 1.2, 
 
 ### MJB Configuration  ###
-c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
+c.setalg("InsituBalanceAlgo",   { "m_name"                : "MJB",
 
 "m_msgLevel"      : "info",
 #---------------------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
 
 
  ## Use dedicated V+jet calibrations, requires JetCalibTools to only run on eta-intercalibration! ##
-# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/MultijetBalance/Configs/Vjet_Nominal.root",
+# "m_VjetCalibFile"  : "$ROOTCOREBIN/data/InsituBalance/Configs/Vjet_Nominal.root",
  "m_VjetCalibFile"  : "",
 
  ## Use GSC value, not insitu, for leading jet.
@@ -141,7 +141,7 @@ c.setalg("MultijetBalanceAlgo",   { "m_name"                : "MultijetAlgo",
   #!!  "m_isDAOD" : True,
 #!!  "m_useCutFlow" : False,
 
-  "m_XSFile"  : "MultijetBalance/XsAcc_13TeV.txt", 
+  "m_XSFile"  : "InsituBalance/XsAcc_13TeV.txt", 
 
 #---------------------------------------------------------------------------------------------
 #### Tool Configurations ####

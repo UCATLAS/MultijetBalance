@@ -1,6 +1,6 @@
 
 //////////////////////////////// Selections //////////////////////////
-bool MultijetBalanceAlgo:: cut_LeadEta(){
+bool InsituBalanceAlgo:: cut_LeadEta(){
   ANA_MSG_DEBUG("Cut: lead jet detector eta");
 
   if( m_jets->size() < m_numJets )
@@ -16,7 +16,7 @@ bool MultijetBalanceAlgo:: cut_LeadEta(){
     return true;
 }
 
-bool MultijetBalanceAlgo:: cut_JetEta(){
+bool InsituBalanceAlgo:: cut_JetEta(){
 
   for (unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
     xAOD::JetFourMom_t jetConstituentP4 = m_jets->at(iJet)->getAttribute<xAOD::JetFourMom_t>("JetConstitScaleMomentum"); // or JetEMScaleMomentum
@@ -35,7 +35,7 @@ bool MultijetBalanceAlgo:: cut_JetEta(){
 
 }
 
-bool MultijetBalanceAlgo:: cut_MCCleaning(){
+bool InsituBalanceAlgo:: cut_MCCleaning(){
   ANA_MSG_DEBUG("Cut: MC Cleaning");
 
   if(m_useMCPileupCheck && m_isMC){
@@ -52,7 +52,7 @@ bool MultijetBalanceAlgo:: cut_MCCleaning(){
   return true;
 }
 
-bool MultijetBalanceAlgo:: cut_SubPt(){
+bool InsituBalanceAlgo:: cut_SubPt(){
   ANA_MSG_DEBUG("Cut: Subleading jet pt");
 
   if( m_jets->size() < m_numJets )
@@ -68,7 +68,7 @@ bool MultijetBalanceAlgo:: cut_SubPt(){
 
 }
 
-bool MultijetBalanceAlgo:: cut_JetPtThresh() {
+bool InsituBalanceAlgo:: cut_JetPtThresh() {
 
   ANA_MSG_DEBUG("Cut: jet pt threshold");
 
@@ -90,7 +90,7 @@ bool MultijetBalanceAlgo:: cut_JetPtThresh() {
 
 }
 
-bool MultijetBalanceAlgo:: cut_LeadJetPtThresh() {
+bool InsituBalanceAlgo:: cut_LeadJetPtThresh() {
 
   ANA_MSG_DEBUG("Cut: lead jet pt threshold");
 
@@ -107,7 +107,7 @@ bool MultijetBalanceAlgo:: cut_LeadJetPtThresh() {
 
 }
 
-bool MultijetBalanceAlgo:: cut_JVT() {
+bool InsituBalanceAlgo:: cut_JVT() {
 
   ANA_MSG_DEBUG("Cut: JVT");
   for(unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
@@ -128,7 +128,7 @@ bool MultijetBalanceAlgo:: cut_JVT() {
 }
 
 //// Ignore event if any of the used jets are not clean ////
-bool MultijetBalanceAlgo:: cut_CleanJet(){
+bool InsituBalanceAlgo:: cut_CleanJet(){
   ANA_MSG_DEBUG("Cut: Jet Cleaning");
 
   for(unsigned int iJet = 0; iJet < m_jets->size(); ++iJet){
@@ -141,7 +141,7 @@ bool MultijetBalanceAlgo:: cut_CleanJet(){
 
 }
 
-bool MultijetBalanceAlgo:: cut_TriggerEffRecoil(){
+bool InsituBalanceAlgo:: cut_TriggerEffRecoil(){
   ///// Trigger Efficiency and prescale /////
 
   m_prescale = 1.;
@@ -172,7 +172,7 @@ bool MultijetBalanceAlgo:: cut_TriggerEffRecoil(){
 
 }
 
-bool MultijetBalanceAlgo:: cut_PtAsym(){
+bool InsituBalanceAlgo:: cut_PtAsym(){
   //Remove dijet events, i.e. events where subleading jet dominates the recoil jets
   ANA_MSG_DEBUG("Cut: Pt asymmetry");
 
@@ -204,7 +204,7 @@ bool MultijetBalanceAlgo:: cut_PtAsym(){
 
 }
 
-bool MultijetBalanceAlgo:: cut_Alpha(){
+bool InsituBalanceAlgo:: cut_Alpha(){
   //Alpha is phi angle between leading jet and recoilJet system
   ANA_MSG_DEBUG("Cut: Alpha (delta phi)");
 
@@ -227,7 +227,7 @@ bool MultijetBalanceAlgo:: cut_Alpha(){
   return true;
 }
 
-bool MultijetBalanceAlgo:: cut_Beta(){
+bool InsituBalanceAlgo:: cut_Beta(){
   //Beta is phi angle between leading jet and each other passing jet
   ANA_MSG_DEBUG("Cut: Beta");
   
@@ -261,7 +261,7 @@ bool MultijetBalanceAlgo:: cut_Beta(){
 }
 
 /// MPF code just ignores any subleading photons
-bool MultijetBalanceAlgo:: cut_ConvPhot(){
+bool InsituBalanceAlgo:: cut_ConvPhot(){
   // Remove Photons that are consistent with a converted photon
   ANA_MSG_DEBUG("Cut: Converted photon");
 
@@ -281,7 +281,7 @@ bool MultijetBalanceAlgo:: cut_ConvPhot(){
 }
 
 /// MPF code just ignores any subleading photons
-bool MultijetBalanceAlgo:: cut_OverlapRemoval(){
+bool InsituBalanceAlgo:: cut_OverlapRemoval(){
   // Remove jets that overlap with a photon
   ANA_MSG_DEBUG("Cut: overlap removal");
 

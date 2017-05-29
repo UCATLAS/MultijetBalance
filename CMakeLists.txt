@@ -1,9 +1,9 @@
 ################################################################################
-# Package: MultijetBalance
+# Package: InsituBalance
 ################################################################################
 
 # Declare the package name:
-atlas_subdir( MultijetBalance )
+atlas_subdir( InsituBalance )
 
 # Declare the package's dependencies:
 atlas_depends_on_subdirs( PUBLIC
@@ -14,15 +14,15 @@ atlas_depends_on_subdirs( PUBLIC
 find_package( ROOT COMPONENTS Core RIO Hist Tree )
 
 # build a dictionary for the library
-atlas_add_root_dictionary ( MultijetBalanceLib MultijetBalanceDictSource
-                            ROOT_HEADERS MultijetBalance/*.h Root/LinkDef.h
+atlas_add_root_dictionary ( InsituBalanceLib InsituBalanceDictSource
+                            ROOT_HEADERS InsituBalance/*.h Root/LinkDef.h
                             EXTERNAL_PACKAGES ROOT
 )
 
 # build a shared library
-atlas_add_library( MultijetBalanceLib MultijetBalance/*.h Root/*.cxx ${MultijetBalanceDictSource}
-#atlas_add_library( MultijetBalanceLib MultijetBalance/*.h Root/*.cxx util/*.cxx ${MultijetBalanceDictSource}
-                   PUBLIC_HEADERS MultijetBalance
+atlas_add_library( InsituBalanceLib InsituBalance/*.h Root/*.cxx ${InsituBalanceDictSource}
+#atlas_add_library( InsituBalanceLib InsituBalance/*.h Root/*.cxx util/*.cxx ${InsituBalanceDictSource}
+                   PUBLIC_HEADERS InsituBalance
                    INCLUDE_DIRS ${ROOT_INCLUDE_DIRS}
                    LINK_LIBRARIES ${ROOT_LIBRARIES} 
                    xAODAnaHelpersLib JetTileCorrectionLib JES_ResponseFitterLib

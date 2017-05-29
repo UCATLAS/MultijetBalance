@@ -3,7 +3,7 @@
 #include "xAODJet/JetContainer.h"
 #include "xAODEventInfo/EventInfo.h"
 
-#include "MultijetBalance/MiniTree.h"
+#include "InsituBalance/MiniTree.h"
 
 
 MiniTree :: MiniTree(xAOD::TEvent * event, TTree* tree, TFile* file) :
